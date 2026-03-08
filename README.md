@@ -41,10 +41,10 @@ python3 seed.py
 ```bash
 cd server
 source venv/bin/activate
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8081
 ```
 
-Backend runs at `http://localhost:8000`. API docs at `http://localhost:8000/docs`.
+Backend runs at `http://localhost:8081`. API docs at `http://localhost:8081/docs`.
 
 ### 5. Start Frontend
 
@@ -53,7 +53,7 @@ Backend runs at `http://localhost:8000`. API docs at `http://localhost:8000/docs
 npm run dev
 ```
 
-Frontend runs at `http://localhost:5173`. API requests are proxied to port 8000 via Vite.
+Frontend runs at `http://localhost:5173`. API requests are proxied to port 8081 via Vite.
 
 ## Production Deployment
 
@@ -80,7 +80,7 @@ server {
 
     # Backend API proxy
     location /api/ {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8081;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
@@ -92,13 +92,13 @@ server {
 ```bash
 cd server
 source venv/bin/activate
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+python3 -m uvicorn main:app --host 0.0.0.0 --port 8081 --workers 4
 ```
 
 Or with `nohup` for background:
 
 ```bash
-nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4 > uvicorn.log 2>&1 &
+nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8081 --workers 4 > uvicorn.log 2>&1 &
 ```
 
 ## Test Accounts
