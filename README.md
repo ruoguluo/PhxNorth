@@ -55,26 +55,33 @@ npm run dev
 
 Frontend runs at `http://localhost:5173`. API requests are proxied to port 8081 via Vite.
 
-## Production Deployment
+## Linux Server Deployment
 
-### Build Frontend
+### Step 1: Build Frontend
 
 ```bash
-npm run build
+cd ~/Projects/PhxNorth
+npm install
+npm run build    # outputs static files to dist/
 ```
 
-Static files output to `dist/`. Serve with Nginx, Caddy, or any static file server.
+### Step 2: Install & Configure Nginx
 
-### Nginx Example Config
+```bash
+sudo apt update && sudo apt install nginx -y
+sudo nano /etc/nginx/sites-available/phxnorth
+```
+
+Paste the following config (replace `your-server-ip` with your server IP or domain):
 
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com;
+    server_name your-server-ip;
 
-    # Frontend
+    # Frontend static files
     location / {
-        root /path/to/PhxNorth/dist;
+        root /root/Projects/PhxNorth/dist;
         try_files $uri $uri/ /index.html;
     }
 
@@ -83,23 +90,50 @@ server {
         proxy_pass http://127.0.0.1:8081;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 }
 ```
 
-### Run Backend in Production
+Enable the site and restart Nginx:
 
 ```bash
-cd server
-source venv/bin/activate
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8081 --workers 4
+sudo ln -s /etc/nginx/sites-available/phxnorth /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t
+sudo systemctl restart nginx
 ```
 
-Or with `nohup` for background:
+### Step 3: Start Backend
 
 ```bash
+cd ~/Projects/PhxNorth/server
+source venv/bin/activate
 nohup python3 -m uvicorn main:app --host 0.0.0.0 --port 8081 --workers 4 > uvicorn.log 2>&1 &
 ```
+
+### Step 4: Open Firewall
+
+```bash
+sudo ufw allow 80
+sudo ufw allow 443
+```
+
+Visit `http://your-server-ip` to access the platform.
+
+### Quick Test (without Nginx)
+
+For quick testing without Nginx, run the Vite dev server directly:
+
+```bash
+cd ~/Projects/PhxNorth
+npm run dev -- --host 0.0.0.0 --port 3000
+```
+
+Then visit `http://your-server-ip:3000` (requires `sudo ufw allow 3000`).
+
+
+> ⚠️ Dev server is for testing only. Use Nginx for production.
 
 ## Test Accounts
 
