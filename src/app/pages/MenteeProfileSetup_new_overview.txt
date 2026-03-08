@@ -1,0 +1,263 @@
+          {/* OVERVIEW SECTION - AI SNAPSHOT */}
+          {activeSection === "overview" && (
+            <div className="space-y-6">
+              {/* Page Header */}
+              <div className="mb-8">
+                <h1 className="text-4xl font-bold text-gray-900 mb-3">Your 5D Snapshot</h1>
+                <p className="text-lg text-gray-600">AI-generated summary — confirm, refine, and control visibility.</p>
+              </div>
+
+              {/* CARD 1 — Signature Tags (AI) */}
+              <div className="bg-white rounded-xl border border-gray-200 p-8">
+                <div className="flex items-center gap-2 mb-6">
+                  <Sparkles className="w-6 h-6 text-[#0A2463]" />
+                  <h2 className="text-2xl font-bold text-gray-900">Your Signature Tags</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Strengths */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Strengths</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {["Strategic Operator", "Execution-Driven", "Cross-border", "High-velocity"].map((tag, idx) => (
+                        <div key={idx} className="group relative">
+                          <button className="px-4 py-2 bg-blue-50 text-[#0A2463] rounded-full text-sm font-medium border border-blue-200 hover:bg-blue-100 flex items-center gap-2">
+                            <span>{tag}</span>
+                            <span className="text-xs text-blue-600">92%</span>
+                          </button>
+                          <div className="absolute hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
+                            Derived from Career + Projects + Workshops
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Domain / Industry Signals */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Domain / Industry Signals</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {["FinTech", "SaaS", "Asset Management", "AI/ML Infrastructure"].map((tag, idx) => (
+                        <div key={idx} className="group relative">
+                          <button className="px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium border border-green-200 hover:bg-green-100 flex items-center gap-2">
+                            <span>{tag}</span>
+                            <span className="text-xs text-green-600">88%</span>
+                          </button>
+                          <div className="absolute hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
+                            Derived from Career + Projects + Workshops
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Decision & Risk Style */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Decision & Risk Style</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {["High-conviction", "Risk-calibrated", "Evidence-led", "First-principles"].map((tag, idx) => (
+                        <div key={idx} className="group relative">
+                          <button className="px-4 py-2 bg-purple-50 text-purple-700 rounded-full text-sm font-medium border border-purple-200 hover:bg-purple-100 flex items-center gap-2">
+                            <span>{tag}</span>
+                            <span className="text-xs text-purple-600">85%</span>
+                          </button>
+                          <div className="absolute hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
+                            Derived from Career + Projects + Workshops
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Collaboration / Communication */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Collaboration / Communication</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {["Direct communicator", "Stakeholder-led", "Consensus-builder", "Remote-first"].map((tag, idx) => (
+                        <div key={idx} className="group relative">
+                          <button className="px-4 py-2 bg-orange-50 text-orange-700 rounded-full text-sm font-medium border border-orange-200 hover:bg-orange-100 flex items-center gap-2">
+                            <span>{tag}</span>
+                            <span className="text-xs text-orange-600">90%</span>
+                          </button>
+                          <div className="absolute hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
+                            Derived from Career + Projects + Workshops
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    Tags are AI-generated from your profile data. Hide or edit any tag.
+                  </p>
+                  <button className="text-sm font-semibold text-[#0A2463] hover:underline flex items-center gap-1">
+                    <RefreshCw className="w-4 h-4" />
+                    Refresh tags
+                  </button>
+                </div>
+              </div>
+
+              {/* CARD 2 — Education Snapshot */}
+              <div className="bg-white rounded-xl border border-gray-200 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Education Snapshot</h2>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-6 h-6 text-[#0A2463]" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-bold text-gray-900">MSc in Computer Science</h3>
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">Imperial College London · 2018-2020</p>
+                      
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase mb-2">AI Academic Summary</p>
+                        <ul className="space-y-1 text-sm text-gray-700">
+                          <li>• Quant-focused training with machine learning specialization</li>
+                          <li>• Research exposure in distributed systems</li>
+                          <li>• Leadership roles in hackathon organization</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setActiveSection("education")}
+                  className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors"
+                >
+                  View & edit Education Timeline
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* CARD 3 — Career Snapshot */}
+              <div className="bg-white rounded-xl border border-gray-200 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Career Snapshot</h2>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-bold text-gray-900">Senior Product Manager</h3>
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <p className="text-sm text-gray-600">TechCorp Ltd</p>
+                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Technology → SaaS</span>
+                      </div>
+                      
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <p className="text-xs font-semibold text-gray-500 uppercase mb-2">AI Career Summary</p>
+                        <ul className="space-y-1 text-sm text-gray-700">
+                          <li>• Leading cross-functional team of 12 across EMEA</li>
+                          <li>• Delivered 3 major product launches with 40% revenue growth</li>
+                          <li>• Scaled user base from 50K to 500K in 18 months</li>
+                          <li>• Rapid progression from PM to Senior PM in 2 years</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setActiveSection("career")}
+                  className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors"
+                >
+                  View & edit Career Timeline
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* CARD 4 — Innovation & Projects */}
+              <div className="bg-white rounded-xl border border-gray-200 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Innovation & Projects</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { name: "AI Compliance Tool", role: "Founder", industry: "FinTech", outcome: "Acquired by RegTech Inc" },
+                    { name: "Mentorship Platform MVP", role: "Product Lead", industry: "EdTech", outcome: "5K users in 3 months" },
+                    { name: "Cross-border Payments", role: "Advisor", industry: "FinTech", outcome: "$2M seed raised" }
+                  ].map((project, idx) => (
+                    <div key={idx} className="border-2 border-gray-200 rounded-lg p-4 hover:border-[#0A2463] transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                          {project.industry}
+                        </span>
+                        <button className="text-gray-400 hover:text-gray-600">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <h3 className="font-bold text-gray-900 mb-1">{project.name}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{project.role}</p>
+                      <p className="text-xs text-green-600 font-semibold">✓ {project.outcome}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => setActiveSection("business")}
+                  className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors"
+                >
+                  View & edit Business / Projects
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* BOTTOM ACTION BAR */}
+              <div className="bg-white rounded-xl border-2 border-[#0A2463] p-6 sticky bottom-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-gray-600">
+                      Last updated: <span className="font-semibold">2 hours ago</span>
+                    </div>
+                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-semibold text-sm">
+                      <RefreshCw className="w-4 h-4" />
+                      AI refresh
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => {
+                        const nextIncomplete = sections.find(s => s.completion < 100 && s.weight && s.weight > 0);
+                        if (nextIncomplete) setActiveSection(nextIncomplete.id);
+                      }}
+                      className="px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      Continue building profile →
+                    </button>
+                    <button 
+                      disabled={sections.find(s => s.id === "career")?.completion === 0}
+                      className={`px-6 py-3 rounded-lg font-bold transition-colors ${
+                        sections.find(s => s.id === "career")?.completion > 0
+                          ? "bg-[#0A2463] text-white hover:bg-[#0A2463]/90"
+                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      Run 5D Analysis
+                    </button>
+                  </div>
+                </div>
+                
+                {sections.find(s => s.id === "career")?.completion === 0 && (
+                  <p className="text-xs text-orange-600 mt-3 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Complete Career Timeline and review Privacy Settings to unlock 5D Analysis
+                  </p>
+                )}
+              </div>
+            </div>
+          )}

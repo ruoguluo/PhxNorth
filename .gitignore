@@ -1,0 +1,11 @@
+node_modules/
+
+# Backend
+__pycache__/
+*.pyc
+*.pyo
+server/phxnorth.db
+.env
+venv/
+.venv/
+
