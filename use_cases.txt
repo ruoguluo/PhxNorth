@@ -1,0 +1,43 @@
+Use Cases（完整清单）
+
+- UC01 访客浏览首页并进入三大核心服务（5D Mentorship / Talent Mobility / Commercial Advisory）。
+- UC02 访客浏览“Individuals”价值页并决定开始注册。
+- UC03 访客浏览“Mentors”价值页并决定成为导师。
+- UC04 访客浏览“Enterprises”价值页并发起 Demo 请求入口。
+- UC05 访客浏览“How it works / Advantage / Why PhxNorth”理解机制与差异化。
+- UC06 访客进入 6 个 Explore 页面（Workshops / Instant / Structured / Programs / Global Talent / Commercial Consultation）了解具体服务形态。
+- UC07 访客查看公开个人页（ /profile/:name ）评估导师/候选人。
+- UC08 用户进入登录页，提交邮箱密码登录并进入应用区。
+- UC09 用户进入 account/login type 选择页，按个人或企业路径继续。
+- UC10 新用户通过多步骤 Create Account 完成注册（基础信息→地域→行业→安全信息）。
+- UC11 新用户在 welcome 页选择一个或多个角色后进入对应工作区。
+- UC12 用户在角色选择页快速以 Mentee/Mentor/Consultant 身份开始。
+- UC13 已登录用户进入 /app/dashboard 查看 Mentee 仪表盘。
+- UC14 Mentee 查看 upcoming/completed sessions、mentorship requests。
+- UC15 Mentee 进入 question-entry 发起结构化问题输入。
+- UC16 Mentee 浏览课程列表与课程详情（ /app/courses , /app/courses/:id ）。
+- UC17 Mentee 浏览项目列表与项目详情（ /app/projects , /app/projects/:id ）。
+- UC18 Mentee 编辑个人资料、查看 5D Snapshot。
+- UC19 Mentee 在面板中切换是否启用 Talent Mobility / Commercial Consultation 视图入口。
+- UC20 Mentor 进入 Mentor Dashboard 查看统计、待处理请求、会话、即时队列。
+- UC21 Mentor 切换在线状态（Instant Mentorship ONLINE/OFFLINE）。
+- UC22 Mentor 接受或拒绝 mentorship request（接受后系统创建 session）。
+- UC23 Mentor 管理可用时间窗（availability）并提交覆盖更新。
+- UC24 Mentor 查看日历视图与 upcoming session 列表。
+- UC25 Mentor 查看 session/request 详情页（ /app/mentor/session/:id , /app/mentor/request/:id ）。
+- UC26 Mentor 管理 workshop 运营页（发布/草稿/完成视图）。
+- UC27 Mentor 管理个人资料与跨角色切换入口（mentee/mentor/consultant）。
+- UC28 用户进入 Talent Mobility 主入口并“Join Now”加入计划。
+- UC29 用户在 Talent Mobility Preferences 配置国家/市场/行业/职能/职级偏好。
+- UC30 用户浏览 Active Campaigns（匹配分、阶段、详情按钮）。
+- UC31 用户查看 Referral Progress（自投状态、被推荐、我推荐的人）。
+- UC32 用户查看 Notifications（未读数、类型化通知、全部标记已读按钮）。
+- UC33 企业用户可通过营销页与商业咨询页理解合作模型并进入申请/咨询入口。
+- UC34 企业/个人可浏览 commercial consultation explore 内容并返回相关落点页。
+- UC35 管理员查看平台级统计（用户、会话、营收、平均评分等）。
+- UC36 管理员分页/按角色筛选用户列表。
+- UC37 管理员查看单个用户详情并更新用户状态或角色。
+- UC38 平台健康检查（ /api/health ）用于运维与存活探测。
+- UC39 认证态用户获取自身资料（ /auth/me ）并维持前端登录态。
+- UC40 用户可查看导师公开列表并按在线、行业、国家过滤。
+- UC41 用户可完成 session 并提交 rating/feedback/notes，触发导师评分与收入累计逻辑。
