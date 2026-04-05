@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ArrowLeft,
   TrendingUp, 
@@ -25,8 +25,11 @@ import {
   PolarAngleAxis, 
   ResponsiveContainer 
 } from 'recharts';
+import { discProfileAPI, type DISCProfile } from '../../lib/disc-api';
+import { DISCScoreBar } from '../components/disc/DISCScoreBar';
+import { DISCRadarChart } from '../components/disc/DISCRadarChart';
 
-const radarData = [
+const hardcodedRadarData = [
   { dimension: 'Capability\nDepth', value: 85, clarity: 'High', confidence: 92 },
   { dimension: 'Execution\nPattern', value: 78, clarity: 'High', confidence: 88 },
   { dimension: 'Decision\nOrientation', value: 65, clarity: 'Medium', confidence: 71 },
@@ -42,8 +45,39 @@ function getClarityColor(clarity: string) {
 
 export function FiveDSnapshot() {
   const [userRole] = useState<'mentee' | 'mentor'>('mentee');
+  const [discProfile, setDiscProfile] = useState<DISCProfile | null>(null);
+  const [discLoading, setDiscLoading] = useState(true);
   const spiLevel = 'High';
   const spiScore = 87;
+
+  useEffect(() => {
+    async function fetchDISC() {
+      try {
+        const profile = await discProfileAPI.get("me", "90d");
+        setDiscProfile(profile);
+      } catch {
+        // Silently fall back to hardcoded data
+      } finally {
+        setDiscLoading(false);
+      }
+    }
+    fetchDISC();
+  }, []);
+
+  // Build radar data from real DISC scores when available, keeping 5D structure
+  const radarData = discProfile
+    ? [
+        { dimension: 'Capability\nDepth', value: discProfile.scores.D, clarity: 'High' as const, confidence: Math.round(discProfile.confidence * 100) },
+        { dimension: 'Execution\nPattern', value: discProfile.scores.I, clarity: 'High' as const, confidence: Math.round(discProfile.confidence * 100) },
+        { dimension: 'Decision\nOrientation', value: discProfile.scores.S, clarity: 'Medium' as const, confidence: Math.round(discProfile.confidence * 100) },
+        { dimension: 'Collaboration\nStyle', value: discProfile.scores.C, clarity: 'Medium' as const, confidence: Math.round(discProfile.confidence * 100) },
+        { dimension: 'Growth\nTrajectory', value: Math.round((discProfile.scores.D + discProfile.scores.I + discProfile.scores.S + discProfile.scores.C) / 4), clarity: 'Emerging' as const, confidence: Math.round(discProfile.confidence * 100) },
+      ]
+    : hardcodedRadarData;
+
+  const dataConfidence = discProfile
+    ? Math.round(discProfile.confidence * 100)
+    : 92;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-8">
@@ -69,7 +103,7 @@ export function FiveDSnapshot() {
             <Activity className="w-4 h-4" />
             <span>Last updated based on 247 platform interactions</span>
             <span className="mx-2">•</span>
-            <span className="text-emerald-600 font-medium">Data confidence: High (92%)</span>
+            <span className="text-emerald-600 font-medium">Data confidence: {dataConfidence >= 80 ? 'High' : dataConfidence >= 60 ? 'Medium' : 'Low'} ({dataConfidence}%)</span>
           </div>
         </div>
 
@@ -136,6 +170,69 @@ export function FiveDSnapshot() {
             </div>
           </div>
         </div>
+
+        {/* SECTION: DISC Profile Scores */}
+        {discProfile && (
+          <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6">
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">DISC Behavioral Profile</h2>
+                  <p className="text-gray-600">
+                    Behavioral style scores from platform interaction analysis
+                    <span className="ml-2 text-sm text-gray-500">
+                      ({Math.round(discProfile.confidence * 100)}% confidence)
+                    </span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs px-2 py-1 rounded-full font-medium bg-slate-800 text-white">
+                    {discProfile.primary_type} dominant
+                  </span>
+                  {discProfile.secondary_type && (
+                    <span className="text-xs px-2 py-1 rounded-full font-medium border border-slate-300 text-slate-600">
+                      {discProfile.secondary_type} secondary
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8">
+              {/* DISC Radar Chart */}
+              <div className="flex items-center justify-center">
+                <DISCRadarChart
+                  scores={{
+                    d: discProfile.scores.D,
+                    i: discProfile.scores.I,
+                    s: discProfile.scores.S,
+                    c: discProfile.scores.C,
+                  }}
+                  confidence={discProfile.confidence}
+                  className="max-w-sm"
+                />
+              </div>
+
+              {/* DISC Score Bars */}
+              <div className="flex flex-col justify-center space-y-4">
+                {(["D", "I", "S", "C"] as const).map((dim) => (
+                  <DISCScoreBar
+                    key={dim}
+                    dimension={dim}
+                    score={discProfile.scores[dim]}
+                    isDominant={discProfile.primary_type === dim}
+                    isSecondary={discProfile.secondary_type === dim}
+                  />
+                ))}
+                {discProfile.summary && (
+                  <p className="mt-4 text-sm text-gray-600 border-t border-gray-100 pt-4">
+                    {discProfile.summary}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SECTION 2: Growth Logic Analysis */}
         <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6">
