@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Outer shield / compass shape -->
+  <polygon
+    points="24,3 44,13 44,35 24,45 4,35 4,13"
+    fill="#0A2463"
+    stroke="none"
+  />
+  <!-- Inner accent top-right facet -->
+  <polygon
+    points="24,3 44,13 34,13 24,7"
+    fill="#1E40AF"
+    stroke="none"
+  />
+  <!-- White stylised "P" / north arrow -->
+  <path
+    d="M17 14 h7 a6 6 0 0 1 0 12 h-3 v8 h-4 V14z
+       M21 22 h3 a2 2 0 0 0 0-4 h-3 z"
+    fill="#FFFFFF"
+    fill-rule="evenodd"
+  />
+</svg>

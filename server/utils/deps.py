@@ -23,16 +23,17 @@ def get_current_user(
     if payload is None:
         raise credentials_exception
 
-    user_id_str: str = payload.get("sub")
-    if user_id_str is None:
+    sub: str = payload.get("sub")
+    if sub is None:
         raise credentials_exception
 
+    # Support both old format (sub=integer ID) and new format (sub=email)
     try:
-        user_id = int(user_id_str)
+        user_id = int(sub)
+        user = db.query(User).filter(User.id == user_id).first()
     except (ValueError, TypeError):
-        raise credentials_exception
-
-    user = db.query(User).filter(User.id == user_id).first()
+        # sub is an email string
+        user = db.query(User).filter(User.email == sub).first()
     if user is None:
         raise credentials_exception
 

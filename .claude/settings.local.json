@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(which node:*)",
+      "Bash(npm install:*)",
+      "Bash(node /tmp/gen_usecases.js 2>&1)",
+      "Bash(npm list:*)",
+      "Read(//Users/apple/.nvm/versions/node/v24.13.0/lib/node_modules/**)",
+      "Bash(NODE_PATH=/Users/apple/.nvm/versions/node/v24.13.0/lib/node_modules node /tmp/gen_usecases.js 2>&1)",
+      "Bash(which playwright:*)",
+      "Bash(cd /tmp && node screenshot_pages.js 2>&1)",
+      "Read(//usr/local/lib/node_modules/**)",
+      "Read(//usr/local/lib/**)",
+      "Bash(python3 -c \"import playwright; print\\(playwright.__file__\\)\")",
+      "Bash(python3 /tmp/screenshot_pages.py 2>&1)",
+      "Bash(python3 -c \"import sys; print\\(sys.executable\\)\"\nfind /usr/local/lib -name \"async_api*\" 2>/dev/null | head -3\npip3 show playwright 2>/dev/null | head -5)",
+      "Bash(/usr/local/bin/python3.13 /tmp/screenshot_pages.py 2>&1)",
+      "Bash(NODE_PATH=/Users/apple/.nvm/versions/node/v24.13.0/lib/node_modules node /tmp/gen_usecases_v2.js 2>&1)",
+      "Bash(NODE_PATH=/Users/apple/.nvm/versions/node/v24.13.0/lib/node_modules node /tmp/gen_analysis.js 2>&1)"
+    ]
+  }
+}

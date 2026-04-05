@@ -49,7 +49,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    token = create_access_token(data={"sub": str(user.id)})
+    token = create_access_token(data={"sub": user.email, "user_id": user.id, "role": user.role})
     return TokenResponse(access_token=token)
 
 
@@ -69,7 +69,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
             detail="Account is deactivated",
         )
 
-    token = create_access_token(data={"sub": str(user.id)})
+    token = create_access_token(data={"sub": user.email, "user_id": user.id, "role": user.role})
     return TokenResponse(access_token=token)
 
 
