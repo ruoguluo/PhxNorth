@@ -1,7 +1,8 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { Bell, User, X, Lock, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert } from "lucide-react";
+import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { useState } from "react";
+import { useAuth } from "../../lib/auth-context";
 
 type Role = 'mentee' | 'mentor' | 'consultant';
 
@@ -44,10 +45,11 @@ const roleConfigs: Record<Role, RoleConfig> = {
 export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const isMentorDashboard = location.pathname.includes('mentor-dashboard');
   
   // Role management state
-  const [activeRoles, setActiveRoles] = useState<Role[]>(['mentee']); // User has activated Mentee role
+  const [activeRoles, setActiveRoles] = useState<Role[]>([((user?.role as Role) || 'mentee')]); // User has activated Mentee role
   const [currentRole, setCurrentRole] = useState<Role>('mentee'); // Currently viewing Mentee dashboard
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [roleToActivate, setRoleToActivate] = useState<Role | null>(null);
@@ -157,14 +159,21 @@ export function Layout() {
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
               </button>
               <Link to="/app/profile" className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <div className="w-8 h-8 bg-[#0A2463] text-white rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5" />
+                <div className="w-8 h-8 bg-[#0A2463] text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  {user?.full_name?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || <User className="w-5 h-5" />}
                 </div>
                 <div className="text-left">
-                  <div className="text-sm font-semibold text-gray-900">John Doe</div>
-                  <div className="text-xs text-gray-500">{roleConfigs[currentRole].name}</div>
+                  <div className="text-sm font-semibold text-gray-900">{user?.full_name || user?.username || 'User'}</div>
+                  <div className="text-xs text-gray-500">{user?.role || roleConfigs[currentRole].name}</div>
                 </div>
               </Link>
+              <button
+                onClick={() => { logout(); navigate('/login'); }}
+                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
