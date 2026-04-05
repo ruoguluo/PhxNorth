@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { User, Building2, ArrowRight } from "lucide-react";
+import { User, Building2, Shield, ArrowRight } from "lucide-react";
 
 export function LoginTypeSelection() {
   const navigate = useNavigate();
@@ -16,24 +16,17 @@ export function LoginTypeSelection() {
         </div>
 
         {/* Login Type Options */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           {/* Individual Login */}
           <div className="bg-white rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
             <div className="flex flex-col h-full">
-              {/* Icon */}
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
                 <User className="w-8 h-8 text-blue-600" />
               </div>
-
-              {/* Title */}
               <h3 className="text-2xl font-bold text-[#0A2463] mb-4">Individual</h3>
-
-              {/* Description */}
               <p className="text-gray-600 mb-8 flex-grow leading-relaxed">
                 For professionals participating in mentorship, talent mobility and commercial advisory opportunities.
               </p>
-
-              {/* Button */}
               <button
                 onClick={() => navigate("/login?type=individual")}
                 className="w-full bg-[#0A2463] text-white py-4 px-6 rounded-xl font-semibold hover:bg-blue-900 transition-all duration-200 flex items-center justify-center gap-2 group"
@@ -47,25 +40,38 @@ export function LoginTypeSelection() {
           {/* Enterprise Login */}
           <div className="bg-white rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
             <div className="flex flex-col h-full">
-              {/* Icon */}
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
                 <Building2 className="w-8 h-8 text-purple-600" />
               </div>
-
-              {/* Title */}
               <h3 className="text-2xl font-bold text-[#0A2463] mb-4">Enterprise</h3>
-
-              {/* Description */}
               <p className="text-gray-600 mb-8 flex-grow leading-relaxed">
                 For companies launching hiring campaigns, talent programs and advisory projects.
               </p>
-
-              {/* Button */}
               <button
                 onClick={() => navigate("/login?type=enterprise")}
                 className="w-full bg-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-purple-700 transition-all duration-200 flex items-center justify-center gap-2 group"
               >
                 Enterprise Login
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+              </button>
+            </div>
+          </div>
+
+          {/* Admin Login */}
+          <div className="bg-white rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
+            <div className="flex flex-col h-full">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+                <Shield className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-[#0A2463] mb-4">Admin</h3>
+              <p className="text-gray-600 mb-8 flex-grow leading-relaxed">
+                For platform administrators managing users, DISC data, risk analysis and system configuration.
+              </p>
+              <button
+                onClick={() => navigate("/login?type=admin")}
+                className="w-full bg-emerald-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-200 flex items-center justify-center gap-2 group"
+              >
+                Admin Login
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
               </button>
             </div>
