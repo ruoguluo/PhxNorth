@@ -36,6 +36,30 @@ async function fetchDISC<T>(
     return response.json();
 }
 
+// ─── User ID Resolution ─────────────────────────────────────────────
+
+/** Cached DISC backend user ID (UUID). Cleared on logout. */
+let _cachedUserId: string | null = null;
+
+/**
+ * Resolve "me" to the actual DISC backend UUID by calling /api/v1/users/me.
+ * Caches the result so subsequent calls are instant.
+ */
+async function resolveUserId(userId: string): Promise<string> {
+    if (userId !== "me") return userId;
+
+    if (_cachedUserId) return _cachedUserId;
+
+    const me = await fetchDISC<{ id: string; email: string }>("/users/me");
+    _cachedUserId = me.id;
+    return _cachedUserId;
+}
+
+/** Clear the cached user ID (call on logout). */
+export function clearDiscUserCache(): void {
+    _cachedUserId = null;
+}
+
 // ─── CV Types ───────────────────────────────────────────────────────
 
 export interface CvUploadResponse {
@@ -204,41 +228,48 @@ export interface PreferencesResponse {
 // ─── CV API ─────────────────────────────────────────────────────────
 
 export const discCvAPI = {
-    upload: (file: File, userId = "me") => {
+    upload: async (file: File, userId = "me") => {
+        const uid = await resolveUserId(userId);
         const form = new FormData();
         form.append("file", file);
-        return fetchDISC<CvUploadResponse>(`/users/${userId}/cv/upload`, {
+        return fetchDISC<CvUploadResponse>(`/users/${uid}/cv/upload`, {
             method: "POST",
             body: form,
             multipart: true,
         });
     },
 
-    pasteText: (rawText: string, userId = "me") =>
-        fetchDISC<CvUploadResponse>(`/users/${userId}/cv/text`, {
+    pasteText: async (rawText: string, userId = "me") => {
+        const uid = await resolveUserId(userId);
+        return fetchDISC<CvUploadResponse>(`/users/${uid}/cv/text`, {
             method: "POST",
             body: JSON.stringify({ raw_text: rawText, source: "paste" } satisfies CvTextPayload),
-        }),
+        });
+    },
 
-    getStatus: (jobId: string, userId = "me") =>
-        fetchDISC<CvStatusResponse>(`/users/${userId}/cv/status/${jobId}`),
+    getStatus: async (jobId: string, userId = "me") => {
+        const uid = await resolveUserId(userId);
+        return fetchDISC<CvStatusResponse>(`/users/${uid}/cv/status/${jobId}`);
+    },
 };
 
 // ─── DISC Profile API ───────────────────────────────────────────────
 
 export const discProfileAPI = {
-    get: (userId = "me", window?: string) => {
+    get: async (userId = "me", window?: string) => {
+        const uid = await resolveUserId(userId);
         const qs = window ? `?window=${encodeURIComponent(window)}` : "";
-        return fetchDISC<DISCProfile>(`/users/${userId}/disc-profile${qs}`);
+        return fetchDISC<DISCProfile>(`/users/${uid}/disc-profile${qs}`);
     },
 
-    history: (userId = "me", params?: { from?: string; to?: string }) => {
+    history: async (userId = "me", params?: { from?: string; to?: string }) => {
+        const uid = await resolveUserId(userId);
         const query = new URLSearchParams();
         if (params?.from) query.set("from", params.from);
         if (params?.to) query.set("to", params.to);
         const qs = query.toString();
         return fetchDISC<DISCProfileHistoryResponse>(
-            `/users/${userId}/disc-profile/history${qs ? `?${qs}` : ""}`
+            `/users/${uid}/disc-profile/history${qs ? `?${qs}` : ""}`
         );
     },
 };
@@ -246,29 +277,40 @@ export const discProfileAPI = {
 // ─── Risk API ───────────────────────────────────────────────────────
 
 export const discRiskAPI = {
-    get: (userId = "me") =>
-        fetchDISC<RiskAssessment>(`/users/${userId}/risk`),
-
-    history: (userId = "me", category?: string) => {
-        const qs = category ? `?category=${encodeURIComponent(category)}` : "";
-        return fetchDISC<RiskHistoryResponse>(`/users/${userId}/risk/history${qs}`);
+    get: async (userId = "me") => {
+        const uid = await resolveUserId(userId);
+        return fetchDISC<RiskAssessment>(`/users/${uid}/risk`);
     },
 
-    contradictions: (userId = "me") =>
-        fetchDISC<ContradictionResponse>(`/users/${userId}/contradiction`),
+    history: async (userId = "me", category?: string) => {
+        const uid = await resolveUserId(userId);
+        const qs = category ? `?category=${encodeURIComponent(category)}` : "";
+        return fetchDISC<RiskHistoryResponse>(`/users/${uid}/risk/history${qs}`);
+    },
 
-    behavioralShift: (userId = "me") =>
-        fetchDISC<BehavioralShiftResponse>(`/users/${userId}/behavioral-shift`),
+    contradictions: async (userId = "me") => {
+        const uid = await resolveUserId(userId);
+        return fetchDISC<ContradictionResponse>(`/users/${uid}/contradiction`);
+    },
+
+    behavioralShift: async (userId = "me") => {
+        const uid = await resolveUserId(userId);
+        return fetchDISC<BehavioralShiftResponse>(`/users/${uid}/behavioral-shift`);
+    },
 };
 
 // ─── Career API ─────────────────────────────────────────────────────
 
 export const discCareerAPI = {
-    get: (userId = "me") =>
-        fetchDISC<CareerProfile>(`/users/${userId}/career`),
+    get: async (userId = "me") => {
+        const uid = await resolveUserId(userId);
+        return fetchDISC<CareerProfile>(`/users/${uid}/career`);
+    },
 
-    preferences: (userId = "me") =>
-        fetchDISC<PreferencesResponse>(`/users/${userId}/preferences`),
+    preferences: async (userId = "me") => {
+        const uid = await resolveUserId(userId);
+        return fetchDISC<PreferencesResponse>(`/users/${uid}/preferences`);
+    },
 };
 
 export { fetchDISC };
