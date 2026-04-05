@@ -17,25 +17,23 @@ import { PreferenceSlider } from "../components/disc/PreferenceSlider";
 import {
   discCareerAPI,
   type PreferencesResponse,
-  type PreferenceIndex,
+  type PreferenceIndexValue,
 } from "../../lib/disc-api";
 
-// ─── Bipolar slider configuration ───────────────────────────────────
+// ─── Slider configuration ───────────────────────────────────────────
 
 interface SliderConfig {
-  dimension: string;
+  key: string;
   leftLabel: string;
   rightLabel: string;
 }
 
 const BIPOLAR_SLIDERS: SliderConfig[] = [
-  { dimension: "stability_vs_growth", leftLabel: "Stability", rightLabel: "Growth" },
-  { dimension: "conservative_vs_aggressive", leftLabel: "Conservative", rightLabel: "Aggressive" },
-  { dimension: "control_vs_collaboration", leftLabel: "Control", rightLabel: "Collaboration" },
-  { dimension: "short_term_vs_long_term", leftLabel: "Short-term", rightLabel: "Long-term" },
+  { key: "stability_vs_growth", leftLabel: "Stability", rightLabel: "Growth" },
+  { key: "conservative_vs_aggressive_risk", leftLabel: "Conservative", rightLabel: "Aggressive" },
+  { key: "control_vs_collaboration", leftLabel: "Control", rightLabel: "Collaboration" },
+  { key: "short_term_vs_long_term", leftLabel: "Short-term", rightLabel: "Long-term" },
 ];
-
-const CONSISTENCY_DIMENSION = "consistency_score";
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -48,17 +46,6 @@ function formatTimestamp(iso: string): string {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-function findIndex(
-  indexes: PreferenceIndex[],
-  dimension: string
-): PreferenceIndex | undefined {
-  return indexes.find(
-    (idx) =>
-      idx.dimension === dimension ||
-      idx.dimension.toLowerCase().replace(/[\s-]/g, "_") === dimension
-  );
 }
 
 // ─── Component ──────────────────────────────────────────────────────
@@ -116,7 +103,7 @@ export function Preferences() {
   }
 
   const { indexes, computed_at } = data;
-  const consistency = findIndex(indexes, CONSISTENCY_DIMENSION);
+  const consistency = indexes.consistency_score;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-8">
@@ -150,23 +137,23 @@ export function Preferences() {
           </CardHeader>
           <CardContent className="space-y-8">
             {BIPOLAR_SLIDERS.map((config) => {
-              const idx = findIndex(indexes, config.dimension);
+              const idx = indexes[config.key as keyof typeof indexes] as PreferenceIndexValue | undefined;
               if (!idx) return null;
               return (
-                <div key={config.dimension}>
+                <div key={config.key}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-semibold text-gray-900">
                       {idx.label}
                     </span>
                     <span className="text-xs text-gray-400">
-                      {idx.evidence_count} evidence points
+                      {idx.value > 0 ? "+" : ""}{idx.value.toFixed(2)}
                     </span>
                   </div>
                   <PreferenceSlider
                     leftLabel={config.leftLabel}
                     rightLabel={config.rightLabel}
-                    value={idx.score}
-                    interpretation={`Score: ${idx.score > 0 ? "+" : ""}${idx.score.toFixed(2)}`}
+                    value={idx.value}
+                    interpretation={idx.interpretation}
                   />
                 </div>
               );
@@ -191,15 +178,11 @@ export function Preferences() {
                     {consistency.label}
                   </span>
                   <span className="text-sm font-bold text-[#0A2463]">
-                    {Math.round(consistency.score * 100)}%
+                    {Math.round(consistency.value * 100)}%
                   </span>
                 </div>
-                <Progress value={consistency.score * 100} className="h-3" />
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>Low consistency</span>
-                  <span>{consistency.evidence_count} evidence points</span>
-                  <span>High consistency</span>
-                </div>
+                <Progress value={consistency.value * 100} className="h-3" />
+                <p className="text-xs text-gray-500">{consistency.interpretation}</p>
               </div>
             </CardContent>
           </Card>

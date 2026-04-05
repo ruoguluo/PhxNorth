@@ -195,39 +195,51 @@ export interface BehavioralShiftResponse {
 // ─── Career Types ───────────────────────────────────────────────────
 
 export interface CareerAnalytics {
-    tenure_avg_months: number;
-    progression_rate: string;
-    industry_consistency: number;
-    role_diversity: number;
+    total_experience_months: number;
+    avg_tenure_months: number;
+    distinct_companies: number;
+    distinct_roles: number;
 }
 
 export interface CareerEntry {
     title: string;
     company: string;
-    industry?: string;
-    start_date: string;
-    end_date?: string;
-    duration_months: number;
+    start_date: string | null;
+    end_date: string | null;
+    duration_months: number | null;
+}
+
+export interface CareerTurningPoint {
+    date: string | null;
+    description: string;
+    type: string;
 }
 
 export interface CareerProfile {
     user_id: string;
-    entries: CareerEntry[];
     analytics: CareerAnalytics;
-    updated_at: string;
+    job_entries: CareerEntry[];
+    turning_points: CareerTurningPoint[];
 }
 
-export interface PreferenceIndex {
-    dimension: string;
-    score: number;
+export interface PreferenceIndexValue {
+    value: number;
     label: string;
-    evidence_count: number;
+    interpretation: string;
+}
+
+export interface PreferenceIndexes {
+    stability_vs_growth: PreferenceIndexValue;
+    conservative_vs_aggressive_risk: PreferenceIndexValue;
+    control_vs_collaboration: PreferenceIndexValue;
+    short_term_vs_long_term: PreferenceIndexValue;
+    consistency_score: PreferenceIndexValue;
 }
 
 export interface PreferencesResponse {
     user_id: string;
-    indexes: PreferenceIndex[];
     computed_at: string;
+    indexes: PreferenceIndexes;
 }
 
 // ─── CV API ─────────────────────────────────────────────────────────

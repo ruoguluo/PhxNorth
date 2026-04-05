@@ -59,7 +59,7 @@ function computeCareerSpanYears(entries: CareerEntry[]): number {
 
 function computeShortTenureRate(entries: CareerEntry[]): number {
   if (entries.length === 0) return 0;
-  const short = entries.filter((e) => e.duration_months < 12).length;
+  const short = entries.filter((e) => (e.duration_months ?? 0) < 12).length;
   return Math.round((short / entries.length) * 100);
 }
 
@@ -126,9 +126,10 @@ export function CareerAnalytics() {
     );
   }
 
-  const { entries, analytics } = data;
+  const entries = data.job_entries ?? [];
+  const analytics = data.analytics;
   const sortedEntries = [...entries].sort(
-    (a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+    (a, b) => new Date(b.start_date ?? 0).getTime() - new Date(a.start_date ?? 0).getTime()
   );
   const industries = uniqueIndustries(entries);
 
@@ -144,7 +145,7 @@ export function CareerAnalytics() {
           <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
             <Calendar className="w-4 h-4" />
             <span>
-              Last updated {formatDate(data.updated_at)}
+              {entries.length} roles analyzed
             </span>
           </div>
         </div>
