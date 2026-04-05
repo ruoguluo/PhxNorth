@@ -135,11 +135,22 @@ export interface RiskFlag {
     detected_at: string;
 }
 
+export interface RiskAssessmentItem {
+    category: string;
+    score: number;
+    severity: string;
+    description: string;
+}
+
 export interface RiskAssessment {
     user_id: string;
-    overall_risk: "low" | "medium" | "high" | "critical";
-    flags: RiskFlag[];
-    assessed_at: string;
+    computed_at: string;
+    overall_risk_tier: string;
+    assessments: RiskAssessmentItem[];
+    active_flags: RiskFlag[];
+    // Aliases for backward compat in components
+    overall_risk?: string;
+    flags?: RiskFlag[];
 }
 
 export interface RiskHistoryEntry {
@@ -155,36 +166,30 @@ export interface RiskHistoryResponse {
     entries: RiskHistoryEntry[];
 }
 
-export interface Contradiction {
-    field: string;
-    claim_a: string;
-    claim_b: string;
-    source_a: string;
-    source_b: string;
-    severity: "low" | "medium" | "high";
-    detected_at: string;
+export interface DimensionGap {
+    dimension_a: string;
+    dimension_b: string;
+    gap: number;
+    interpretation: string;
 }
 
 export interface ContradictionResponse {
     user_id: string;
-    contradictions: Contradiction[];
-    assessed_at: string;
-}
-
-export interface BehavioralShiftEntry {
-    dimension: string;
-    previous_value: number;
-    current_value: number;
-    delta: number;
-    direction: "increase" | "decrease";
-    significance: "minor" | "notable" | "major";
+    contradiction_score: number;
+    severity_tier: string;
+    threshold_exceeded: boolean;
+    dimension_gaps: DimensionGap[];
+    flagged_dimensions: string[];
+    contradiction_type: string | null;
 }
 
 export interface BehavioralShiftResponse {
     user_id: string;
-    shifts: BehavioralShiftEntry[];
-    period: string;
-    assessed_at: string;
+    shift_detected: boolean;
+    magnitude: number;
+    shift_type: string | null;
+    shifted_dimensions: string[];
+    interpretation: string | null;
 }
 
 // ─── Career Types ───────────────────────────────────────────────────
@@ -279,7 +284,11 @@ export const discProfileAPI = {
 export const discRiskAPI = {
     get: async (userId = "me") => {
         const uid = await resolveUserId(userId);
-        return fetchDISC<RiskAssessment>(`/users/${uid}/risk`);
+        const data = await fetchDISC<RiskAssessment>(`/users/${uid}/risk`);
+        // Normalize field names for frontend compat
+        data.overall_risk = data.overall_risk_tier ?? data.overall_risk;
+        data.flags = data.active_flags ?? data.flags ?? [];
+        return data;
     },
 
     history: async (userId = "me", category?: string) => {
