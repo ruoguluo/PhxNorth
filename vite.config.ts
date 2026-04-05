@@ -58,6 +58,12 @@ export default defineConfig({
 
   server: {
     proxy: {
+      // DISC behavioral intelligence backend (must come before /api)
+      '/api/v1': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      // Existing mentorship backend
       '/api': {
         target: 'http://localhost:8081',
         changeOrigin: true,
