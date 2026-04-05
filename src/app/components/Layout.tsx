@@ -184,108 +184,113 @@ export function Layout() {
         {/* Sidebar Navigation */}
         <aside className="w-60 bg-white border-r border-gray-200 min-h-[calc(100vh-73px)] sticky top-[73px] self-start flex-shrink-0">
           <nav className="p-4 space-y-6">
-            {/* Main */}
-            <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Main</h3>
-              <div className="space-y-1">
-                <Link
-                  to="/app/dashboard"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === '/app/dashboard' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  Dashboard
-                </Link>
-                <Link
-                  to="/app/projects"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname.startsWith('/app/projects') ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <FolderOpen className="w-4 h-4" />
-                  Projects
-                </Link>
-                <Link
-                  to="/app/courses"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname.startsWith('/app/courses') ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  Courses
-                </Link>
-              </div>
-            </div>
-
-            {/* Intelligence */}
-            <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Intelligence</h3>
-              <div className="space-y-1">
-                <Link
-                  to="/app/cv-upload"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === '/app/cv-upload' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  Upload CV
-                </Link>
-                <Link
-                  to="/app/5d-snapshot"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === '/app/5d-snapshot' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Radar className="w-4 h-4" />
-                  5D Snapshot
-                </Link>
-                <Link
-                  to="/app/career"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === '/app/career' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <Briefcase className="w-4 h-4" />
-                  Career
-                </Link>
-                <Link
-                  to="/app/preferences"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === '/app/preferences' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
-                  Preferences
-                </Link>
-              </div>
-            </div>
-
-            {/* Admin — only visible to admin users */}
-            {user?.role === 'admin' && (
-              <div>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Admin</h3>
-                <div className="space-y-1">
-                  <Link
-                    to="/app/admin"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/admin' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    Admin Dashboard
-                  </Link>
-                  <Link
-                    to="/app/admin/risk"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/admin/risk' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <ShieldAlert className="w-4 h-4" />
-                    Risk Analysis
-                  </Link>
+            {user?.role === 'admin' ? (
+              /* ── Admin Sidebar ── */
+              <>
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Admin</h3>
+                  <div className="space-y-1">
+                    <Link
+                      to="/app/admin"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/admin' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Admin Dashboard
+                    </Link>
+                    <Link
+                      to="/app/admin/risk"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/admin/risk' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <ShieldAlert className="w-4 h-4" />
+                      Risk Analysis
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              </>
+            ) : (
+              /* ── Mentee / Mentor Sidebar ── */
+              <>
+                {/* Main */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Main</h3>
+                  <div className="space-y-1">
+                    <Link
+                      to="/app/dashboard"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/dashboard' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </Link>
+                    <Link
+                      to="/app/projects"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname.startsWith('/app/projects') ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <FolderOpen className="w-4 h-4" />
+                      Projects
+                    </Link>
+                    <Link
+                      to="/app/courses"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname.startsWith('/app/courses') ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <GraduationCap className="w-4 h-4" />
+                      Courses
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Intelligence */}
+                <div>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Intelligence</h3>
+                  <div className="space-y-1">
+                    <Link
+                      to="/app/cv-upload"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/cv-upload' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Upload CV
+                    </Link>
+                    <Link
+                      to="/app/5d-snapshot"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/5d-snapshot' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Radar className="w-4 h-4" />
+                      5D Snapshot
+                    </Link>
+                    <Link
+                      to="/app/career"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/career' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Briefcase className="w-4 h-4" />
+                      Career
+                    </Link>
+                    <Link
+                      to="/app/preferences"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/preferences' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <SlidersHorizontal className="w-4 h-4" />
+                      Preferences
+                    </Link>
+                  </div>
+                </div>
+              </>
             )}
           </nav>
         </aside>
