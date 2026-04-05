@@ -313,4 +313,27 @@ export const discCareerAPI = {
     },
 };
 
+// ─── Admin API ──────────────────────────────────────────────────────
+
+export interface DISCUser {
+    id: string;
+    email: string;
+    is_active: boolean;
+    created_at: string | null;
+}
+
+export const discAdminAPI = {
+    listUsers: () =>
+        fetchDISC<DISCUser[]>("/admin/users"),
+
+    resetUserData: async (userId: string) => {
+        // Clear cached ID since user record will be deleted
+        clearDiscUserCache();
+        return fetchDISC<{ status: string; message: string; user_id: string; email: string }>(
+            `/admin/users/${userId}/disc-data`,
+            { method: "DELETE" }
+        );
+    },
+};
+
 export { fetchDISC };

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, CheckCircle, Clock, DollarSign, Users, TrendingUp, FileText } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle, Clock, DollarSign, Users, TrendingUp, FileText, Trash2, RefreshCw, Database } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { adminAPI } from '../../lib/api';
+import { discAdminAPI, type DISCUser } from '../../lib/disc-api';
 
 const complianceData = [
   { month: 'Jan', flags: 3 },
@@ -280,6 +281,9 @@ export function AdminDashboard() {
           />
         </div>
       </div>
+
+      {/* DISC Data Management */}
+      <DISCDataManagement />
     </div>
   );
 }
@@ -434,6 +438,138 @@ function PayoutRow({ mentor, amount, status }: {
           {status}
         </span>
       </div>
+    </div>
+  );
+}
+
+function DISCDataManagement() {
+  const [discUsers, setDiscUsers] = useState<DISCUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [resetting, setResetting] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const users = await discAdminAPI.listUsers();
+      setDiscUsers(users);
+    } catch (err) {
+      console.error('Failed to fetch DISC users:', err);
+      setDiscUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  const handleReset = async (user: DISCUser) => {
+    if (!confirm(`Reset all DISC data for ${user.email}?\n\nThis will delete their DISC profile, career data, risk assessments, and all behavioral signals. The user record will be re-created on their next login.`)) {
+      return;
+    }
+    setResetting(user.id);
+    setMessage(null);
+    try {
+      const result = await discAdminAPI.resetUserData(user.id);
+      setMessage({ type: 'success', text: `${result.message}` });
+      await fetchUsers();
+    } catch (err) {
+      setMessage({ type: 'error', text: `Failed to reset: ${err instanceof Error ? err.message : 'Unknown error'}` });
+    } finally {
+      setResetting(null);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-50 rounded-lg">
+            <Database className="w-6 h-6 text-indigo-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">DISC Data Management</h2>
+            <p className="text-sm text-gray-500">Manage behavioral intelligence data for users</p>
+          </div>
+        </div>
+        <button
+          onClick={fetchUsers}
+          disabled={loading}
+          className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+
+      {message && (
+        <div className={`mb-4 p-3 rounded-lg text-sm ${message.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+          {message.type === 'success' ? <CheckCircle className="w-4 h-4 inline mr-2" /> : <AlertTriangle className="w-4 h-4 inline mr-2" />}
+          {message.text}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-8 text-gray-500">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+          Loading DISC users...
+        </div>
+      ) : discUsers.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <Database className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+          <p>No users have DISC data yet.</p>
+          <p className="text-xs mt-1">Users appear here after they first access a DISC feature.</p>
+        </div>
+      ) : (
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3">Email</th>
+                <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3">DISC User ID</th>
+                <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3">Created</th>
+                <th className="text-left text-xs font-semibold text-gray-600 px-4 py-3">Status</th>
+                <th className="text-right text-xs font-semibold text-gray-600 px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {discUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <span className="text-sm font-medium text-gray-900">{user.email}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs font-mono text-gray-500">{user.id.slice(0, 8)}...</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-sm text-gray-600">
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${user.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {user.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => handleReset(user)}
+                      disabled={resetting === user.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                    >
+                      {resetting === user.id ? (
+                        <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Resetting...</>
+                      ) : (
+                        <><Trash2 className="w-3.5 h-3.5" /> Reset Data</>
+                      )}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
