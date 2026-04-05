@@ -45,6 +45,10 @@ import { StructuredMentorshipExplore } from "./pages/StructuredMentorshipExplore
 import { MentorshipProgramsExplore } from "./pages/MentorshipProgramsExplore";
 import { GlobalTalentMobilityExplore } from "./pages/GlobalTalentMobilityExplore";
 import { CommercialConsultationExplore } from "./pages/CommercialConsultationExplore";
+import { CVUpload } from "./pages/CVUpload";
+import { CareerAnalytics } from "./pages/CareerAnalytics";
+import { Preferences } from "./pages/Preferences";
+import { RiskDashboard } from "./pages/RiskDashboard";
 import { NotFound } from "./pages/NotFound";
 import { Layout } from "./components/Layout";
 
@@ -253,6 +257,22 @@ export const router = createBrowserRouter([
       {
         path: "5d-snapshot",
         Component: FiveDSnapshot,
+      },
+      {
+        path: "cv-upload",
+        Component: CVUpload,
+      },
+      {
+        path: "career",
+        Component: CareerAnalytics,
+      },
+      {
+        path: "preferences",
+        Component: Preferences,
+      },
+      {
+        path: "admin/risk",
+        Component: RiskDashboard,
       },
     ],
   },
