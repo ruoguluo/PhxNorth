@@ -261,30 +261,32 @@ export function Layout() {
               </div>
             </div>
 
-            {/* Admin */}
-            <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Admin</h3>
-              <div className="space-y-1">
-                <Link
-                  to="/app/admin"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === '/app/admin' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  Admin Dashboard
-                </Link>
-                <Link
-                  to="/app/admin/risk"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === '/app/admin/risk' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  <ShieldAlert className="w-4 h-4" />
-                  Risk Analysis
-                </Link>
+            {/* Admin — only visible to admin users */}
+            {user?.role === 'admin' && (
+              <div>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Admin</h3>
+                <div className="space-y-1">
+                  <Link
+                    to="/app/admin"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/admin' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Admin Dashboard
+                  </Link>
+                  <Link
+                    to="/app/admin/risk"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/admin/risk' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <ShieldAlert className="w-4 h-4" />
+                    Risk Analysis
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
           </nav>
         </aside>
 
