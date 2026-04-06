@@ -169,13 +169,13 @@ export function CareerAnalytics() {
             <StatCard
               icon={<Clock className="w-5 h-5" />}
               label="Avg Tenure"
-              value={`${Math.round(analytics.tenure_avg_months)} mo`}
+              value={`${Math.round(analytics.avg_tenure_months)} mo`}
               accent="purple"
             />
             <StatCard
               icon={<Layers className="w-5 h-5" />}
-              label="Role Diversity"
-              value={`${Math.round(analytics.role_diversity * 100)}%`}
+              label="Companies"
+              value={String(analytics.distinct_companies)}
               accent="emerald"
             />
             <StatCard
@@ -220,22 +220,19 @@ export function CareerAnalytics() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <MetricCard label="Progression Rate" value={analytics.progression_rate} />
+            <MetricCard label="Total Roles" value={String(analytics.distinct_roles)} />
+            <MetricCard label="Total Companies" value={String(analytics.distinct_companies)} />
             <MetricCard
-              label="Industry Consistency"
-              value={`${Math.round(analytics.industry_consistency * 100)}%`}
-            />
-            <MetricCard
-              label="Role Diversity"
-              value={`${Math.round(analytics.role_diversity * 100)}%`}
+              label="Total Experience"
+              value={formatDuration(analytics.total_experience_months)}
             />
             <MetricCard
               label="Avg Tenure"
-              value={formatDuration(Math.round(analytics.tenure_avg_months))}
+              value={formatDuration(Math.round(analytics.avg_tenure_months))}
             />
             <MetricCard
-              label="Unique Industries"
-              value={String(industries.length)}
+              label="Short Tenure Rate"
+              value={`${computeShortTenureRate(entries)}%`}
             />
             <MetricCard
               label="Career Span"
@@ -243,11 +240,11 @@ export function CareerAnalytics() {
             />
             <MetricCard
               label="Short Tenures (<12mo)"
-              value={String(entries.filter((e) => e.duration_months < 12).length)}
+              value={String(entries.filter((e) => (e.duration_months ?? 0) < 12).length)}
             />
             <MetricCard
               label="Long Tenures (>36mo)"
-              value={String(entries.filter((e) => e.duration_months > 36).length)}
+              value={String(entries.filter((e) => (e.duration_months ?? 0) > 36).length)}
             />
           </div>
         </div>
