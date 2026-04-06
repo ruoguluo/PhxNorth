@@ -19,7 +19,7 @@ import { Progress } from "../components/ui/progress";
 import { Badge } from "../components/ui/badge";
 import { Textarea } from "../components/ui/textarea";
 import { useAuth } from "../../lib/auth-context";
-import { discCvAPI, type CvStatusResponse, type CvParseStatus } from "../../lib/disc-api";
+import { discCvAPI, type CvStatusResponse, type CvParseStatus, type LatestCvResponse } from "../../lib/disc-api";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_TYPES = [
@@ -251,7 +251,19 @@ export function CVUpload() {
     // Tracking state
     const [jobId, setJobId] = useState<string | null>(null);
 
+    // Latest CV state
+    const [latestCv, setLatestCv] = useState<LatestCvResponse | null>(null);
+    const [latestCvLoading, setLatestCvLoading] = useState(true);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Fetch latest CV on mount
+    useEffect(() => {
+        discCvAPI.getLatest()
+            .then(setLatestCv)
+            .catch(() => setLatestCv(null))
+            .finally(() => setLatestCvLoading(false));
+    }, []);
 
     // ─── File Validation ──────────────────────────────────────────
 
@@ -320,6 +332,7 @@ export function CVUpload() {
         try {
             const res = await discCvAPI.upload(selectedFile);
             setJobId(res.job_id);
+            handleUploadComplete();
         } catch (err) {
             setUploadError(err instanceof Error ? err.message : "Upload failed");
         } finally {
@@ -334,6 +347,7 @@ export function CVUpload() {
         try {
             const res = await discCvAPI.pasteText(pasteText.trim());
             setJobId(res.job_id);
+            handleUploadComplete();
         } catch (err) {
             setPasteError(err instanceof Error ? err.message : "Submission failed");
         } finally {
@@ -373,6 +387,26 @@ export function CVUpload() {
         );
     }
 
+    const handleDownloadCv = () => {
+        if (!latestCv) return;
+        const blob = new Blob([latestCv.raw_text], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `cv_${latestCv.source}_${latestCv.created_at?.slice(0, 10) ?? "unknown"}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // Refresh latest CV after successful upload
+    const handleUploadComplete = () => {
+        discCvAPI.getLatest()
+            .then(setLatestCv)
+            .catch(() => {});
+    };
+
     return (
         <div className="max-w-2xl mx-auto space-y-6">
             {/* Page Header */}
@@ -382,6 +416,54 @@ export function CVUpload() {
                     Upload your CV to generate behavioral insights and career analytics.
                 </p>
             </div>
+
+            {/* Latest Upload Card */}
+            {!latestCvLoading && latestCv && (
+                <Card className="border-emerald-200 bg-emerald-50/50">
+                    <CardContent className="pt-6">
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-4">
+                                <div className="p-2.5 bg-emerald-100 rounded-lg">
+                                    <FileText className="w-5 h-5 text-emerald-700" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-gray-900 mb-1">Latest Upload</h3>
+                                    <div className="space-y-1 text-sm text-gray-600">
+                                        <div className="flex items-center gap-4">
+                                            <span className="capitalize">{latestCv.source}</span>
+                                            <span>{latestCv.word_count.toLocaleString()} words</span>
+                                            <span>{latestCv.char_count.toLocaleString()} characters</span>
+                                        </div>
+                                        {latestCv.parsed_at && (
+                                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                                <span>
+                                                    Parsed {new Date(latestCv.parsed_at).toLocaleDateString("en-US", {
+                                                        month: "short", day: "numeric", year: "numeric",
+                                                        hour: "numeric", minute: "2-digit",
+                                                    })}
+                                                </span>
+                                                {latestCv.parser_version && (
+                                                    <span className="text-gray-400">v{latestCv.parser_version}</span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleDownloadCv}
+                                className="border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                            >
+                                <FileText className="w-4 h-4 mr-1.5" />
+                                Download
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             <Card>
                 <CardHeader>

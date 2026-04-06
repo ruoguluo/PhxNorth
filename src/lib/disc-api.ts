@@ -90,6 +90,18 @@ export interface CvStatusResponse {
     error?: string;
 }
 
+export interface LatestCvResponse {
+    id: string;
+    user_id: string;
+    source: string;
+    parsed_at: string | null;
+    parser_version: string | null;
+    created_at: string | null;
+    word_count: number;
+    char_count: number;
+    raw_text: string;
+}
+
 // ─── DISC Profile Types ─────────────────────────────────────────────
 
 export interface DISCScores {
@@ -267,6 +279,11 @@ export const discCvAPI = {
     getStatus: async (jobId: string, userId = "me") => {
         const uid = await resolveUserId(userId);
         return fetchDISC<CvStatusResponse>(`/users/${uid}/cv/status/${jobId}`);
+    },
+
+    getLatest: async (userId = "me") => {
+        const uid = await resolveUserId(userId);
+        return fetchDISC<LatestCvResponse>(`/users/${uid}/cv/latest`);
     },
 };
 
