@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router";
-import { User, Building2, ArrowRight } from "lucide-react";
+import { User, Building2, GraduationCap, ArrowRight } from "lucide-react";
 
 export function AccountTypeSelection() {
   const navigate = useNavigate();
@@ -16,29 +16,42 @@ export function AccountTypeSelection() {
         </div>
 
         {/* Account Type Options */}
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Individual Account */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Mentee Account */}
           <div className="bg-white rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
             <div className="flex flex-col h-full">
-              {/* Icon */}
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-6">
                 <User className="w-8 h-8 text-blue-600" />
               </div>
-
-              {/* Title */}
-              <h3 className="text-2xl font-bold text-[#0A2463] mb-4">Individual</h3>
-
-              {/* Description */}
+              <h3 className="text-2xl font-bold text-[#0A2463] mb-4">Mentee</h3>
               <p className="text-gray-600 mb-8 flex-grow leading-relaxed">
-                For professionals participating in mentorship, talent mobility and commercial advisory opportunities.
+                For professionals seeking mentorship, career guidance, and growth through structured learning opportunities.
               </p>
-
-              {/* Button */}
               <button
-                onClick={() => navigate("/create-account?type=individual")}
+                onClick={() => navigate("/create-account?type=mentee")}
                 className="w-full bg-[#0A2463] text-white py-4 px-6 rounded-xl font-semibold hover:bg-blue-900 transition-all duration-200 flex items-center justify-center gap-2 group"
               >
-                Create Individual Account
+                Create Mentee Account
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+              </button>
+            </div>
+          </div>
+
+          {/* Mentor Account */}
+          <div className="bg-white rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
+            <div className="flex flex-col h-full">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+                <GraduationCap className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-[#0A2463] mb-4">Mentor</h3>
+              <p className="text-gray-600 mb-8 flex-grow leading-relaxed">
+                For experienced professionals ready to guide mentees, host workshops, and share their industry expertise.
+              </p>
+              <button
+                onClick={() => navigate("/create-account?type=mentor")}
+                className="w-full bg-emerald-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-200 flex items-center justify-center gap-2 group"
+              >
+                Create Mentor Account
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
               </button>
             </div>
@@ -47,20 +60,13 @@ export function AccountTypeSelection() {
           {/* Enterprise Account */}
           <div className="bg-white rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 hover:-translate-y-1">
             <div className="flex flex-col h-full">
-              {/* Icon */}
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mb-6">
                 <Building2 className="w-8 h-8 text-purple-600" />
               </div>
-
-              {/* Title */}
               <h3 className="text-2xl font-bold text-[#0A2463] mb-4">Enterprise</h3>
-
-              {/* Description */}
               <p className="text-gray-600 mb-8 flex-grow leading-relaxed">
                 For companies launching hiring campaigns, talent programs and advisory projects.
               </p>
-
-              {/* Button */}
               <button
                 onClick={() => navigate("/create-account?type=enterprise")}
                 className="w-full bg-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-purple-700 transition-all duration-200 flex items-center justify-center gap-2 group"

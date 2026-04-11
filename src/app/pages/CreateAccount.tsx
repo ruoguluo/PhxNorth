@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { ArrowRight, ArrowLeft, Check, Shield } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 
@@ -65,8 +65,13 @@ const fieldsOfStudy = [
 
 export function CreateAccount() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { register } = useAuth();
   const [step, setStep] = useState(1);
+
+  // Determine role from URL query param: ?type=mentee|mentor|individual|enterprise
+  const typeParam = searchParams.get('type') || 'mentee';
+  const role = typeParam === 'mentor' ? 'mentor' : 'mentee';
   const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -111,7 +116,7 @@ export function CreateAccount() {
         password,
         username,
         full_name: fullName,
-        role: 'mentee',
+        role,
         keep_name_private: keepNamePrivate,
         status: status || undefined,
         degree_level: degreeLevel || undefined,
@@ -172,8 +177,14 @@ export function CreateAccount() {
           <Link to="/" className="inline-block mb-6">
             <h1 className="text-3xl font-bold text-white">PhxNorth</h1>
           </Link>
-          <h2 className="text-2xl font-bold text-white mb-2">Create Your Account</h2>
-          <p className="text-blue-200">Join the AI-native human capital infrastructure</p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Create Your {role === 'mentor' ? 'Mentor' : 'Mentee'} Account
+          </h2>
+          <p className="text-blue-200">
+            {role === 'mentor'
+              ? 'Share your expertise and guide the next generation of professionals'
+              : 'Join the AI-native human capital infrastructure'}
+          </p>
         </div>
 
         {/* Progress Indicator */}
