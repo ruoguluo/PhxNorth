@@ -18,9 +18,11 @@ import {
   X,
   Sparkles,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
+import { discCvAPI, discCareerAPI } from "../../lib/disc-api";
 
 type SectionStatus = "not-started" | "draft" | "verified";
 type ImportMethod = "upload" | "linkedin" | "form" | null;
@@ -140,33 +142,95 @@ export function MenteeProfileSetup() {
     "Public Sector & Education": ["Government", "Non-profit", "EdTech", "Universities", "Research"]
   };
 
-  // Mock AI parsed data
-  const simulateAIParse = (method: ImportMethod) => {
-    setShowAIPanel(true);
-    setAIFields([
-      { id: "title", label: "Current Title", value: "Senior Product Manager", confidence: "high", confirmed: false, required: true },
-      { id: "company", label: "Current Company", value: "TechCorp Ltd", confidence: "high", confirmed: false, required: false },
-      { id: "industryL1", label: "Industry (Level 1)", value: "Technology", confidence: "high", confirmed: false, required: true },
-      { id: "industryL2", label: "Industry (Level 2)", value: "SaaS", confidence: "medium", confirmed: false, required: true },
-      { id: "country", label: "Country", value: "United Kingdom", confidence: "high", confirmed: false, required: true },
-      { id: "city", label: "City", value: "London", confidence: "medium", confirmed: false, required: false }
-    ]);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const populateFromBackend = async () => {
+    try {
+      const career = await discCareerAPI.get();
+      const fields: AIField[] = [];
+
+      // Extract latest job entry as current position
+      const entries = career.job_entries ?? [];
+      if (entries.length > 0) {
+        const latest = entries[0]; // sorted descending by date
+        fields.push(
+          { id: "title", label: "Current Title", value: latest.title || "", confidence: "high", confirmed: false, required: true },
+          { id: "company", label: "Current Company", value: latest.company || "", confidence: "high", confirmed: false, required: false },
+        );
+      }
+
+      // Analytics
+      const a = career.analytics;
+      if (a.distinct_roles > 0) {
+        fields.push(
+          { id: "roles", label: "Total Roles", value: String(a.distinct_roles), confidence: "high", confirmed: false, required: false },
+          { id: "experience", label: "Total Experience", value: `${Math.round(a.total_experience_months / 12)} years`, confidence: "high", confirmed: false, required: false },
+          { id: "avgTenure", label: "Avg Tenure", value: `${Math.round(a.avg_tenure_months)} months`, confidence: "medium", confirmed: false, required: false },
+        );
+      }
+
+      if (a.distinct_companies > 0) {
+        fields.push(
+          { id: "companies", label: "Companies", value: String(a.distinct_companies), confidence: "high", confirmed: false, required: false },
+        );
+      }
+
+      // If no useful fields extracted, show a note
+      if (fields.length === 0) {
+        fields.push(
+          { id: "title", label: "Current Title", value: "", confidence: "low", confirmed: false, required: true },
+          { id: "company", label: "Current Company", value: "", confidence: "low", confirmed: false, required: false },
+        );
+      }
+
+      setAIFields(fields);
+      setShowAIPanel(true);
+    } catch {
+      // If career data fetch fails, show empty fields
+      setAIFields([
+        { id: "title", label: "Current Title", value: "", confidence: "low", confirmed: false, required: true },
+        { id: "company", label: "Current Company", value: "", confidence: "low", confirmed: false, required: false },
+      ]);
+      setShowAIPanel(true);
+    }
   };
 
   const handleMethodSelect = (method: ImportMethod) => {
     setSelectedMethod(method);
+    setUploadError(null);
+
     if (method === "upload") {
-      // Trigger file upload
       const input = document.createElement("input");
       input.type = "file";
       input.accept = ".pdf,.doc,.docx,.txt";
-      input.onchange = () => simulateAIParse(method);
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+
+        setUploadLoading(true);
+        setUploadError(null);
+        try {
+          // Upload file to DISC backend for parsing
+          const result = await discCvAPI.upload(file);
+          if (result.status === "failed") {
+            // Try as text if file upload fails
+            const text = await file.text();
+            await discCvAPI.pasteText(text);
+          }
+          // Fetch parsed career data and populate AI fields
+          await populateFromBackend();
+        } catch (err) {
+          setUploadError(err instanceof Error ? err.message : "Upload failed");
+        } finally {
+          setUploadLoading(false);
+        }
+      };
       input.click();
     } else if (method === "linkedin") {
-      // Simulate LinkedIn import
-      setTimeout(() => simulateAIParse(method), 1000);
+      // LinkedIn import not yet implemented
+      setUploadError("LinkedIn import coming soon. Please use Upload or Form instead.");
     } else if (method === "form") {
-      // Navigate to form view
       setActiveSection("overview");
     }
   };
@@ -337,8 +401,30 @@ export function MenteeProfileSetup() {
             </div>
           )}
 
+          {/* Loading state */}
+          {uploadLoading && activeSection === "import" && (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <Loader2 className="w-10 h-10 animate-spin text-[#0A2463] mx-auto mb-4" />
+                <p className="text-lg font-semibold text-gray-900">Parsing your CV...</p>
+                <p className="text-sm text-gray-500">Extracting career data and building your profile</p>
+              </div>
+            </div>
+          )}
+
+          {/* Upload error */}
+          {uploadError && activeSection === "import" && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-800">Upload Error</p>
+                <p className="text-sm text-red-700">{uploadError}</p>
+              </div>
+            </div>
+          )}
+
           {/* Upload / Import / Fill Methods */}
-          {activeSection === "import" && !showAIPanel && (
+          {activeSection === "import" && !showAIPanel && !uploadLoading && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {/* Upload Local */}
               <button
