@@ -131,8 +131,12 @@ export function CreateAccount() {
       });
       setShowSuccess(true);
       setTimeout(() => {
-        navigate('/welcome');
-      }, 3000);
+        if (role === 'mentor') {
+          navigate('/app/mentor/dashboard');
+        } else {
+          navigate('/app/mentee/profile-setup');
+        }
+      }, 2000);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
     }
@@ -159,10 +163,12 @@ export function CreateAccount() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">Account Created!</h2>
           <p className="text-gray-600 mb-6">
-            Please verify your email to activate your account.
+            {role === 'mentor'
+              ? 'Welcome aboard! Setting up your mentor dashboard...'
+              : 'Welcome! Let\'s set up your profile and upload your CV...'}
           </p>
           <p className="text-sm text-gray-500">
-            Redirecting to your dashboard...
+            Redirecting...
           </p>
         </div>
       </div>
