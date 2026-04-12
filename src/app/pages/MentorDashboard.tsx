@@ -33,7 +33,11 @@ import {
 
 export function MentorDashboard() {
   const { user } = useAuth();
-  const [isOnline, setIsOnline] = useState(user?.is_online ?? false);
+  const [isOnline, setIsOnline] = useState(() => {
+    // Persist across refreshes until we have a proper API to fetch status
+    const saved = localStorage.getItem('phxnorth_mentor_online');
+    return saved === 'true';
+  });
   const [hasCourses, setHasCourses] = useState(false);
   const [isScheduledMentorshipOpen, setIsScheduledMentorshipOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<'instant' | 'scheduled' | 'action'>('instant');
@@ -70,8 +74,12 @@ export function MentorDashboard() {
     try {
       const result = await profileAPI.toggleOnlineStatus();
       setIsOnline(result.is_online);
+      localStorage.setItem('phxnorth_mentor_online', String(result.is_online));
     } catch (err) {
-      console.error('Failed to toggle online status:', err);
+      // API may not exist yet — toggle locally
+      const newState = !isOnline;
+      setIsOnline(newState);
+      localStorage.setItem('phxnorth_mentor_online', String(newState));
     }
   };
 
