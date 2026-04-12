@@ -1,8 +1,9 @@
 import os
 import uuid
+import asyncio
 from datetime import datetime
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect, UploadFile, File, Form, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -12,6 +13,8 @@ from models.message import Message
 from models.session import Session as MentorSession
 from models.user import User
 from utils.deps import get_current_user
+from services.chat_signal_classifier import classify_message
+from services.disc_event_dispatcher import dispatch_chat_events
 
 router = APIRouter(prefix="/api/messages", tags=["Messages"])
 
@@ -177,6 +180,7 @@ def mark_messages_read(
 @router.post("/session/{session_id}/upload", response_model=MessageResponse)
 async def upload_file_message(
     session_id: int,
+    request: Request,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -229,6 +233,19 @@ async def upload_file_message(
     db.add(message)
     db.commit()
     db.refresh(message)
+
+    # Dispatch behavioral signals to DISC backend (fire-and-forget)
+    try:
+        auth_token = request.headers.get("Authorization", "").replace("Bearer ", "")
+        events = classify_message(
+            content=message.content, file_url=file_url,
+            session_id=session_id, sender_id=current_user.id,
+            created_at=message.created_at, db=db,
+        )
+        if events and auth_token:
+            asyncio.create_task(dispatch_chat_events(events, auth_token))
+    except Exception:
+        pass  # Never let signal dispatch break file upload
 
     # Build payload for WS broadcast
     msg_payload = {
@@ -324,6 +341,18 @@ async def websocket_endpoint(
                 db.add(message)
                 db.commit()
                 db.refresh(message)
+
+                # Dispatch behavioral signals to DISC backend (fire-and-forget)
+                try:
+                    events = classify_message(
+                        content=content, file_url=None,
+                        session_id=session_id, sender_id=user.id,
+                        created_at=message.created_at, db=db,
+                    )
+                    if events and token:
+                        asyncio.create_task(dispatch_chat_events(events, token))
+                except Exception:
+                    pass  # Never let signal dispatch break chat
 
                 # Build message payload
                 msg_payload = {
