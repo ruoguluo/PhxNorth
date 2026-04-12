@@ -80,6 +80,7 @@ export function MenteeProfileSetup() {
   const [certifications, setCertifications] = useState<{id: string; name: string; issuer: string; date: string; expiry: string; credentialId: string; visibility: "public"|"private"}[]>([]);
   const [trainings, setTrainings] = useState<{id: string; name: string; provider: string; date: string; duration: string; type: string; visibility: "public"|"private"}[]>([]);
   const [psychTests, setPsychTests] = useState<{id: string; testType: string; date: string; result: string; provider: string; visibility: "public"|"private"}[]>([]);
+  const [draftSaved, setDraftSaved] = useState(false);
   
   // Overview state
   const [coreIdentity, setCoreIdentity] = useState({
@@ -394,10 +395,33 @@ export function MenteeProfileSetup() {
             >
               Continue to 5D Analysis
             </button>
-            <button className="w-full border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors text-sm">
-              Save Draft
+            <button
+              onClick={() => {
+                try {
+                  const draft = {
+                    activeSection,
+                    coreIdentity,
+                    professionalFocus,
+                    aiFields,
+                    timelineEntries,
+                    certifications,
+                    trainings,
+                    psychTests,
+                    savedAt: new Date().toISOString(),
+                  };
+                  localStorage.setItem("phxnorth_profile_draft", JSON.stringify(draft));
+                  setDraftSaved(true);
+                  setTimeout(() => setDraftSaved(false), 2000);
+                } catch { /* ignore quota errors */ }
+              }}
+              className="w-full border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors text-sm"
+            >
+              {draftSaved ? "Draft Saved!" : "Save Draft"}
             </button>
-            <button className="w-full text-gray-600 hover:text-gray-900 py-2 text-sm">
+            <button
+              onClick={() => navigate("/app/dashboard")}
+              className="w-full text-gray-600 hover:text-gray-900 py-2 text-sm"
+            >
               Skip for now
             </button>
           </div>
