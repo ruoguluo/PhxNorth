@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search, ChevronDown, UserCircle } from "lucide-react";
+import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search, ChevronDown, UserCircle, Target, MessageSquare, BookOpen } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { useState } from "react";
 import { useAuth } from "../../lib/auth-context";
@@ -279,6 +279,29 @@ export function Layout() {
 
                   {/* My Profile — collapsible */}
                   <ProfileSubmenu currentPath={location.pathname} />
+
+                  {/* Mentorship */}
+                  <Link
+                    to="/app/dashboard"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100`}
+                  >
+                    <Target className="w-4 h-4" />
+                    Scheduled Mentorship
+                  </Link>
+                  <Link
+                    to="/app/dashboard"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100`}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Instant Mentorship
+                  </Link>
+                  <Link
+                    to="/app/dashboard"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Courses
+                  </Link>
                 </div>
               </>
             )}
