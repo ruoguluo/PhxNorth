@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert } from "lucide-react";
+import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { useState } from "react";
 import { useAuth } from "../../lib/auth-context";
@@ -226,6 +226,15 @@ export function Layout() {
                     >
                       <LayoutDashboard className="w-4 h-4" />
                       Dashboard
+                    </Link>
+                    <Link
+                      to="/app/find-mentor"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/find-mentor' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Search className="w-4 h-4" />
+                      Find Mentor
                     </Link>
                     <Link
                       to="/app/projects"
