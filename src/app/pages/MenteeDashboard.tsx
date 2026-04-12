@@ -1,10 +1,16 @@
 import { Calendar, BookOpen, TrendingUp, FileText, Bell, CheckCircle, Clock, AlertTriangle, User, ChevronRight, ChevronDown, Target, Users, BarChart3, Sparkles, ArrowRight, MessageSquare, Video, Award, Zap, Globe, MapPin, Briefcase, Building2 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Navigate } from "react-router";
 import { mentorshipAPI } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 
 export function MenteeDashboard() {
   const { user } = useAuth();
+
+  // Redirect mentors to their own dashboard
+  if (user?.role === 'mentor') {
+    return <Navigate to="/app/mentor/dashboard" replace />;
+  }
   const [expandedSections, setExpandedSections] = useState({
     profile: true,
     mentorship: true,
