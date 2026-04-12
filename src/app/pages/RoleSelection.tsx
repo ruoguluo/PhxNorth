@@ -27,7 +27,7 @@ export function RoleSelection() {
               "Track progress",
               "Get certified"
             ]}
-            link="/app/dashboard"
+            link="/create-account?type=mentee"
           />
           <RoleCard
             icon={<Users className="w-12 h-12 text-[#0A2463]" />}
@@ -39,7 +39,7 @@ export function RoleSelection() {
               "Manage sessions",
               "Build reputation"
             ]}
-            link="/app/mentor/dashboard"
+            link="/create-account?type=mentor"
             highlighted
           />
           <RoleCard
@@ -52,7 +52,7 @@ export function RoleSelection() {
               "Enterprise clients",
               "High-value engagements"
             ]}
-            link="/app/mentor/dashboard"
+            link="/create-account?type=enterprise"
           />
         </div>
 
