@@ -104,6 +104,7 @@ def list_requests(
         resp = MentorshipRequestResponse.model_validate(req)
         resp.mentee_name = mentee.full_name if mentee else None
         resp.mentor_name = mentor.full_name if mentor else None
+        resp.mentee_username = mentee.username if mentee else None
         results.append(resp)
 
     return results
@@ -137,6 +138,7 @@ def create_request(
     resp = MentorshipRequestResponse.model_validate(mentorship_req)
     resp.mentee_name = current_user.full_name
     resp.mentor_name = mentor.full_name
+    resp.mentee_username = current_user.username
     return resp
 
 
@@ -158,6 +160,7 @@ def get_request(
     resp = MentorshipRequestResponse.model_validate(req)
     resp.mentee_name = mentee.full_name if mentee else None
     resp.mentor_name = mentor.full_name if mentor else None
+    resp.mentee_username = mentee.username if mentee else None
     return resp
 
 

@@ -127,6 +127,9 @@ export const mentorshipAPI = {
         return fetchAPI<unknown[]>(`/mentorship/requests?${query}`);
     },
 
+    getRequest: (id: number) =>
+        fetchAPI<Record<string, unknown>>(`/mentorship/requests/${id}`),
+
     createRequest: (data: Record<string, unknown>) =>
         fetchAPI<unknown>("/mentorship/requests", {
             method: "POST",
