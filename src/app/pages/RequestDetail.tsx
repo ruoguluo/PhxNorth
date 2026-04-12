@@ -21,6 +21,13 @@ import {
   XCircle,
 } from 'lucide-react';
 import { mentorshipAPI, profileAPI } from '../../lib/api';
+// 5D profile labels for display
+const FIVE_D_LABELS: Record<string, string> = {
+  D: 'Drive',
+  I: 'Influence',
+  S: 'Steadiness',
+  C: 'Conscientiousness',
+};
 
 interface SubQuestion {
   id: string;
@@ -70,6 +77,9 @@ export function RequestDetail() {
   const [menteeProfile, setMenteeProfile] = useState<MenteeProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 5D profile scores
+  const [fiveDScores, setFiveDScores] = useState<Record<string, number> | null>(null);
 
   // Big Question & Agenda state (initialized from request data)
   const [bigQuestion, setBigQuestion] = useState('');
@@ -313,12 +323,47 @@ export function RequestDetail() {
               )}
 
               {menteeProfile?.specializations && menteeProfile.specializations.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 mb-4">
                   {menteeProfile.specializations.map((s, i) => (
                     <span key={i} className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">{s}</span>
                   ))}
                 </div>
               )}
+
+              {/* 5D Profile Snapshot */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900">5D Profile Snapshot</h3>
+                  {menteeProfile?.username && (
+                    <a href={`/profile/${menteeProfile.username}`} className="text-xs text-emerald-600 hover:underline font-medium">
+                      View Full Profile
+                    </a>
+                  )}
+                </div>
+                {fiveDScores ? (
+                  <div className="space-y-2">
+                    {Object.entries(FIVE_D_LABELS).map(([key, label]) => {
+                      const value = fiveDScores[key] ?? 0;
+                      return (
+                        <div key={key}>
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-gray-600">{label}</span>
+                            <span className="font-medium text-gray-900">{value.toFixed(0)}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1.5">
+                            <div
+                              className="bg-emerald-600 h-1.5 rounded-full transition-all"
+                              style={{ width: `${Math.min(value, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 italic">5D profile data not yet available. The mentee needs to upload their CV first.</p>
+                )}
+              </div>
             </div>
 
             {/* Right: Request Info */}
