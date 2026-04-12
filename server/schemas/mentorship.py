@@ -46,6 +46,7 @@ class MentorshipRequestResponse(BaseModel):
     mentee_name: Optional[str] = None
     mentor_name: Optional[str] = None
     mentee_username: Optional[str] = None
+    mentee_email: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

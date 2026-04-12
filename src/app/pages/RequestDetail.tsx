@@ -21,13 +21,20 @@ import {
   XCircle,
 } from 'lucide-react';
 import { mentorshipAPI, profileAPI } from '../../lib/api';
-// 5D profile labels for display
-const FIVE_D_LABELS: Record<string, string> = {
-  D: 'Drive',
-  I: 'Influence',
-  S: 'Steadiness',
-  C: 'Conscientiousness',
-};
+// 5D profile: mapped from DISC scores (D/I/S/C) to the 5D model
+// Drive ← D (Dominance), Discipline ← C (Conscientiousness),
+// Decision Quality ← avg(D,C), Dialogue ← I (Influence), Dynamism ← avg(I,S inverted)
+const FIVE_D_LABELS = ['Drive', 'Discipline', 'Decision Quality', 'Dialogue', 'Dynamism'] as const;
+
+function discTo5D(scores: { D: number; I: number; S: number; C: number }): Record<string, number> {
+  return {
+    'Drive': scores.D,
+    'Discipline': scores.C,
+    'Decision Quality': Math.round((scores.D + scores.C) / 2),
+    'Dialogue': scores.I,
+    'Dynamism': Math.round((scores.D + scores.I + (100 - scores.S)) / 3),
+  };
+}
 
 interface SubQuestion {
   id: string;
@@ -50,6 +57,7 @@ interface MentorshipRequest {
   mentee_name: string | null;
   mentor_name: string | null;
   mentee_username: string | null;
+  mentee_email: string | null;
 }
 
 interface MenteeProfile {
@@ -145,7 +153,26 @@ export function RequestDetail() {
           const profile = await profileAPI.getPublic(reqData.mentee_username) as MenteeProfile;
           setMenteeProfile(profile);
         } catch {
-          // Profile fetch is optional -- don't block the page
+          // Profile fetch is optional
+        }
+      }
+
+      // Fetch mentee DISC/5D data if email is available
+      if (reqData.mentee_email) {
+        try {
+          const token = localStorage.getItem('phxnorth_token');
+          const resp = await fetch(
+            `/api/v1/disc-profile-by-email?email=${encodeURIComponent(reqData.mentee_email)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (resp.ok) {
+            const disc = await resp.json();
+            if (disc.scores && disc.confidence > 0) {
+              setFiveDScores(discTo5D(disc.scores));
+            }
+          }
+        } catch {
+          // DISC fetch is optional
         }
       }
     } catch (err: any) {
@@ -341,18 +368,18 @@ export function RequestDetail() {
                   )}
                 </div>
                 {fiveDScores ? (
-                  <div className="space-y-2">
-                    {Object.entries(FIVE_D_LABELS).map(([key, label]) => {
-                      const value = fiveDScores[key] ?? 0;
+                  <div className="space-y-3">
+                    {FIVE_D_LABELS.map((label) => {
+                      const value = fiveDScores[label] ?? 0;
                       return (
-                        <div key={key}>
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-gray-600">{label}</span>
-                            <span className="font-medium text-gray-900">{value.toFixed(0)}%</span>
+                        <div key={label}>
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-gray-700 font-medium">{label}</span>
+                            <span className="font-bold text-gray-900">{Math.round(value)}%</span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
-                              className="bg-emerald-600 h-1.5 rounded-full transition-all"
+                              className="bg-emerald-600 h-2 rounded-full transition-all"
                               style={{ width: `${Math.min(value, 100)}%` }}
                             />
                           </div>
