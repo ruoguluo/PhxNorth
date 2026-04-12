@@ -197,93 +197,6 @@ export function MentorDashboard() {
       {/* Left Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 p-4 flex-shrink-0">
         <div className="space-y-6">
-          {/* ACTIVATIONS Section */}
-          <div>
-            <div className="px-2 py-2 mb-3">
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">ACTIVATIONS</span>
-            </div>
-
-            {/* Join Talent Mobility Card */}
-            <div className="px-2 mb-3">
-              <div
-                className={`bg-[#F9FBFF] rounded-xl p-3 transition-all hover:shadow-md ${isTalentMobilityEnabled
-                  ? 'border-2 border-emerald-500'
-                  : 'border border-gray-200'
-                  }`}
-              >
-                <div className="flex items-start gap-3 mb-2">
-                  <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                    <Globe className="w-4 h-4 text-blue-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <h4 className="text-xs font-semibold text-gray-900">Join Talent Mobility</h4>
-                      <button
-                        onClick={handleTalentMobilityToggle}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${isTalentMobilityEnabled ? 'bg-emerald-600' : 'bg-gray-300'
-                          }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isTalentMobilityEnabled ? 'translate-x-5' : 'translate-x-1'
-                            }`}
-                        />
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-gray-600 leading-relaxed">
-                      Access curated enterprise hiring campaigns and participate in global talent mobility opportunities.
-                    </p>
-                    {isTalentMobilityEnabled && (
-                      <span className="inline-block mt-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Commercial Consultation Card */}
-            <div className="px-2 mb-3">
-              <div
-                className={`bg-[#F9FBFF] rounded-xl p-3 transition-all hover:shadow-md ${isCommercialConsultationEnabled
-                  ? 'border-2 border-emerald-500'
-                  : 'border border-gray-200'
-                  }`}
-              >
-                <div className="flex items-start gap-3 mb-2">
-                  <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                    <Briefcase className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <h4 className="text-xs font-semibold text-gray-900">Commercial Consultation</h4>
-                      <button
-                        onClick={handleCommercialConsultationToggle}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${isCommercialConsultationEnabled ? 'bg-emerald-600' : 'bg-gray-300'
-                          }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isCommercialConsultationEnabled ? 'translate-x-5' : 'translate-x-1'
-                            }`}
-                        />
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-gray-600 leading-relaxed">
-                      Participate in enterprise consulting projects and advisory engagements.
-                    </p>
-                    {isCommercialConsultationEnabled && (
-                      <span className="inline-block mt-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200"></div>
-
           {/* Profile Section */}
           <div>
             <div className="px-2 py-2 mb-2">
@@ -557,6 +470,57 @@ export function MentorDashboard() {
               </div>
             </>
           )}
+
+          {/* ACTIVATIONS Section - at bottom */}
+          <div className="border-t border-gray-200 pt-4">
+            <div className="px-2 py-2 mb-3">
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">ACTIVATIONS</span>
+            </div>
+
+            <div className="px-2 mb-3">
+              <div className={`bg-[#F9FBFF] rounded-xl p-3 transition-all hover:shadow-md ${isTalentMobilityEnabled ? 'border-2 border-emerald-500' : 'border border-gray-200'}`}>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                    <Globe className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <h4 className="text-xs font-semibold text-gray-900">Talent Mobility</h4>
+                      <button
+                        onClick={handleTalentMobilityToggle}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${isTalentMobilityEnabled ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                      >
+                        <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isTalentMobilityEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-600 leading-relaxed">Enterprise hiring campaigns and global talent mobility.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-2 mb-3">
+              <div className={`bg-[#F9FBFF] rounded-xl p-3 transition-all hover:shadow-md ${isCommercialConsultationEnabled ? 'border-2 border-emerald-500' : 'border border-gray-200'}`}>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
+                    <Briefcase className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <h4 className="text-xs font-semibold text-gray-900">Commercial Consultation</h4>
+                      <button
+                        onClick={handleCommercialConsultationToggle}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${isCommercialConsultationEnabled ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                      >
+                        <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isCommercialConsultationEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-600 leading-relaxed">Enterprise consulting projects and advisory engagements.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
 
