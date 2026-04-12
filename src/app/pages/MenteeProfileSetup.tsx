@@ -151,22 +151,37 @@ export function MenteeProfileSetup() {
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Check if a string looks like a valid title/company (not a description sentence)
+  const isValidField = (val: string | null | undefined): boolean => {
+    if (!val) return false;
+    const trimmed = val.trim();
+    if (trimmed.length === 0) return false;
+    if (trimmed.length > 80) return false; // descriptions are long
+    if (trimmed.split(" ").length > 10) return false; // too many words
+    return true;
+  };
+
   const populateFromBackend = async () => {
     try {
       const career = await discCareerAPI.get();
       const fields: AIField[] = [];
-
-      // Extract latest job entry as current position
       const entries = career.job_entries ?? [];
-      if (entries.length > 0) {
-        const latest = entries[0]; // sorted descending by date
-        fields.push(
-          { id: "title", label: "Current Title", value: latest.title || "", confidence: "high", confirmed: false, required: true },
-          { id: "company", label: "Current Company", value: latest.company || "", confidence: "high", confirmed: false, required: false },
-        );
-      }
 
-      // Analytics
+      // Show each job entry as a separate field pair
+      entries.forEach((entry, idx) => {
+        const title = isValidField(entry.title) ? entry.title : "";
+        const company = isValidField(entry.company) ? entry.company : "";
+        const conf = (title && company) ? "high" : title || company ? "medium" : "low";
+        const isCurrent = !entry.end_date;
+        const label = idx === 0 ? (isCurrent ? "Current" : "Most Recent") : `Role ${idx + 1}`;
+
+        fields.push(
+          { id: `title-${idx}`, label: `${label} Title`, value: title, confidence: conf as ConfidenceLevel, confirmed: false, required: idx === 0 },
+          { id: `company-${idx}`, label: `${label} Company`, value: company, confidence: conf as ConfidenceLevel, confirmed: false, required: false },
+        );
+      });
+
+      // Analytics summary
       const a = career.analytics;
       if (a.distinct_roles > 0) {
         fields.push(
@@ -182,21 +197,20 @@ export function MenteeProfileSetup() {
         );
       }
 
-      // If no useful fields extracted, show a note
+      // If no useful fields extracted, show empty fields for manual entry
       if (fields.length === 0) {
         fields.push(
-          { id: "title", label: "Current Title", value: "", confidence: "low", confirmed: false, required: true },
-          { id: "company", label: "Current Company", value: "", confidence: "low", confirmed: false, required: false },
+          { id: "title-0", label: "Current Title", value: "", confidence: "low", confirmed: false, required: true },
+          { id: "company-0", label: "Current Company", value: "", confidence: "low", confirmed: false, required: false },
         );
       }
 
       setAIFields(fields);
       setShowAIPanel(true);
     } catch {
-      // If career data fetch fails, show empty fields
       setAIFields([
-        { id: "title", label: "Current Title", value: "", confidence: "low", confirmed: false, required: true },
-        { id: "company", label: "Current Company", value: "", confidence: "low", confirmed: false, required: false },
+        { id: "title-0", label: "Current Title", value: "", confidence: "low", confirmed: false, required: true },
+        { id: "company-0", label: "Current Company", value: "", confidence: "low", confirmed: false, required: false },
       ]);
       setShowAIPanel(true);
     }
