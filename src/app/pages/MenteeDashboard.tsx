@@ -1,4 +1,4 @@
-import { Calendar, BookOpen, TrendingUp, FileText, Bell, CheckCircle, Clock, AlertTriangle, User, ChevronRight, ChevronDown, Target, Users, BarChart3, Sparkles, ArrowRight, MessageSquare, Video, Award, Zap, Globe, MapPin, Briefcase, Building2 } from "lucide-react";
+import { Calendar, BookOpen, TrendingUp, FileText, Bell, CheckCircle, Clock, AlertTriangle, User, ChevronRight, ChevronDown, Target, Users, BarChart3, Sparkles, ArrowRight, MessageSquare, Video, Award, Zap, Globe, MapPin, Briefcase, Building2, Star } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Navigate } from "react-router";
 import { mentorshipAPI } from '../../lib/api';
@@ -347,14 +347,25 @@ export function MenteeDashboard() {
                   </div>
                 </div>
 
-                {/* Card 4: Upcoming Session */}
+                {/* Card 4: Next Session */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="bg-orange-50 p-3 rounded-lg">
                       <Video className="w-6 h-6 text-orange-600" />
                     </div>
+                    {sessions[0] && (
+                      <Star className="w-5 h-5 text-orange-400" />
+                    )}
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">{sessions[0] ? (() => { const diff = new Date(sessions[0].scheduled_at).getTime() - Date.now(); const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); return h > 0 ? `${h}h ${m}m` : `${m}m`; })() : '--'}</div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1">
+                    {sessions[0] ? (() => {
+                      const diff = new Date(sessions[0].scheduled_at).getTime() - Date.now();
+                      if (diff <= 0) return 'Now';
+                      const h = Math.floor(diff / 3600000);
+                      const m = Math.floor((diff % 3600000) / 60000);
+                      return h > 0 ? `${h}h ${m}m` : `${m}m`;
+                    })() : '--'}
+                  </div>
                   <div className="text-sm text-gray-600 mb-1">Next Session</div>
                   <div className="text-xs text-gray-500 mb-3">with {sessions[0]?.mentor_name || sessions[0]?.mentee_name || 'TBD'}</div>
                   <div className="text-xs bg-orange-50 text-orange-700 px-2 py-1 rounded inline-block">
@@ -370,39 +381,24 @@ export function MenteeDashboard() {
                   <span className="text-sm text-gray-500">{sessions.length} in progress</span>
                 </div>
                 <div className="space-y-4">
-                  <MentorshipTrackCard
-                    topic="How do I transition from IC to Engineering Manager?"
-                    mentor="Sarah Johnson"
-                    mentorRole="VP of Engineering at TechCorp"
-                    phase="Execution"
-                    phaseStep="2 of 3"
-                    progress={65}
-                    nextSession="Today, 3:00 PM"
-                    status="On Track"
-                    statusColor="green"
-                  />
-                  <MentorshipTrackCard
-                    topic="Building scalable microservices architecture"
-                    mentor="Dr. Michael Chen"
-                    mentorRole="Principal Architect at CloudScale"
-                    phase="Strategy"
-                    phaseStep="1 of 3"
-                    progress={35}
-                    nextSession="Tomorrow, 10:00 AM"
-                    status="Needs Input"
-                    statusColor="orange"
-                  />
-                  <MentorshipTrackCard
-                    topic="Developing executive presence and leadership style"
-                    mentor="Emily Williams"
-                    mentorRole="Leadership Coach & Former CTO"
-                    phase="Review"
-                    phaseStep="3 of 3"
-                    progress={85}
-                    nextSession="Friday, 2:00 PM"
-                    status="On Track"
-                    statusColor="green"
-                  />
+                  {sessions.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Video className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                      <p className="text-sm">No upcoming sessions yet.</p>
+                      <p className="text-xs text-gray-400 mt-1">Request a mentor to get started.</p>
+                    </div>
+                  ) : (
+                    sessions.map((s: any) => (
+                      <MentorshipTrackCard
+                        key={s.id}
+                        sessionId={s.id}
+                        topic={s.topic}
+                        mentor={s.mentor_name || 'TBD'}
+                        scheduledAt={s.scheduled_at}
+                        durationMinutes={s.duration_minutes}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -421,24 +417,19 @@ export function MenteeDashboard() {
                 </button>
                 {expandedSections.completedMentorship && (
                   <div className="px-6 pb-6 space-y-3 border-t border-gray-200 pt-4">
-                    <CompletedMentorshipCard
-                      topic="Migrating monolith to microservices"
-                      mentor="James Rodriguez"
-                      outcome="Successfully implemented migration strategy, reduced deploy time by 60%"
-                      impact="+28% Technical Skills"
-                    />
-                    <CompletedMentorshipCard
-                      topic="Product strategy for B2B SaaS"
-                      mentor="Lisa Park"
-                      outcome="Launched new product line, achieved $2M ARR in first quarter"
-                      impact="+35% Business Acumen"
-                    />
-                    <CompletedMentorshipCard
-                      topic="Building high-performing engineering teams"
-                      mentor="David Kumar"
-                      outcome="Grew team from 5 to 15 engineers with 95% retention"
-                      impact="+42% Leadership"
-                    />
+                    {completedSessions.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center py-4">No completed sessions yet.</p>
+                    ) : (
+                      completedSessions.map((s: any) => (
+                        <CompletedMentorshipCard
+                          key={s.id}
+                          topic={s.topic}
+                          mentor={s.mentor_name || 'TBD'}
+                          feedback={s.feedback}
+                          rating={s.rating}
+                        />
+                      ))
+                    )}
                   </div>
                 )}
               </div>
@@ -1690,58 +1681,60 @@ export function MenteeDashboard() {
   );
 }
 
-function MentorshipTrackCard({ topic, mentor, mentorRole, phase, phaseStep, progress, nextSession, status, statusColor }: {
+function MentorshipTrackCard({ sessionId, topic, mentor, scheduledAt, durationMinutes }: {
+  sessionId: number;
   topic: string;
   mentor: string;
-  mentorRole: string;
-  phase: string;
-  phaseStep: string;
-  progress: number;
-  nextSession: string;
-  status: string;
-  statusColor: string;
+  scheduledAt: string;
+  durationMinutes: number;
 }) {
-  const statusColors = {
-    green: 'bg-green-50 text-green-700',
-    orange: 'bg-orange-50 text-orange-700',
-    blue: 'bg-blue-50 text-blue-700',
-    red: 'bg-red-50 text-red-700',
-  };
+  const date = new Date(scheduledAt);
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const isToday = date.toDateString() === now.toDateString();
+  const isTomorrow = date.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+
+  let dateLabel: string;
+  if (diffMs < 0) {
+    dateLabel = 'Overdue';
+  } else if (isToday) {
+    dateLabel = `Today, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+  } else if (isTomorrow) {
+    dateLabel = `Tomorrow, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+  } else {
+    dateLabel = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
 
   return (
-    <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+    <a href={`/app/session/${sessionId}`} className="block p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 mb-1">{topic}</h3>
           <p className="text-sm text-gray-600">Mentor: {mentor}</p>
-          <p className="text-xs text-gray-500">{mentorRole}</p>
         </div>
-        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ml-2 ${statusColors[statusColor as keyof typeof statusColors]}`}>
-          {status}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2 py-1 rounded-full whitespace-nowrap bg-blue-50 text-blue-700">
+            Upcoming
+          </span>
+          <MessageSquare className="w-4 h-4 text-gray-400" />
+        </div>
       </div>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">Phase: {phase} ({phaseStep})</span>
-          <span className="font-semibold text-gray-900">{progress}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div className="bg-[#0A2463] h-2 rounded-full" style={{ width: `${progress}%` }} />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+      <div className="flex items-center justify-between text-sm text-gray-600">
+        <div className="flex items-center gap-2">
           <Clock className="w-4 h-4" />
-          Next: {nextSession}
+          {dateLabel}
         </div>
+        <span className="text-xs text-gray-400">{durationMinutes} min</span>
       </div>
-    </div>
+    </a>
   );
 }
 
-function CompletedMentorshipCard({ topic, mentor, outcome, impact }: {
+function CompletedMentorshipCard({ topic, mentor, feedback, rating }: {
   topic: string;
   mentor: string;
-  outcome: string;
-  impact: string;
+  feedback: string | null;
+  rating: number | null;
 }) {
   return (
     <div className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-gray-50/50">
@@ -1758,14 +1751,22 @@ function CompletedMentorshipCard({ topic, mentor, outcome, impact }: {
         </div>
       </div>
       <div className="space-y-2">
-        <div className="text-sm text-gray-700">
-          <span className="font-semibold">Outcome:</span> {outcome}
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-semibold">
-            5D Impact: {impact}
+        {feedback && (
+          <div className="text-sm text-gray-700">
+            <span className="font-semibold">Feedback:</span> {feedback}
           </div>
-        </div>
+        )}
+        {rating != null && (
+          <div className="flex items-center gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={`w-4 h-4 ${i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+              />
+            ))}
+            <span className="text-xs text-gray-500 ml-1">{rating.toFixed(1)}</span>
+          </div>
+        )}
       </div>
     </div>
   );

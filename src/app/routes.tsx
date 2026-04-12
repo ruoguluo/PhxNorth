@@ -279,6 +279,10 @@ export const router = createBrowserRouter([
         path: "find-mentor",
         Component: FindMentor,
       },
+      {
+        path: "session/:id",
+        Component: SessionDetail,
+      },
     ],
   },
   {

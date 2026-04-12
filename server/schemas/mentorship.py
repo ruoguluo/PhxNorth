@@ -73,6 +73,8 @@ class SessionResponse(BaseModel):
     created_at: Optional[datetime] = None
     mentee_name: Optional[str] = None
     mentor_name: Optional[str] = None
+    mentee_email: Optional[str] = None
+    mentor_email: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

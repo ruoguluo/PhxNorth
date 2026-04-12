@@ -238,6 +238,8 @@ def list_sessions(
         resp = SessionResponse.model_validate(s)
         resp.mentee_name = mentee.full_name if mentee else None
         resp.mentor_name = mentor.full_name if mentor else None
+        resp.mentee_email = mentee.email if mentee else None
+        resp.mentor_email = mentor.email if mentor else None
         results.append(resp)
 
     return results
@@ -261,6 +263,8 @@ def get_session(
     resp = SessionResponse.model_validate(s)
     resp.mentee_name = mentee.full_name if mentee else None
     resp.mentor_name = mentor.full_name if mentor else None
+    resp.mentee_email = mentee.email if mentee else None
+    resp.mentor_email = mentor.email if mentor else None
     return resp
 
 
@@ -318,6 +322,8 @@ def complete_session(
     resp = SessionResponse.model_validate(s)
     resp.mentee_name = mentee.full_name if mentee else None
     resp.mentor_name = mentor.full_name if mentor else None
+    resp.mentee_email = mentee.email if mentee else None
+    resp.mentor_email = mentor.email if mentor else None
     return resp
 
 

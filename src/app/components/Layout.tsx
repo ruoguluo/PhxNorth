@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search, ChevronDown, UserCircle, Target, MessageSquare, BookOpen } from "lucide-react";
+import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search, ChevronDown, UserCircle, Target, MessageSquare, BookOpen, CalendarDays } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
@@ -291,6 +291,17 @@ export function Layout() {
                       Find Mentor
                     </Link>
                   )}
+
+                  {/* My Sessions — links to dashboard with sessions visible */}
+                  <Link
+                    to="/app/mentor/upcoming"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/mentor/upcoming' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    My Sessions
+                  </Link>
 
                   {/* My Profile — collapsible */}
                   <ProfileSubmenu currentPath={location.pathname} />

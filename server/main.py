@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base
-from routers import auth, profile, mentorship, admin
+from routers import auth, profile, mentorship, admin, messages
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -31,6 +31,7 @@ app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(mentorship.router)
 app.include_router(admin.router)
+app.include_router(messages.router)
 
 
 @app.get("/api/health")

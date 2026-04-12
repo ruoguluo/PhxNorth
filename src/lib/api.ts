@@ -168,6 +168,62 @@ export const mentorshipAPI = {
     getStats: () => fetchAPI<unknown>("/mentorship/stats"),
 };
 
+// ─── Messages API ───────────────────────────────────────────────────
+
+export interface MessageResponse {
+    id: number;
+    session_id: number;
+    sender_id: number;
+    sender_role: 'mentor' | 'mentee';
+    sender_name: string | null;
+    content: string;
+    file_url: string | null;
+    file_name: string | null;
+    is_read: boolean;
+    created_at: string;
+}
+
+export const messagesAPI = {
+    getHistory: (sessionId: number, limit = 50) =>
+        fetchAPI<MessageResponse[]>(`/messages/session/${sessionId}?limit=${limit}`),
+
+    send: (sessionId: number, content: string) =>
+        fetchAPI<MessageResponse>(`/messages/session/${sessionId}`, {
+            method: "POST",
+            body: JSON.stringify({ content }),
+        }),
+
+    markRead: (sessionId: number) =>
+        fetchAPI<{ status: string; message: string }>(`/messages/session/${sessionId}/read`, {
+            method: "PUT",
+        }),
+
+    uploadFile: async (sessionId: number, file: File): Promise<MessageResponse> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        const token = localStorage.getItem("phxnorth_token");
+        const response = await fetch(`/api/messages/session/${sessionId}/upload`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({ detail: "Upload failed" }));
+            throw new Error(err.detail || "Upload failed");
+        }
+        return response.json();
+    },
+
+    getUnreadCount: async (sessionId: number): Promise<number> => {
+        try {
+            const messages = await fetchAPI<MessageResponse[]>(`/messages/session/${sessionId}?limit=100`);
+            return messages.filter(m => !m.is_read).length;
+        } catch {
+            return 0;
+        }
+    },
+};
+
 // ─── Admin API ──────────────────────────────────────────────────────
 
 export const adminAPI = {
