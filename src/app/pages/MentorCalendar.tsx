@@ -30,11 +30,13 @@ interface Appointment {
   menteeName: string;
   menteeAvatar?: string;
   sessionType: 'Scheduled' | 'Instant';
+  scheduledDate: Date;
   startTime: string;
   endTime: string;
   status: 'confirmed' | 'pending' | 'awaiting reply';
   topic: string;
   bigQuestion?: string;
+  sessionId: number;
 }
 
 const availableTimezones: Timezone[] = [
@@ -70,11 +72,13 @@ export function MentorCalendar() {
             id: String(s.id),
             menteeName: s.mentee_name || s.mentor_name || 'Participant',
             sessionType: s.type === 'instant' ? 'Instant' as const : 'Scheduled' as const,
+            scheduledDate: scheduled,
             startTime: `${String(scheduled.getHours()).padStart(2, '0')}:${String(scheduled.getMinutes()).padStart(2, '0')}`,
             endTime: `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`,
             status: s.status === 'upcoming' ? 'confirmed' as const : s.status === 'completed' ? 'confirmed' as const : 'pending' as const,
             topic: s.topic || 'Mentorship Session',
             bigQuestion: s.notes,
+            sessionId: s.id,
           };
         })
       );
@@ -297,6 +301,7 @@ export function MentorCalendar() {
             <WeekView
               appointments={appointments}
               hours={hours}
+              currentDate={currentDate}
               selectedTimezones={selectedTimezones}
               showSecondaryTimezone={showSecondaryTimezone}
               convertTime={convertTime}
@@ -498,6 +503,7 @@ function DayView({
 function WeekView({
   appointments,
   hours,
+  currentDate,
   selectedTimezones,
   showSecondaryTimezone,
   convertTime,
@@ -505,29 +511,47 @@ function WeekView({
 }: {
   appointments: Appointment[];
   hours: number[];
+  currentDate: Date;
   selectedTimezones: Timezone[];
   showSecondaryTimezone: boolean;
   convertTime: (time: string, from: number, to: number) => string;
   onAppointmentClick: (appointment: Appointment) => void;
 }) {
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Compute the dates for each day of the current week (Monday-based)
+  const weekStart = new Date(currentDate);
+  const dayOfWeek = currentDate.getDay(); // 0=Sun, 1=Mon, ...
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  weekStart.setDate(currentDate.getDate() + mondayOffset);
+
+  const weekDates = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    return d;
+  });
+
+  const today = new Date();
 
   return (
     <div className="overflow-auto">
       <div className="min-w-[1000px]">
-        {/* Week header */}
+        {/* Week header with actual dates */}
         <div className="flex border-b border-gray-200 bg-gray-50">
           <div className="w-20 flex-shrink-0 p-3 border-r border-gray-200"></div>
-          {daysOfWeek.map(day => (
-            <div key={day} className="flex-1 p-3 text-center border-r border-gray-200 last:border-r-0">
-              <div className="font-semibold text-gray-900 text-sm">{day.slice(0, 3)}</div>
-              {selectedTimezones.length > 1 && (
-                <div className="text-xs text-gray-500 mt-1">
-                  {selectedTimezones.map(tz => tz.code).join(' | ')}
+          {weekDates.map((date, i) => {
+            const isToday = date.toDateString() === today.toDateString();
+            return (
+              <div key={i} className="flex-1 p-3 text-center border-r border-gray-200 last:border-r-0">
+                <div className={`text-sm ${isToday ? 'font-bold text-emerald-600' : 'font-semibold text-gray-900'}`}>
+                  {daysOfWeek[i]}
                 </div>
-              )}
-            </div>
-          ))}
+                <div className={`text-xs mt-0.5 ${isToday ? 'text-emerald-600 font-medium' : 'text-gray-500'}`}>
+                  {date.getDate()}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Week grid */}
@@ -536,12 +560,19 @@ function WeekView({
             <div className="w-20 flex-shrink-0 py-2 px-3 bg-gray-50 border-r border-gray-200 text-sm text-gray-600">
               {hour}:00
             </div>
-            {daysOfWeek.map((day, dayIndex) => (
-              <div key={day} className="flex-1 py-2 px-2 min-h-[60px] border-r border-gray-100 last:border-r-0 relative">
-                {/* Show appointments for Monday (dayIndex 0) as example */}
-                {dayIndex === 0 && appointments
-                  .filter(apt => parseInt(apt.startTime.split(':')[0]) === hour)
-                  .map(apt => (
+            {weekDates.map((date, dayIndex) => {
+              // Filter appointments that fall on this date and hour
+              const dayAppointments = appointments.filter(apt => {
+                const aptDate = apt.scheduledDate;
+                return aptDate.getFullYear() === date.getFullYear()
+                  && aptDate.getMonth() === date.getMonth()
+                  && aptDate.getDate() === date.getDate()
+                  && aptDate.getHours() === hour;
+              });
+
+              return (
+                <div key={dayIndex} className="flex-1 py-2 px-2 min-h-[60px] border-r border-gray-100 last:border-r-0 relative">
+                  {dayAppointments.map(apt => (
                     <button
                       key={apt.id}
                       onClick={() => onAppointmentClick(apt)}
@@ -554,11 +585,12 @@ function WeekView({
                       title={`${apt.menteeName}: ${apt.topic}`}
                     >
                       <div className="font-semibold text-gray-900 truncate">{apt.menteeName}</div>
-                      <div className="text-gray-600 truncate">{apt.startTime}</div>
+                      <div className="text-gray-600 truncate">{apt.startTime} - {apt.endTime}</div>
                     </button>
                   ))}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
@@ -577,12 +609,15 @@ function MonthView({
   onAppointmentClick: (appointment: Appointment) => void;
 }) {
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
-  const adjustedFirstDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Adjust for Monday start
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const adjustedFirstDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1; // Monday start
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const emptyDays = Array.from({ length: adjustedFirstDay }, (_, i) => i);
+  const today = new Date();
 
   return (
     <div>
@@ -598,25 +633,42 @@ function MonthView({
       {/* Month grid */}
       <div className="grid grid-cols-7">
         {emptyDays.map(i => (
-          <div key={`empty-${i}`} className="h-24 border-r border-b border-gray-100 bg-gray-50"></div>
+          <div key={`empty-${i}`} className="h-28 border-r border-b border-gray-100 bg-gray-50"></div>
         ))}
         {days.map(day => {
-          const dayAppointments = appointments.slice(0, Math.floor(Math.random() * 3)); // Mock: random appointments
+          // Match appointments to the correct calendar date
+          const dayAppointments = appointments.filter(apt => {
+            const d = apt.scheduledDate;
+            return d.getFullYear() === year && d.getMonth() === month && d.getDate() === day;
+          });
+          const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+
           return (
             <div
               key={day}
-              className="h-24 border-r border-b border-gray-100 p-2 hover:bg-gray-50 transition-colors last:border-r-0"
+              className={`h-28 border-r border-b border-gray-100 p-2 hover:bg-gray-50 transition-colors last:border-r-0 ${isToday ? 'bg-emerald-50/50' : ''}`}
             >
-              <div className="text-sm font-medium text-gray-900 mb-1">{day}</div>
-              <div className="space-y-1">
-                {dayAppointments.map(apt => (
+              <div className={`text-sm mb-1 ${isToday ? 'font-bold text-emerald-600' : 'font-medium text-gray-900'}`}>
+                {day}
+              </div>
+              <div className="space-y-1 overflow-hidden">
+                {dayAppointments.slice(0, 3).map(apt => (
                   <button
                     key={apt.id}
                     onClick={() => onAppointmentClick(apt)}
-                    className="w-2 h-2 rounded-full bg-emerald-500 hover:bg-emerald-600"
-                    title={apt.menteeName}
-                  ></button>
+                    className={`w-full text-left text-xs px-1.5 py-0.5 rounded truncate hover:opacity-80 ${
+                      apt.status === 'confirmed'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                    title={`${apt.startTime} ${apt.menteeName}: ${apt.topic}`}
+                  >
+                    {apt.startTime} {apt.menteeName}
+                  </button>
                 ))}
+                {dayAppointments.length > 3 && (
+                  <div className="text-xs text-gray-500 px-1">+{dayAppointments.length - 3} more</div>
+                )}
               </div>
             </div>
           );

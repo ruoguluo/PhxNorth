@@ -308,11 +308,13 @@ export function Layout() {
 
                   {/* Mentorship */}
                   <Link
-                    to="/app/dashboard"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100`}
+                    to="/app/mentor/calendar"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/mentor/calendar' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     <Target className="w-4 h-4" />
-                    Scheduled Mentorship
+                    Calendar
                   </Link>
                   <Link
                     to="/app/dashboard"
