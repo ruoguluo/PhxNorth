@@ -267,15 +267,17 @@ export function Layout() {
                     <LayoutDashboard className="w-4 h-4" />
                     Dashboard
                   </Link>
-                  <Link
-                    to="/app/find-mentor"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/find-mentor' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Search className="w-4 h-4" />
-                    Find Mentor
-                  </Link>
+                  {user?.role !== 'mentor' && (
+                    <Link
+                      to="/app/find-mentor"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/find-mentor' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Search className="w-4 h-4" />
+                      Find Mentor
+                    </Link>
+                  )}
 
                   {/* My Profile — collapsible */}
                   <ProfileSubmenu currentPath={location.pathname} />
