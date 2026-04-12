@@ -20,6 +20,7 @@ import {
   RefreshCw,
   ExternalLink,
   Loader2,
+  Shield,
 } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { discCvAPI, discCareerAPI } from "../../lib/disc-api";
@@ -74,6 +75,9 @@ export function MenteeProfileSetup() {
   const [showAddSectionModal, setShowAddSectionModal] = useState(false);
   const [expandedTimeline, setExpandedTimeline] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("import");
+  const [certifications, setCertifications] = useState<{id: string; name: string; issuer: string; date: string; expiry: string; credentialId: string; visibility: "public"|"private"}[]>([]);
+  const [trainings, setTrainings] = useState<{id: string; name: string; provider: string; date: string; duration: string; type: string; visibility: "public"|"private"}[]>([]);
+  const [psychTests, setPsychTests] = useState<{id: string; testType: string; date: string; result: string; provider: string; visibility: "public"|"private"}[]>([]);
   
   // Overview state
   const [coreIdentity, setCoreIdentity] = useState({
@@ -748,9 +752,150 @@ export function MenteeProfileSetup() {
                   Add Entry
                 </button>
               </div>
-              <div className="text-center py-12 text-gray-500">
-                <p>Education timeline entries will appear here</p>
-              </div>
+
+              {timelineEntries.filter(e => e.type === "education").length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p className="mb-4">No education entries yet</p>
+                  <button
+                    onClick={() => addTimelineEntry("education")}
+                    className="text-[#0A2463] font-semibold hover:underline"
+                  >
+                    Add your first entry
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {timelineEntries.filter(e => e.type === "education").map((entry) => (
+                    <div key={entry.id} className="border border-gray-200 rounded-lg">
+                      <button
+                        onClick={() => setExpandedTimeline(expandedTimeline === entry.id ? null : entry.id)}
+                        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          {expandedTimeline === entry.id ? (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                          )}
+                          <div className="text-left">
+                            <div className="font-semibold text-gray-900">
+                              {entry.title || "New Education Entry"}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {entry.organization || "Institution not specified"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {entry.visibility === "public" ? (
+                            <Eye className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-gray-400" />
+                          )}
+                        </div>
+                      </button>
+
+                      {expandedTimeline === entry.id && (
+                        <div className="px-6 py-4 border-t border-gray-200 space-y-4">
+                          {/* Degree Level */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Degree Level <span className="text-red-500">*</span>
+                            </label>
+                            <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                              <option value="">Select degree level...</option>
+                              <option value="bachelor">Bachelor</option>
+                              <option value="master">Master</option>
+                              <option value="mba">MBA</option>
+                              <option value="phd">PhD</option>
+                              <option value="executive">Executive Education</option>
+                            </select>
+                          </div>
+
+                          {/* Field of Study */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Field of Study <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g., Computer Science, Finance, Business Administration"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          {/* Institution */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Institution Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g., Imperial College London"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          {/* Date Range */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                              <input
+                                type="month"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                              <input
+                                type="month"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                disabled={entry.isCurrent}
+                              />
+                              <label className="flex items-center gap-2 mt-2">
+                                <input type="checkbox" className="rounded" />
+                                <span className="text-sm text-gray-600">Currently studying here</span>
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Location */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                            <input
+                              type="text"
+                              placeholder="e.g., London, United Kingdom"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          {/* Visibility */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                            <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                              <option value="public">Public</option>
+                              <option value="private">Private</option>
+                            </select>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                            <button
+                              onClick={() => setTimelineEntries(timelineEntries.filter(e => e.id !== entry.id))}
+                              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-semibold text-sm"
+                            >
+                              Delete Entry
+                            </button>
+                            <button className="px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-semibold text-sm">
+                              Save Entry
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -767,8 +912,646 @@ export function MenteeProfileSetup() {
                   Add Entry
                 </button>
               </div>
-              <div className="text-center py-12 text-gray-500">
-                <p>Business and project entries will appear here</p>
+
+              {timelineEntries.filter(e => e.type === "business").length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p className="mb-4">No business or project entries yet</p>
+                  <button
+                    onClick={() => addTimelineEntry("business")}
+                    className="text-[#0A2463] font-semibold hover:underline"
+                  >
+                    Add your first entry
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {timelineEntries.filter(e => e.type === "business").map((entry) => (
+                    <div key={entry.id} className="border border-gray-200 rounded-lg">
+                      <button
+                        onClick={() => setExpandedTimeline(expandedTimeline === entry.id ? null : entry.id)}
+                        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          {expandedTimeline === entry.id ? (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                          )}
+                          <div className="text-left">
+                            <div className="font-semibold text-gray-900">
+                              {entry.title || "New Project Entry"}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {entry.organization || "Role not specified"}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {entry.visibility === "public" ? (
+                            <Eye className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-gray-400" />
+                          )}
+                        </div>
+                      </button>
+
+                      {expandedTimeline === entry.id && (
+                        <div className="px-6 py-4 border-t border-gray-200 space-y-4">
+                          {/* Project Name */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Project Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g., AI Compliance Tool, Mentorship Platform MVP"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          {/* Your Role */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Your Role <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g., Founder, Advisor, Product Lead"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          {/* Industry */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Industry <span className="text-red-500">*</span>
+                            </label>
+                            <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                              <option value="">Select industry...</option>
+                              {Object.keys(industryTaxonomy).map(sector => (
+                                <option key={sector} value={sector}>{sector}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Date Range */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                              <input
+                                type="month"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                              <input
+                                type="month"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                disabled={entry.isCurrent}
+                              />
+                              <label className="flex items-center gap-2 mt-2">
+                                <input type="checkbox" className="rounded" />
+                                <span className="text-sm text-gray-600">Ongoing</span>
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Description/Outcome */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Description / Outcome</label>
+                            <textarea
+                              rows={3}
+                              placeholder="Describe the project and its outcome..."
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                            />
+                          </div>
+
+                          {/* Visibility */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                            <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                              <option value="public">Public</option>
+                              <option value="private">Private</option>
+                            </select>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                            <button
+                              onClick={() => setTimelineEntries(timelineEntries.filter(e => e.id !== entry.id))}
+                              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-semibold text-sm"
+                            >
+                              Delete Entry
+                            </button>
+                            <button className="px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-semibold text-sm">
+                              Save Entry
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Certifications Section */}
+          {activeSection === "certifications" && (
+            <div className="bg-white rounded-xl border border-gray-200 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Certifications</h2>
+                <button
+                  onClick={() => setCertifications([...certifications, { id: `cert-${Date.now()}`, name: "", issuer: "", date: "", expiry: "", credentialId: "", visibility: "public" }])}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-semibold text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Certification
+                </button>
+              </div>
+
+              {certifications.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p className="mb-4">No certifications added yet</p>
+                  <button
+                    onClick={() => setCertifications([{ id: `cert-${Date.now()}`, name: "", issuer: "", date: "", expiry: "", credentialId: "", visibility: "public" }])}
+                    className="text-[#0A2463] font-semibold hover:underline"
+                  >
+                    Add your first certification
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {certifications.map((cert) => (
+                    <div key={cert.id} className="border border-gray-200 rounded-lg p-6 space-y-4">
+                      {/* Certification Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Certification Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={cert.name}
+                          onChange={(e) => setCertifications(certifications.map(c => c.id === cert.id ? { ...c, name: e.target.value } : c))}
+                          placeholder="e.g., CFA Level III, AWS Solutions Architect"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      {/* Issuing Organization */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Issuing Organization <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={cert.issuer}
+                          onChange={(e) => setCertifications(certifications.map(c => c.id === cert.id ? { ...c, issuer: e.target.value } : c))}
+                          placeholder="e.g., CFA Institute, Amazon"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      {/* Dates */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Date Obtained</label>
+                          <input
+                            type="month"
+                            value={cert.date}
+                            onChange={(e) => setCertifications(certifications.map(c => c.id === cert.id ? { ...c, date: e.target.value } : c))}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date (optional)</label>
+                          <input
+                            type="month"
+                            value={cert.expiry}
+                            onChange={(e) => setCertifications(certifications.map(c => c.id === cert.id ? { ...c, expiry: e.target.value } : c))}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Credential ID */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Credential ID (optional)</label>
+                        <input
+                          type="text"
+                          value={cert.credentialId}
+                          onChange={(e) => setCertifications(certifications.map(c => c.id === cert.id ? { ...c, credentialId: e.target.value } : c))}
+                          placeholder="e.g., ABC-123-XYZ"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      {/* Visibility */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                        <select
+                          value={cert.visibility}
+                          onChange={(e) => setCertifications(certifications.map(c => c.id === cert.id ? { ...c, visibility: e.target.value as "public"|"private" } : c))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="public">Public</option>
+                          <option value="private">Private</option>
+                        </select>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => setCertifications(certifications.filter(c => c.id !== cert.id))}
+                          className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-semibold text-sm"
+                        >
+                          Delete
+                        </button>
+                        <button className="px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-semibold text-sm">
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Professional Training Section */}
+          {activeSection === "training" && (
+            <div className="bg-white rounded-xl border border-gray-200 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Professional Training</h2>
+                <button
+                  onClick={() => setTrainings([...trainings, { id: `train-${Date.now()}`, name: "", provider: "", date: "", duration: "", type: "", visibility: "public" }])}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-semibold text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Training
+                </button>
+              </div>
+
+              {trainings.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p className="mb-4">No training records yet</p>
+                  <button
+                    onClick={() => setTrainings([{ id: `train-${Date.now()}`, name: "", provider: "", date: "", duration: "", type: "", visibility: "public" }])}
+                    className="text-[#0A2463] font-semibold hover:underline"
+                  >
+                    Add your first training
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {trainings.map((training) => (
+                    <div key={training.id} className="border border-gray-200 rounded-lg p-6 space-y-4">
+                      {/* Course/Program Name */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Course / Program Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={training.name}
+                          onChange={(e) => setTrainings(trainings.map(t => t.id === training.id ? { ...t, name: e.target.value } : t))}
+                          placeholder="e.g., Executive Leadership Program, Machine Learning Specialization"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      {/* Provider */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Provider <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={training.provider}
+                          onChange={(e) => setTrainings(trainings.map(t => t.id === training.id ? { ...t, provider: e.target.value } : t))}
+                          placeholder="e.g., Coursera, Harvard Business School"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      {/* Type */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Type <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={training.type}
+                          onChange={(e) => setTrainings(trainings.map(t => t.id === training.id ? { ...t, type: e.target.value } : t))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select type...</option>
+                          <option value="online">Online Course</option>
+                          <option value="workshop">Workshop</option>
+                          <option value="bootcamp">Bootcamp</option>
+                          <option value="executive">Executive Program</option>
+                          <option value="conference">Conference</option>
+                        </select>
+                      </div>
+
+                      {/* Date and Duration */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Date Completed</label>
+                          <input
+                            type="month"
+                            value={training.date}
+                            onChange={(e) => setTrainings(trainings.map(t => t.id === training.id ? { ...t, date: e.target.value } : t))}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+                          <input
+                            type="text"
+                            value={training.duration}
+                            onChange={(e) => setTrainings(trainings.map(t => t.id === training.id ? { ...t, duration: e.target.value } : t))}
+                            placeholder="e.g., 6 weeks, 3 months"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Visibility */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                        <select
+                          value={training.visibility}
+                          onChange={(e) => setTrainings(trainings.map(t => t.id === training.id ? { ...t, visibility: e.target.value as "public"|"private" } : t))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="public">Public</option>
+                          <option value="private">Private</option>
+                        </select>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => setTrainings(trainings.filter(t => t.id !== training.id))}
+                          className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-semibold text-sm"
+                        >
+                          Delete
+                        </button>
+                        <button className="px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-semibold text-sm">
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Psychometric Tests Section */}
+          {activeSection === "psychometric" && (
+            <div className="bg-white rounded-xl border border-gray-200 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Psychometric Tests</h2>
+                <button
+                  onClick={() => setPsychTests([...psychTests, { id: `psych-${Date.now()}`, testType: "", date: "", result: "", provider: "", visibility: "public" }])}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-semibold text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Test
+                </button>
+              </div>
+
+              {psychTests.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p className="mb-4">No psychometric tests added yet</p>
+                  <button
+                    onClick={() => setPsychTests([{ id: `psych-${Date.now()}`, testType: "", date: "", result: "", provider: "", visibility: "public" }])}
+                    className="text-[#0A2463] font-semibold hover:underline"
+                  >
+                    Add your first test
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {psychTests.map((test) => (
+                    <div key={test.id} className="border border-gray-200 rounded-lg p-6 space-y-4">
+                      {/* Test Type */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Test Type <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={test.testType}
+                          onChange={(e) => setPsychTests(psychTests.map(t => t.id === test.id ? { ...t, testType: e.target.value } : t))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select test type...</option>
+                          <option value="disc">DISC Assessment</option>
+                          <option value="mbti">MBTI</option>
+                          <option value="bigfive">Big Five / OCEAN</option>
+                          <option value="strengthsfinder">StrengthsFinder</option>
+                          <option value="hogan">Hogan</option>
+                          <option value="shl">SHL</option>
+                          <option value="custom">Custom</option>
+                        </select>
+                      </div>
+
+                      {/* Provider/Platform */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Provider / Platform
+                        </label>
+                        <input
+                          type="text"
+                          value={test.provider}
+                          onChange={(e) => setPsychTests(psychTests.map(t => t.id === test.id ? { ...t, provider: e.target.value } : t))}
+                          placeholder="e.g., TTI Success Insights, 16Personalities"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      {/* Date Taken */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Date Taken</label>
+                        <input
+                          type="month"
+                          value={test.date}
+                          onChange={(e) => setPsychTests(psychTests.map(t => t.id === test.id ? { ...t, date: e.target.value } : t))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      {/* Result Summary */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Result Summary</label>
+                        <textarea
+                          rows={3}
+                          value={test.result}
+                          onChange={(e) => setPsychTests(psychTests.map(t => t.id === test.id ? { ...t, result: e.target.value } : t))}
+                          placeholder='e.g., "DISC: D=72, I=45, S=68, C=81" or "MBTI: INTJ"'
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                      </div>
+
+                      {/* Visibility */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                        <select
+                          value={test.visibility}
+                          onChange={(e) => setPsychTests(psychTests.map(t => t.id === test.id ? { ...t, visibility: e.target.value as "public"|"private" } : t))}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="public">Public</option>
+                          <option value="private">Private</option>
+                        </select>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                        <button
+                          onClick={() => setPsychTests(psychTests.filter(t => t.id !== test.id))}
+                          className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-semibold text-sm"
+                        >
+                          Delete
+                        </button>
+                        <button className="px-4 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-semibold text-sm">
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                <p className="text-sm text-gray-700">
+                  Your DISC profile from PhxNorth's 5D Analysis will appear here automatically once computed.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Privacy Settings Section */}
+          {activeSection === "privacy" && (
+            <div className="bg-white rounded-xl border border-gray-200 p-8">
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="w-6 h-6 text-[#0A2463]" />
+                  <h2 className="text-2xl font-bold text-gray-900">Privacy Settings</h2>
+                </div>
+                <p className="text-gray-600">Control what mentors, enterprises, and other users can see</p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Global Profile Visibility */}
+                <div className="border border-gray-200 rounded-lg p-6">
+                  <h3 className="font-semibold text-gray-900 mb-1">Global Profile Visibility</h3>
+                  <p className="text-sm text-gray-600 mb-4">Controls whether your profile appears in search results</p>
+                  <div className="flex gap-4">
+                    {(["public", "private", "custom"] as const).map((option) => (
+                      <label key={option} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="globalVisibility"
+                          checked={visibilitySettings.globalVisibility === option}
+                          onChange={() => setVisibilitySettings({ ...visibilitySettings, globalVisibility: option })}
+                          className="w-4 h-4 text-[#0A2463] focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700 capitalize">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Show Current Company */}
+                <div className="border border-gray-200 rounded-lg p-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Show Current Company</h3>
+                    <p className="text-sm text-gray-600">Display your current employer on your public profile</p>
+                  </div>
+                  <button
+                    onClick={() => setVisibilitySettings({ ...visibilitySettings, showCurrentCompany: !visibilitySettings.showCurrentCompany })}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                      visibilitySettings.showCurrentCompany ? "bg-[#0A2463]" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        visibilitySettings.showCurrentCompany ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Show Full Career Timeline */}
+                <div className="border border-gray-200 rounded-lg p-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Show Full Career Timeline</h3>
+                    <p className="text-sm text-gray-600">Show all past positions or only current role</p>
+                  </div>
+                  <button
+                    onClick={() => setVisibilitySettings({ ...visibilitySettings, showFullCareerTimeline: !visibilitySettings.showFullCareerTimeline })}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                      visibilitySettings.showFullCareerTimeline ? "bg-[#0A2463]" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        visibilitySettings.showFullCareerTimeline ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Allow Enterprise View */}
+                <div className="border border-gray-200 rounded-lg p-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Allow Enterprise View</h3>
+                    <p className="text-sm text-gray-600">Let enterprises see your profile for talent campaigns</p>
+                  </div>
+                  <button
+                    onClick={() => setVisibilitySettings({ ...visibilitySettings, allowEnterpriseView: !visibilitySettings.allowEnterpriseView })}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                      visibilitySettings.allowEnterpriseView ? "bg-[#0A2463]" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        visibilitySettings.allowEnterpriseView ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Allow Mentor Discovery */}
+                <div className="border border-gray-200 rounded-lg p-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Allow Mentor Discovery</h3>
+                    <p className="text-sm text-gray-600">Appear in mentor search results</p>
+                  </div>
+                  <button
+                    onClick={() => setVisibilitySettings({ ...visibilitySettings, allowMentorDiscovery: !visibilitySettings.allowMentorDiscovery })}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                      visibilitySettings.allowMentorDiscovery ? "bg-[#0A2463]" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        visibilitySettings.allowMentorDiscovery ? "translate-x-6" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="mt-6 flex justify-end">
+                <button className="px-6 py-3 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-bold text-sm">
+                  Save Privacy Settings
+                </button>
               </div>
             </div>
           )}
