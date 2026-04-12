@@ -224,12 +224,7 @@ export function MentorDashboard() {
                 <ToggleLeft className="w-12 h-12 text-white" />
               )}
             </button>
-            {isOnline && (
-              <div className="bg-orange-100 border-2 border-orange-300 rounded-lg px-4 py-2">
-                <div className="text-orange-700 text-sm font-semibold">2 Requests Waiting</div>
-                <div className="text-orange-600 text-xs">View in queue below</div>
-              </div>
-            )}
+            {/* TODO: Show when real mentorship requests exist from API */}
           </div>
         </div>
 
