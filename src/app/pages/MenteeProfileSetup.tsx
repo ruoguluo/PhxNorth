@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { discCvAPI, discCareerAPI } from "../../lib/disc-api";
+import { useAuth } from "../../lib/auth-context";
 
 type SectionStatus = "not-started" | "draft" | "verified";
 type ImportMethod = "upload" | "linkedin" | "form" | null;
@@ -65,6 +66,7 @@ interface ModularSection {
 
 export function MenteeProfileSetup() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // State
   const [selectedMethod, setSelectedMethod] = useState<ImportMethod>(null);
@@ -1561,261 +1563,194 @@ export function MenteeProfileSetup() {
             <div className="space-y-6">
               {/* Page Header */}
               <div className="mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-3">Your 5D Snapshot</h1>
-                <p className="text-lg text-gray-600">AI-generated summary — confirm, refine, and control visibility.</p>
+                <h1 className="text-4xl font-bold text-gray-900 mb-3">Profile Overview</h1>
+                <p className="text-lg text-gray-600">Summary of your profile sections. Click any card to edit.</p>
               </div>
 
-              {/* CARD 1 — Signature Tags (AI) */}
+              {/* Core Identity */}
               <div className="bg-white rounded-xl border border-gray-200 p-8">
-                <div className="flex items-center gap-2 mb-6">
-                  <Sparkles className="w-6 h-6 text-[#0A2463]" />
-                  <h2 className="text-2xl font-bold text-gray-900">Your Signature Tags</h2>
-                </div>
-
-                <div className="space-y-4">
-                  {/* Strengths */}
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Core Identity</h2>
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Strengths</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {["Strategic Operator", "Execution-Driven", "Cross-border", "High-velocity"].map((tag, idx) => (
-                        <div key={idx} className="group relative">
-                          <button className="px-4 py-2 bg-blue-50 text-[#0A2463] rounded-full text-sm font-medium border border-blue-200 hover:bg-blue-100 flex items-center gap-2">
-                            <span>{tag}</span>
-                            <span className="text-xs text-blue-600">92%</span>
-                          </button>
-                          <div className="absolute hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
-                            Derived from Career + Projects + Workshops
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-500 mb-1">Name</p>
+                    <p className="font-semibold text-gray-900">{user?.full_name || user?.username || "Not set"}</p>
                   </div>
-
-                  {/* Domain / Industry Signals */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Domain / Industry Signals</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {["FinTech", "SaaS", "Asset Management", "AI/ML Infrastructure"].map((tag, idx) => (
-                        <div key={idx} className="group relative">
-                          <button className="px-4 py-2 bg-green-50 text-green-700 rounded-full text-sm font-medium border border-green-200 hover:bg-green-100 flex items-center gap-2">
-                            <span>{tag}</span>
-                            <span className="text-xs text-green-600">88%</span>
-                          </button>
-                          <div className="absolute hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
-                            Derived from Career + Projects + Workshops
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-500 mb-1">Email</p>
+                    <p className="font-semibold text-gray-900">{user?.email || "Not set"}</p>
                   </div>
-
-                  {/* Decision & Risk Style */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Decision & Risk Style</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {["High-conviction", "Risk-calibrated", "Evidence-led", "First-principles"].map((tag, idx) => (
-                        <div key={idx} className="group relative">
-                          <button className="px-4 py-2 bg-purple-50 text-purple-700 rounded-full text-sm font-medium border border-purple-200 hover:bg-purple-100 flex items-center gap-2">
-                            <span>{tag}</span>
-                            <span className="text-xs text-purple-600">85%</span>
-                          </button>
-                          <div className="absolute hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
-                            Derived from Career + Projects + Workshops
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-500 mb-1">Industry</p>
+                    <p className="font-semibold text-gray-900">{user?.industry || "Not set"}{user?.sector ? ` / ${user.sector}` : ""}</p>
                   </div>
-
-                  {/* Collaboration / Communication */}
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Collaboration / Communication</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {["Direct communicator", "Stakeholder-led", "Consensus-builder", "Remote-first"].map((tag, idx) => (
-                        <div key={idx} className="group relative">
-                          <button className="px-4 py-2 bg-orange-50 text-orange-700 rounded-full text-sm font-medium border border-orange-200 hover:bg-orange-100 flex items-center gap-2">
-                            <span>{tag}</span>
-                            <span className="text-xs text-orange-600">90%</span>
-                          </button>
-                          <div className="absolute hidden group-hover:block bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded whitespace-nowrap z-10">
-                            Derived from Career + Projects + Workshops
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-500 mb-1">Country</p>
+                    <p className="font-semibold text-gray-900">{user?.current_country || "Not set"}</p>
                   </div>
-                </div>
-
-                <div className="mt-6 flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">
-                    Tags are AI-generated from your profile data. Hide or edit any tag.
-                  </p>
-                  <button className="text-sm font-semibold text-[#0A2463] hover:underline flex items-center gap-1">
-                    <RefreshCw className="w-4 h-4" />
-                    Refresh tags
-                  </button>
                 </div>
               </div>
 
-              {/* CARD 2 — Education Snapshot */}
+              {/* Education Summary */}
               <div className="bg-white rounded-xl border border-gray-200 p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Education Snapshot</h2>
-                
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-6 h-6 text-[#0A2463]" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-bold text-gray-900">MSc in Computer Science</h3>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">Imperial College London · 2018-2020</p>
-                      
-                      <div className="bg-blue-50 rounded-lg p-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-2">AI Academic Summary</p>
-                        <ul className="space-y-1 text-sm text-gray-700">
-                          <li>• Quant-focused training with machine learning specialization</li>
-                          <li>• Research exposure in distributed systems</li>
-                          <li>• Leadership roles in hackathon organization</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Education</h2>
+                  <span className="text-sm font-semibold text-gray-500">{timelineEntries.filter(e => e.type === "education").length} entries</span>
                 </div>
-
-                <button 
-                  onClick={() => setActiveSection("education")}
-                  className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors"
-                >
+                {timelineEntries.filter(e => e.type === "education").length > 0 ? (
+                  <div className="space-y-3">
+                    {timelineEntries.filter(e => e.type === "education").map((entry) => (
+                      <div key={entry.id} className="flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-5 h-5 text-[#0A2463]" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{entry.title || "Untitled"}</p>
+                          <p className="text-sm text-gray-600">{entry.organization || "Institution not specified"}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No education entries yet.</p>
+                )}
+                <button onClick={() => setActiveSection("education")} className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors">
                   View & edit Education Timeline
                   <ExternalLink className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* CARD 3 — Career Snapshot */}
+              {/* Career Summary */}
               <div className="bg-white rounded-xl border border-gray-200 p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Career Snapshot</h2>
-                
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-bold text-gray-900">Senior Product Manager</h3>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <p className="text-sm text-gray-600">TechCorp Ltd</p>
-                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Technology → SaaS</span>
-                      </div>
-                      
-                      <div className="bg-green-50 rounded-lg p-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase mb-2">AI Career Summary</p>
-                        <ul className="space-y-1 text-sm text-gray-700">
-                          <li>• Leading cross-functional team of 12 across EMEA</li>
-                          <li>• Delivered 3 major product launches with 40% revenue growth</li>
-                          <li>• Scaled user base from 50K to 500K in 18 months</li>
-                          <li>• Rapid progression from PM to Senior PM in 2 years</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Career</h2>
+                  <span className="text-sm font-semibold text-gray-500">{timelineEntries.filter(e => e.type === "career").length} entries</span>
                 </div>
-
-                <button 
-                  onClick={() => setActiveSection("career")}
-                  className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors"
-                >
+                {timelineEntries.filter(e => e.type === "career").length > 0 ? (
+                  <div className="space-y-3">
+                    {timelineEntries.filter(e => e.type === "career").map((entry) => (
+                      <div key={entry.id} className="flex items-center gap-4 p-3 bg-green-50 rounded-lg">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{entry.title || "Untitled"}</p>
+                          <p className="text-sm text-gray-600">{entry.organization || "Company not specified"}{entry.industryL1 ? ` · ${entry.industryL1}` : ""}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No career entries yet.</p>
+                )}
+                <button onClick={() => setActiveSection("career")} className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors">
                   View & edit Career Timeline
                   <ExternalLink className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* CARD 4 — Innovation & Projects */}
+              {/* Projects Summary */}
               <div className="bg-white rounded-xl border border-gray-200 p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Innovation & Projects</h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { name: "AI Compliance Tool", role: "Founder", industry: "FinTech", outcome: "Acquired by RegTech Inc" },
-                    { name: "Mentorship Platform MVP", role: "Product Lead", industry: "EdTech", outcome: "5K users in 3 months" },
-                    { name: "Cross-border Payments", role: "Advisor", industry: "FinTech", outcome: "$2M seed raised" }
-                  ].map((project, idx) => (
-                    <div key={idx} className="border-2 border-gray-200 rounded-lg p-4 hover:border-[#0A2463] transition-colors">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                          {project.industry}
-                        </span>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <h3 className="font-bold text-gray-900 mb-1">{project.name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{project.role}</p>
-                      <p className="text-xs text-green-600 font-semibold">✓ {project.outcome}</p>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Business / Projects</h2>
+                  <span className="text-sm font-semibold text-gray-500">{timelineEntries.filter(e => e.type === "business").length} entries</span>
                 </div>
-
-                <button 
-                  onClick={() => setActiveSection("business")}
-                  className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors"
-                >
+                {timelineEntries.filter(e => e.type === "business").length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {timelineEntries.filter(e => e.type === "business").map((entry) => (
+                      <div key={entry.id} className="border border-gray-200 rounded-lg p-4">
+                        <p className="font-bold text-gray-900">{entry.title || "Untitled"}</p>
+                        <p className="text-sm text-gray-600">{entry.organization || "Role not specified"}</p>
+                        {entry.industryL1 && <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded mt-2 inline-block">{entry.industryL1}</span>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No projects yet.</p>
+                )}
+                <button onClick={() => setActiveSection("business")} className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors">
                   View & edit Business / Projects
                   <ExternalLink className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* BOTTOM ACTION BAR */}
+              {/* Credentials Summary */}
+              <div className="bg-white rounded-xl border border-gray-200 p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">Credentials</h2>
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-3xl font-bold text-[#0A2463]">{certifications.length}</p>
+                    <p className="text-sm text-gray-600 mt-1">Certifications</p>
+                    <button onClick={() => setActiveSection("certifications")} className="text-xs text-[#0A2463] font-semibold mt-2 hover:underline">View / Add</button>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-3xl font-bold text-[#0A2463]">{trainings.length}</p>
+                    <p className="text-sm text-gray-600 mt-1">Training Records</p>
+                    <button onClick={() => setActiveSection("training")} className="text-xs text-[#0A2463] font-semibold mt-2 hover:underline">View / Add</button>
+                  </div>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <p className="text-3xl font-bold text-[#0A2463]">{psychTests.length}</p>
+                    <p className="text-sm text-gray-600 mt-1">Psychometric Tests</p>
+                    <button onClick={() => setActiveSection("psychometric")} className="text-xs text-[#0A2463] font-semibold mt-2 hover:underline">View / Add</button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Privacy Summary */}
+              <div className="bg-white rounded-xl border border-gray-200 p-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">Privacy</h2>
+                  <span className={`text-xs px-3 py-1 rounded-full font-semibold ${visibilitySettings.globalVisibility === "public" ? "bg-green-100 text-green-700" : visibilitySettings.globalVisibility === "private" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
+                    {visibilitySettings.globalVisibility.charAt(0).toUpperCase() + visibilitySettings.globalVisibility.slice(1)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-600">Show current company</span>
+                    <span className={`font-semibold ${visibilitySettings.showCurrentCompany ? "text-green-600" : "text-gray-400"}`}>{visibilitySettings.showCurrentCompany ? "Yes" : "No"}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-600">Full career timeline</span>
+                    <span className={`font-semibold ${visibilitySettings.showFullCareerTimeline ? "text-green-600" : "text-gray-400"}`}>{visibilitySettings.showFullCareerTimeline ? "Yes" : "No"}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-600">Enterprise view</span>
+                    <span className={`font-semibold ${visibilitySettings.allowEnterpriseView ? "text-green-600" : "text-gray-400"}`}>{visibilitySettings.allowEnterpriseView ? "Yes" : "No"}</span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-600">Mentor discovery</span>
+                    <span className={`font-semibold ${visibilitySettings.allowMentorDiscovery ? "text-green-600" : "text-gray-400"}`}>{visibilitySettings.allowMentorDiscovery ? "Yes" : "No"}</span>
+                  </div>
+                </div>
+                <button onClick={() => setActiveSection("privacy")} className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:border-[#0A2463] hover:text-[#0A2463] font-semibold transition-colors">
+                  Edit Privacy Settings
+                  <ExternalLink className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Action Bar */}
               <div className="bg-white rounded-xl border-2 border-[#0A2463] p-6 sticky bottom-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="text-sm text-gray-600">
-                      Last updated: <span className="font-semibold">2 hours ago</span>
-                    </div>
-                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-semibold text-sm">
-                      <RefreshCw className="w-4 h-4" />
-                      AI refresh
-                    </button>
+                  <div className="text-sm text-gray-600">
+                    Profile sections: {timelineEntries.length} timeline entries, {certifications.length} certs, {trainings.length} training, {psychTests.length} tests
                   </div>
-                  
                   <div className="flex items-center gap-3">
-                    <button 
+                    <button
                       onClick={() => {
                         const nextIncomplete = sections.find(s => s.completion < 100 && s.weight && s.weight > 0);
                         if (nextIncomplete) setActiveSection(nextIncomplete.id);
                       }}
                       className="px-6 py-3 border border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50"
                     >
-                      Continue building profile →
+                      Continue building profile
                     </button>
-                    <button 
-                      disabled={sections.find(s => s.id === "career")?.completion === 0}
-                      className={`px-6 py-3 rounded-lg font-bold transition-colors ${
-                        sections.find(s => s.id === "career")?.completion > 0
-                          ? "bg-[#0A2463] text-white hover:bg-[#0A2463]/90"
-                          : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      }`}
+                    <button
+                      onClick={() => navigate("/app/5d-snapshot")}
+                      className="px-6 py-3 bg-[#0A2463] text-white rounded-lg font-bold hover:bg-[#0A2463]/90"
                     >
-                      Run 5D Analysis
+                      View 5D Snapshot
                     </button>
                   </div>
                 </div>
-                
-                {sections.find(s => s.id === "career")?.completion === 0 && (
-                  <p className="text-xs text-orange-600 mt-3 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    Complete Career Timeline and review Privacy Settings to unlock 5D Analysis
-                  </p>
-                )}
               </div>
             </div>
           )}
