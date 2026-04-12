@@ -49,6 +49,7 @@ import { CVUpload } from "./pages/CVUpload";
 import { CareerAnalytics } from "./pages/CareerAnalytics";
 import { Preferences } from "./pages/Preferences";
 import { RiskDashboard } from "./pages/RiskDashboard";
+import { FindMentor } from "./pages/FindMentor";
 import { NotFound } from "./pages/NotFound";
 import { Layout } from "./components/Layout";
 
@@ -273,6 +274,10 @@ export const router = createBrowserRouter([
       {
         path: "admin/risk",
         Component: RiskDashboard,
+      },
+      {
+        path: "find-mentor",
+        Component: FindMentor,
       },
     ],
   },
