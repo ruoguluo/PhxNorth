@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search, ChevronDown, UserCircle, Target, MessageSquare, BookOpen } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
 
 type Role = 'mentee' | 'mentor' | 'consultant';
@@ -89,11 +89,24 @@ export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const isMentorDashboard = location.pathname.includes('mentor-dashboard');
+  // Derive current role from URL path
+  const isMentorPath = location.pathname.includes('/mentor');
+  const derivedRole: Role = isMentorPath ? 'mentor' : 'mentee';
   
   // Role management state
-  const [activeRoles, setActiveRoles] = useState<Role[]>([((user?.role as Role) || 'mentee')]); // User has activated Mentee role
-  const [currentRole, setCurrentRole] = useState<Role>('mentee'); // Currently viewing Mentee dashboard
+  const userRole = (user?.role as Role) || 'mentee';
+  const [activeRoles, setActiveRoles] = useState<Role[]>(() => {
+    const roles = new Set<Role>([userRole]);
+    if (isMentorPath) roles.add('mentor');
+    if (userRole === 'mentee') roles.add('mentee');
+    return Array.from(roles);
+  });
+  const [currentRole, setCurrentRole] = useState<Role>(derivedRole);
+  // Keep currentRole in sync with URL
+  useEffect(() => {
+    setCurrentRole(derivedRole);
+  }, [derivedRole]);
+
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [roleToActivate, setRoleToActivate] = useState<Role | null>(null);
 
