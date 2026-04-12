@@ -202,93 +202,6 @@ export function MenteeDashboard() {
       {/* Left Sidebar - Mentee Tools */}
       <aside className="w-64 flex-shrink-0">
         <div className="bg-white rounded-xl border border-gray-200 p-4 sticky top-24">
-          {/* ACTIVATIONS Section */}
-          <div>
-            <div className="px-2 py-2 mb-3">
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">ACTIVATIONS</span>
-            </div>
-
-            {/* Join Talent Mobility Card */}
-            <div className="px-2 mb-3">
-              <div
-                className={`bg-[#F9FBFF] rounded-xl p-3 transition-all hover:shadow-md ${isTalentMobilityEnabled
-                    ? 'border-2 border-emerald-500'
-                    : 'border border-gray-200'
-                  }`}
-              >
-                <div className="flex items-start gap-3 mb-2">
-                  <div className="p-2 bg-emerald-100 rounded-lg flex-shrink-0">
-                    <Globe className="w-4 h-4 text-emerald-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <h4 className="text-xs font-semibold text-gray-900">Join Talent Mobility</h4>
-                      <button
-                        onClick={handleTalentMobilityToggle}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${isTalentMobilityEnabled ? 'bg-emerald-600' : 'bg-gray-300'
-                          }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isTalentMobilityEnabled ? 'translate-x-5' : 'translate-x-1'
-                            }`}
-                        />
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-gray-600 leading-relaxed">
-                      Access curated enterprise hiring campaigns and participate in global talent mobility opportunities.
-                    </p>
-                    {isTalentMobilityEnabled && (
-                      <span className="inline-block mt-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Commercial Consultation Card */}
-            <div className="px-2 mb-3">
-              <div
-                className={`bg-[#F9FBFF] rounded-xl p-3 transition-all hover:shadow-md ${isCommercialConsultationEnabled
-                    ? 'border-2 border-emerald-500'
-                    : 'border border-gray-200'
-                  }`}
-              >
-                <div className="flex items-start gap-3 mb-2">
-                  <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                    <Briefcase className="w-4 h-4 text-purple-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <h4 className="text-xs font-semibold text-gray-900">Commercial Consultation</h4>
-                      <button
-                        onClick={handleCommercialConsultationToggle}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${isCommercialConsultationEnabled ? 'bg-emerald-600' : 'bg-gray-300'
-                          }`}
-                      >
-                        <span
-                          className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isCommercialConsultationEnabled ? 'translate-x-5' : 'translate-x-1'
-                            }`}
-                        />
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-gray-600 leading-relaxed">
-                      Participate in enterprise consulting projects and advisory engagements.
-                    </p>
-                    {isCommercialConsultationEnabled && (
-                      <span className="inline-block mt-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 mb-4"></div>
-
           {/* MENTEE TOOLS Section Header */}
           <div className="px-2 py-2 mb-2">
             <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">MENTEE TOOLS</span>
@@ -397,83 +310,94 @@ export function MenteeDashboard() {
             )}
           </div>
 
-          {/* TALENT MOBILITY Section - Only shown when toggle is ON */}
-          {isTalentMobilityEnabled && (
-            <>
-              <div className="border-t border-gray-200 my-3"></div>
-
-              <div
-                ref={talentMobilityRef}
-                className={`mx-2 mb-3 bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 border-l-4 border-emerald-600 transition-all duration-500 ${talentMobilityJustActivated ? 'animate-pulse shadow-lg' : 'shadow-sm'
-                  }`}
-              >
-                <div className="mb-3">
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-emerald-700" />
-                    <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">TALENT MOBILITY</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <a
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); setViewMode('talentMobility'); }}
-                    className="flex items-center gap-2 px-3 py-2 text-emerald-800 hover:bg-white/80 rounded-lg transition-all hover:shadow-sm group"
-                  >
-                    <Target className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium">Job Alerts Setup</span>
-                  </a>
-                  <a
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); setViewMode('talentMobility'); }}
-                    className="flex items-center gap-2 px-3 py-2 text-emerald-800 hover:bg-white/80 rounded-lg transition-all hover:shadow-sm group"
-                  >
-                    <TrendingUp className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium">Referral Progress</span>
-                  </a>
-                </div>
+          {/* TALENT MOBILITY Section - toggle + submenu */}
+          <div className="border-t border-gray-200 my-3"></div>
+          <div
+            ref={talentMobilityRef}
+            className={`mx-2 mb-3 rounded-xl p-4 border-l-4 transition-all duration-500 ${
+              isTalentMobilityEnabled
+                ? `bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-600 ${talentMobilityJustActivated ? 'animate-pulse shadow-lg' : 'shadow-sm'}`
+                : 'bg-gray-50 border-gray-300'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-emerald-700" />
+                <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Talent Mobility</span>
               </div>
-            </>
-          )}
-
-          {/* COMMERCIAL CONSULTATION Section - Only shown when toggle is ON */}
-          {isCommercialConsultationEnabled && (
-            <>
-              <div className="border-t border-gray-200 my-3"></div>
-
-              <div
-                ref={commercialConsultationRef}
-                className={`mx-2 mb-3 bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4 border-l-4 border-purple-600 transition-all duration-500 ${commercialJustActivated ? 'animate-pulse shadow-lg' : 'shadow-sm'
-                  }`}
+              <button
+                onClick={handleTalentMobilityToggle}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${isTalentMobilityEnabled ? 'bg-emerald-600' : 'bg-gray-300'}`}
               >
-                <div className="mb-3">
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="w-4 h-4 text-purple-700" />
-                    <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">COMMERCIAL CONSULTATION</span>
-                  </div>
-                </div>
+                <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isTalentMobilityEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+              </button>
+            </div>
 
-                <div className="space-y-1">
-                  <a
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); setViewMode('commercialConsultation'); }}
-                    className="flex items-center gap-2 px-3 py-2 text-purple-800 hover:bg-white/80 rounded-lg transition-all hover:shadow-sm group"
-                  >
-                    <FileText className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium">Project Interests Setup</span>
-                  </a>
-                  <a
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); setViewMode('commercialConsultation'); }}
-                    className="flex items-center gap-2 px-3 py-2 text-purple-800 hover:bg-white/80 rounded-lg transition-all hover:shadow-sm group"
-                  >
-                    <Briefcase className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium">Advisory Projects</span>
-                  </a>
-                </div>
+            {isTalentMobilityEnabled && (
+              <div className="space-y-1 mt-3">
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setViewMode('talentMobility'); }}
+                  className="flex items-center gap-2 px-3 py-2 text-emerald-800 hover:bg-white/80 rounded-lg transition-all hover:shadow-sm group"
+                >
+                  <Target className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Job Alerts Setup</span>
+                </a>
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setViewMode('talentMobility'); }}
+                  className="flex items-center gap-2 px-3 py-2 text-emerald-800 hover:bg-white/80 rounded-lg transition-all hover:shadow-sm group"
+                >
+                  <TrendingUp className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Referral Progress</span>
+                </a>
               </div>
-            </>
-          )}
+            )}
+          </div>
+
+          {/* COMMERCIAL CONSULTATION Section - toggle + submenu */}
+          <div
+            ref={commercialConsultationRef}
+            className={`mx-2 mb-3 rounded-xl p-4 border-l-4 transition-all duration-500 ${
+              isCommercialConsultationEnabled
+                ? `bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-600 ${commercialJustActivated ? 'animate-pulse shadow-lg' : 'shadow-sm'}`
+                : 'bg-gray-50 border-gray-300'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-purple-700" />
+                <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">Commercial Consultation</span>
+              </div>
+              <button
+                onClick={handleCommercialConsultationToggle}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${isCommercialConsultationEnabled ? 'bg-emerald-600' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${isCommercialConsultationEnabled ? 'translate-x-5' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {isCommercialConsultationEnabled && (
+              <div className="space-y-1 mt-3">
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setViewMode('commercialConsultation'); }}
+                  className="flex items-center gap-2 px-3 py-2 text-purple-800 hover:bg-white/80 rounded-lg transition-all hover:shadow-sm group"
+                >
+                  <FileText className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Project Interests Setup</span>
+                </a>
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); setViewMode('commercialConsultation'); }}
+                  className="flex items-center gap-2 px-3 py-2 text-purple-800 hover:bg-white/80 rounded-lg transition-all hover:shadow-sm group"
+                >
+                  <Briefcase className="w-4 h-4 text-purple-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Advisory Projects</span>
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
