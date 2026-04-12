@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search } from "lucide-react";
+import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search, ChevronDown, UserCircle } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { useState } from "react";
 import { useAuth } from "../../lib/auth-context";
@@ -41,6 +41,49 @@ const roleConfigs: Record<Role, RoleConfig> = {
     description: 'Provide strategic advisory to enterprises, manage consulting projects, and drive business outcomes.',
   },
 };
+
+function ProfileSubmenu({ currentPath }: { currentPath: string }) {
+  const profilePaths = ['/app/mentee/profile-setup', '/app/5d-snapshot'];
+  const isActive = profilePaths.some(p => currentPath.startsWith(p));
+  const [open, setOpen] = useState(isActive);
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+          isActive ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+        }`}
+      >
+        <span className="flex items-center gap-3">
+          <UserCircle className="w-4 h-4" />
+          My Profile
+        </span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="ml-7 mt-1 space-y-1 border-l-2 border-gray-200 pl-3">
+          <Link
+            to="/app/mentee/profile-setup"
+            className={`block px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              currentPath === '/app/mentee/profile-setup' ? 'text-[#0A2463] font-medium bg-[#0A2463]/5' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Update Profile
+          </Link>
+          <Link
+            to="/app/5d-snapshot"
+            className={`block px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              currentPath === '/app/5d-snapshot' ? 'text-[#0A2463] font-medium bg-[#0A2463]/5' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            5D Snapshot
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Layout() {
   const location = useLocation();
@@ -214,90 +257,28 @@ export function Layout() {
             ) : (
               /* ── Mentee / Mentor Sidebar ── */
               <>
-                {/* Main */}
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Main</h3>
-                  <div className="space-y-1">
-                    <Link
-                      to="/app/dashboard"
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname === '/app/dashboard' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Dashboard
-                    </Link>
-                    <Link
-                      to="/app/find-mentor"
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname === '/app/find-mentor' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Search className="w-4 h-4" />
-                      Find Mentor
-                    </Link>
-                    <Link
-                      to="/app/projects"
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname.startsWith('/app/projects') ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <FolderOpen className="w-4 h-4" />
-                      Projects
-                    </Link>
-                    <Link
-                      to="/app/courses"
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname.startsWith('/app/courses') ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <GraduationCap className="w-4 h-4" />
-                      Courses
-                    </Link>
-                  </div>
-                </div>
+                <div className="space-y-1">
+                  <Link
+                    to="/app/dashboard"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/dashboard' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/app/find-mentor"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/find-mentor' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Search className="w-4 h-4" />
+                    Find Mentor
+                  </Link>
 
-                {/* Intelligence */}
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Intelligence</h3>
-                  <div className="space-y-1">
-                    <Link
-                      to="/app/cv-upload"
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname === '/app/cv-upload' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <FileText className="w-4 h-4" />
-                      Upload CV
-                    </Link>
-                    <Link
-                      to="/app/5d-snapshot"
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname === '/app/5d-snapshot' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Radar className="w-4 h-4" />
-                      5D Snapshot
-                    </Link>
-                    <Link
-                      to="/app/career"
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname === '/app/career' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Briefcase className="w-4 h-4" />
-                      Career
-                    </Link>
-                    <Link
-                      to="/app/preferences"
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        location.pathname === '/app/preferences' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <SlidersHorizontal className="w-4 h-4" />
-                      Preferences
-                    </Link>
-                  </div>
+                  {/* My Profile — collapsible */}
+                  <ProfileSubmenu currentPath={location.pathname} />
                 </div>
               </>
             )}
