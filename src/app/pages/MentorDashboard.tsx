@@ -197,30 +197,6 @@ export function MentorDashboard() {
       {/* Left Sidebar */}
       <aside className="w-64 bg-white border-r border-gray-200 p-4 flex-shrink-0">
         <div className="space-y-6">
-          {/* Role Switcher */}
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 px-2">
-              Your Roles
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {activeRoles.map((role) => {
-                const isActive = role === currentRole;
-                const style = getRoleStyle(role, isActive);
-                return (
-                  <a
-                    key={role}
-                    href={getRoleRoute(role)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${style.bg} ${style.text} ${style.hover}`}
-                  >
-                    {getRoleLabel(role)}
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200"></div>
-
           {/* ACTIVATIONS Section */}
           <div>
             <div className="px-2 py-2 mb-3">
