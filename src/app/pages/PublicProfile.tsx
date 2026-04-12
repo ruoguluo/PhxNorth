@@ -19,6 +19,27 @@ import {
 import { profileAPI, mentorshipAPI, type UserProfile } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 
+// 5D mapping from DISC scores
+const FIVE_D_LABELS = ['Drive', 'Discipline', 'Decision Quality', 'Dialogue', 'Dynamism'] as const;
+function discTo5D(scores: { D: number; I: number; S: number; C: number }): Record<string, number> {
+  return {
+    'Drive': scores.D,
+    'Discipline': scores.C,
+    'Decision Quality': Math.round((scores.D + scores.C) / 2),
+    'Dialogue': scores.I,
+    'Dynamism': Math.round((scores.D + scores.I + (100 - scores.S)) / 3),
+  };
+}
+
+interface JobEntry {
+  title: string;
+  company: string;
+  location?: string;
+  start_date: string;
+  end_date: string | null;
+  duration_months?: number;
+}
+
 type RequestType = 'instant' | 'scheduled';
 type Duration = 30 | 60;
 
@@ -37,6 +58,8 @@ export function PublicProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fiveDScores, setFiveDScores] = useState<Record<string, number> | null>(null);
+  const [jobEntries, setJobEntries] = useState<JobEntry[]>([]);
 
   // Mentorship request modal
   const [showModal, setShowModal] = useState(false);
@@ -59,8 +82,46 @@ export function PublicProfile() {
 
     profileAPI
       .getPublic(name)
-      .then((data) => {
-        if (!cancelled) setProfile(data);
+      .then(async (data) => {
+        if (cancelled) return;
+        setProfile(data);
+
+        // Fetch DISC/5D and career data using the email
+        const email = (data as any).email;
+        if (!email) return;
+
+        const token = localStorage.getItem('phxnorth_token');
+        const headers = { Authorization: `Bearer ${token}` };
+
+        // Fetch DISC profile
+        try {
+          const discResp = await fetch(`/api/v1/disc-profile-by-email?email=${encodeURIComponent(email)}`, { headers });
+          if (discResp.ok) {
+            const disc = await discResp.json();
+            if (disc.scores && disc.confidence > 0 && !cancelled) {
+              setFiveDScores(discTo5D(disc.scores));
+            }
+          }
+        } catch { /* optional */ }
+
+        // Fetch career data (job entries)
+        try {
+          // Need the DISC user UUID first
+          const meResp = await fetch(`/api/v1/disc-profile-by-email?email=${encodeURIComponent(email)}`, { headers });
+          if (meResp.ok) {
+            const discData = await meResp.json();
+            const userId = discData.user_id;
+            if (userId) {
+              const careerResp = await fetch(`/api/v1/users/${userId}/career`, { headers });
+              if (careerResp.ok) {
+                const career = await careerResp.json();
+                if (career.job_entries && !cancelled) {
+                  setJobEntries(career.job_entries);
+                }
+              }
+            }
+          }
+        } catch { /* optional */ }
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load profile');
@@ -317,6 +378,66 @@ export function PublicProfile() {
             )}
           </div>
         </div>
+
+        {/* 5D Profile Snapshot */}
+        {fiveDScores && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">5D Profile Snapshot</h2>
+            <div className="space-y-3">
+              {FIVE_D_LABELS.map((label) => {
+                const value = fiveDScores[label] ?? 0;
+                return (
+                  <div key={label}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-gray-700 font-medium">{label}</span>
+                      <span className="font-bold text-gray-900">{Math.round(value)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-emerald-600 h-2 rounded-full transition-all"
+                        style={{ width: `${Math.min(value, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Career History */}
+        {jobEntries.length > 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Career History</h2>
+            <div className="space-y-4">
+              {jobEntries.map((job, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="flex flex-col items-center">
+                    <div className="w-3 h-3 bg-[#0A2463] rounded-full mt-1.5" />
+                    {i < jobEntries.length - 1 && <div className="w-0.5 flex-1 bg-gray-200 mt-1" />}
+                  </div>
+                  <div className="flex-1 pb-4">
+                    <h3 className="text-sm font-bold text-gray-900">{job.title || 'Untitled Role'}</h3>
+                    <p className="text-sm text-gray-600">{job.company}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                      {job.start_date && (
+                        <span>
+                          {job.start_date} — {job.end_date || 'Present'}
+                        </span>
+                      )}
+                      {job.duration_months && (
+                        <span className="bg-gray-100 px-2 py-0.5 rounded">
+                          {job.duration_months} mo
+                        </span>
+                      )}
+                      {job.location && <span>{job.location}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Request Mentorship Button */}
         {profile.role === 'mentor' && isAuthenticated && user?.id !== profile.id && (
