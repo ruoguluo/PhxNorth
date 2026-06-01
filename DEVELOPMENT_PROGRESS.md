@@ -92,13 +92,19 @@ make up          # the full stack in Docker (no reload)        -> :8080
 make test        # both pytest suites
 ```
 
-`make dev-all` is backed by `start-all.sh`, which **overrides** `DATABASE_URL`/
-`REDIS_URL`/`KAFKA_BOOTSTRAP_SERVERS` to `localhost` with the docker-compose
-Postgres creds (`phxnorth:phxnorth`) — the repo `.env` targets the in-network
-`postgres` host with a different password, so a natively-run backend needs the
-override. It also runs `alembic upgrade head` (best-effort) before starting the
-behavioral backend. Apps: behavioral `:8000`, demo `:8081`, frontend `:5173`
-(Vite proxies `/api`→8081 and `/api/v1`→8000).
+`make dev-all` is backed by `start-all.sh`. For the **behavioral backend only**
+(scoped to its subshell, so it never leaks into the SQLite demo server) it
+overrides `DATABASE_URL` → `localhost:5432` with the docker-compose Postgres
+creds (`phxnorth:phxnorth`), `REDIS_URL` → `localhost:6379`, and
+`KAFKA_BOOTSTRAP_SERVERS` → `localhost:29092`. The repo `.env` targets the
+in-network `postgres`/`kafka` hosts, so a natively-run backend needs these.
+It also runs `alembic upgrade head` (best-effort) first. Apps: behavioral
+`:8000`, demo `:8081`, frontend `:5173` (Vite proxies `/api`→8081, `/api/v1`→8000).
+
+> Kafka note: the broker advertises a host listener `PLAINTEXT_HOST://localhost:29092`
+> (added to `phxnorth-backend/docker-compose.yml`) so the native backend can reach
+> it; in-Docker clients still use `kafka:9092`. Recreate Kafka after pulling that
+> change: `docker compose -f ../phxnorth-backend/docker-compose.yml up -d --force-recreate kafka`.
 
 ---
 
