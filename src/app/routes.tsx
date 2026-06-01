@@ -50,6 +50,8 @@ import { CareerAnalytics } from "./pages/CareerAnalytics";
 import { Preferences } from "./pages/Preferences";
 import { RiskDashboard } from "./pages/RiskDashboard";
 import { FindMentor } from "./pages/FindMentor";
+import { Billing } from "./pages/Billing";
+import { Messages } from "./pages/Messages";
 import { NotFound } from "./pages/NotFound";
 import { Layout } from "./components/Layout";
 
@@ -254,6 +256,14 @@ export const router = createBrowserRouter([
       {
         path: "profile",
         Component: Profile,
+      },
+      {
+        path: "billing",
+        Component: Billing,
+      },
+      {
+        path: "messages",
+        Component: Messages,
       },
       {
         path: "5d-snapshot",

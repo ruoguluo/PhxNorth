@@ -94,3 +94,43 @@ class MentorStats(BaseModel):
     average_rating: float
     monthly_income: float
     pending_requests: int
+
+
+# --- Matching ---
+
+class MatchRequest(BaseModel):
+    """Structured intent for mentor matching (from FR-03 understanding)."""
+
+    category: Optional[str] = None
+    subtype: Optional[str] = None
+    primary_goal: Optional[str] = None
+    stage: Optional[str] = None
+    country: Optional[str] = None
+    keywords: Optional[list[str]] = None
+    max_budget: Optional[float] = None
+    raw_question: Optional[str] = None
+    limit: int = 8
+
+
+class MentorMatchResponse(BaseModel):
+    """Mirrors the frontend MentorMatch shape (plus explainability reasons)."""
+
+    id: str
+    name: str
+    title: str
+    expertise: list[str] = []
+    experience: str
+    matchScore: int
+    matchConfidence: str
+    availability: str
+    responseTime: str
+    sessionsCompleted: int
+    avatarColor: str
+    status: str
+    queueLength: Optional[int] = None
+    estimatedWaitTime: Optional[str] = None
+    nextAvailability: Optional[str] = None
+    mentorshipType: Optional[str] = None
+    menteesMarked: int = 0
+    deepDialogues: int = 0
+    reasons: list[str] = []

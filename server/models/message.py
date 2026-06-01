@@ -9,6 +9,11 @@ class Message(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False, index=True)
+    # Durable thread spanning sessions (FR-05). Nullable for back-compat with
+    # rows created before conversations existed; backfilled on startup.
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id"), nullable=True, index=True
+    )
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     sender_role = Column(String(20), nullable=False)  # 'mentor' or 'mentee'
     content = Column(Text, nullable=False)

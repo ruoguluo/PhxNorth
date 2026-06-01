@@ -10,6 +10,42 @@ A full-stack mentorship platform with React frontend and FastAPI backend.
 | Backend  | Python 3.10+, FastAPI, SQLAlchemy, SQLite |
 | Auth     | JWT (python-jose), bcrypt (passlib)       |
 
+## Running all services (start / stop)
+
+The whole stack — frontend, the demo API, and the behavioral backend
+(`phxnorth-backend`) with its Postgres/Redis/Kafka — is orchestrated from the
+`Makefile`. Run `make help` to see every target. The two sibling repos must sit
+side-by-side (e.g. `~/Projects/PhxNorth` and `~/Projects/phxnorth-backend`).
+
+### Option A — Docker (everything in containers)
+
+| Action | Command | Notes |
+|--------|---------|-------|
+| **Start all** | `make up` | Build + start frontend (`:8080`), demo API (`:8081`), behavioral API (`:8000`), Celery worker/beat, Postgres, Redis, Kafka. Open http://localhost:8080 |
+| Start light | `make up-light` | Only frontend + demo API (skips the behavioral backend + infra; AI features degrade gracefully) |
+| **Stop all** | `make down` | Stop & remove all containers (data volumes kept) |
+| Stop + wipe data | `make down-v` | Also removes the Postgres/Redis/Kafka and demo-DB volumes |
+| View logs | `make logs` / `make logs-api` | Tail all services / just the behavioral API |
+| Status | `make ps` | List running services |
+| Restart behavioral API | `make restart-api` | Rebuild + restart `api` (e.g. after editing `.env`) |
+
+Requires Docker Desktop running and Docker Compose **v2.20+** (for `include`).
+
+### Option B — Native, with hot reload
+
+Runs Postgres/Redis/Kafka in Docker but the three app processes natively so you
+get live reload.
+
+| Action | Command | Notes |
+|--------|---------|-------|
+| **Start all** | `make dev-all` | Infra in Docker + behavioral API (`:8000`), demo API (`:8081`), frontend (`:5173`). Backed by `start-all.sh`. |
+| **Stop all** | `Ctrl-C`, then `make infra-down` | Ctrl-C stops the three app processes; `make infra-down` stops the database containers |
+| Frontend + demo only | `make dev` | Runs `start-dev.sh` (no behavioral backend) |
+| Databases only | `make infra` / `make infra-down` | Start / stop just Postgres/Redis/Kafka |
+
+> First run pulls images, installs deps, and seeds the demo DB, so it takes a
+> while. The DeepSeek key for the AI features lives in `phxnorth-backend/.env`.
+
 ## Quick Start
 
 ### 1. Clone & Install Frontend

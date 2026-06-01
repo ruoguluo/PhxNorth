@@ -25,6 +25,8 @@ import {
   Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { questionAPI, type AIUnderstanding as AIUnderstandingDTO } from '../../lib/question-api';
+import { mentorshipAPI } from '../../lib/api';
 
 type QuestionType = 'structured' | 'quick' | null;
 type QuickQuestionStep = 'input' | 'assumed-goal' | 'stage' | 'clarification' | 'matching' | 'results';
@@ -202,34 +204,50 @@ export function MenteeQuestionEntry() {
   const [mentorMatches, setMentorMatches] = useState<MentorMatch[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // New AI-first flow functions
-  const analyzeQuestionAndGenerateAssumedGoal = () => {
+  // Default stage options used if the AI returns none / is unavailable.
+  const defaultStageOptions: StageOption[] = [
+    { id: 'deciding', label: 'Still deciding direction' },
+    { id: 'preparing', label: 'Preparing application materials' },
+    { id: 'drafting', label: 'Working on the details' },
+    { id: 'interview', label: 'Preparing for a key milestone' },
+    { id: 'submitted', label: 'Reviewing / finalising' }
+  ];
+
+  // AI-first flow: interpret the mentee's raw question via the backend.
+  const analyzeQuestionAndGenerateAssumedGoal = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      // Mock AI inference from question content
-      const mockAssumedGoal: AssumedGoal = {
-        institution: 'University of Oxford',
-        programLevel: 'Undergraduate',
-        major: 'Chemistry',
-        targetIntake: 'Fall 2027',
-        country: 'United Kingdom',
-        category: 'Education'
-      };
-      setAssumedGoal(mockAssumedGoal);
-      
-      // Generate stage options based on detected context
-      const mockStageOptions: StageOption[] = [
-        { id: 'deciding', label: 'Still deciding direction' },
-        { id: 'preparing', label: 'Preparing application materials' },
-        { id: 'drafting', label: 'Drafting personal statement' },
-        { id: 'interview', label: 'Preparing for interview' },
-        { id: 'submitted', label: 'Already submitted' }
-      ];
-      setStageOptions(mockStageOptions);
-      
+    try {
+      const result = await questionAPI.interpret(quickQuestion, {
+        country: countryData.country || undefined,
+      });
+
+      setAssumedGoal(result.assumedGoal as AssumedGoal);
+      setStageOptions(
+        result.stageOptions.length > 0
+          ? (result.stageOptions as StageOption[])
+          : defaultStageOptions
+      );
+      setAiUnderstanding(result.understanding as AIUnderstandingDTO as AIUnderstanding);
+      // Stash any clarification questions the AI wants to ask after stage selection.
+      setClarificationQuestions(
+        (result.clarificationQuestions ?? []).map((c) => ({
+          id: c.id,
+          question: c.question,
+          type: c.type,
+          options: c.options ?? undefined,
+        }))
+      );
+    } catch (err) {
+      // Graceful degradation: let the mentee proceed manually if the
+      // structuring service is unavailable.
+      console.warn('Question interpretation failed, falling back to manual flow', err);
+      setAssumedGoal(null);
+      setStageOptions(defaultStageOptions);
+      setClarificationQuestions([]);
+    } finally {
       setIsProcessing(false);
       setQuickQuestionStep('assumed-goal');
-    }, 1500);
+    }
   };
 
   const confirmAssumedGoal = () => {
@@ -244,199 +262,59 @@ export function MenteeQuestionEntry() {
 
   const handleStageSelection = (stageId: string) => {
     setSelectedStage(stageId);
-    
-    // Check if clarification needed (mock: ask 1-2 questions if needed)
-    const needsClarification = Math.random() > 0.5;
-    
-    if (needsClarification) {
-      const mockClarificationQuestions: ClarificationQuestion[] = [
-        {
-          id: '1',
-          question: 'Have you already taken any standardized tests (SAT, ACT, etc.)?',
-          type: 'select',
-          options: ['Yes, completed', 'Scheduled', 'Not yet', 'Not required']
-        }
-      ];
-      setClarificationQuestions(mockClarificationQuestions);
+
+    // Use the clarification questions the AI surfaced during interpretation.
+    if (clarificationQuestions.length > 0) {
       setQuickQuestionStep('clarification');
     } else {
       proceedToMatching();
     }
   };
 
-  const proceedToMatching = () => {
+  const proceedToMatching = async () => {
     setQuickQuestionStep('matching');
     setIsProcessing(true);
-    setTimeout(() => {
-      const mockMatches: MentorMatch[] = [
-        // Online mentors
-        {
-          id: '1',
-          name: 'Dr. Sarah Thompson',
-          title: 'Oxford Chemistry Professor',
-          expertise: ['Organic Chemistry', 'UK Admissions', 'UCAS'],
-          experience: '15 years in admissions',
-          matchScore: 95,
-          matchConfidence: 'High',
-          availability: 'Available now',
-          responseTime: '< 2 min',
-          sessionsCompleted: 127,
-          avatarColor: 'bg-blue-600',
-          status: 'online',
-          mentorshipType: 'both',
-          menteesMarked: 50,
-          deepDialogues: 10
-        },
-        {
-          id: '2',
-          name: 'Prof. James Wilson',
-          title: 'Cambridge Admissions Tutor',
-          expertise: ['Personal Statements', 'Interviews', 'Sciences'],
-          experience: '20 years admissions experience',
-          matchScore: 93,
-          matchConfidence: 'High',
-          availability: 'Available now',
-          responseTime: '< 5 min',
-          sessionsCompleted: 89,
-          avatarColor: 'bg-purple-600',
-          status: 'online',
-          mentorshipType: 'instant',
-          menteesMarked: 45,
-          deepDialogues: 8
-        },
-        {
-          id: '3',
-          name: 'Dr. Emily Rodriguez',
-          title: 'University College London Advisor',
-          expertise: ['Chemistry', 'Research Experience', 'UK Unis'],
-          experience: '12 years academic advising',
-          matchScore: 91,
-          matchConfidence: 'High',
-          availability: 'Available now',
-          responseTime: '< 3 min',
-          sessionsCompleted: 64,
-          avatarColor: 'bg-emerald-600',
-          status: 'online',
-          mentorshipType: 'both',
-          menteesMarked: 30,
-          deepDialogues: 5
-        },
-        // In-session mentors
-        {
-          id: '4',
-          name: 'Dr. Michael Chen',
-          title: 'Imperial College Senior Lecturer',
-          expertise: ['Chemistry', 'International Students', 'Test Prep'],
-          experience: '10 years',
-          matchScore: 89,
-          matchConfidence: 'Good',
-          availability: 'In session',
-          responseTime: '< 10 min',
-          sessionsCompleted: 75,
-          avatarColor: 'bg-amber-600',
-          status: 'in-session',
-          queueLength: 2,
-          estimatedWaitTime: '20 minutes',
-          mentorshipType: 'instant',
-          menteesMarked: 25,
-          deepDialogues: 3
-        },
-        {
-          id: '5',
-          name: 'Prof. Lisa Anderson',
-          title: 'Edinburgh University Advisor',
-          expertise: ['UK Application Strategy', 'Chemistry', 'Personal Statements'],
-          experience: '18 years',
-          matchScore: 87,
-          matchConfidence: 'Good',
-          availability: 'In session',
-          responseTime: '< 15 min',
-          sessionsCompleted: 102,
-          avatarColor: 'bg-pink-600',
-          status: 'in-session',
-          queueLength: 1,
-          estimatedWaitTime: '15 minutes',
-          mentorshipType: 'instant',
-          menteesMarked: 20,
-          deepDialogues: 2
-        },
-        // Offline mentors
-        {
-          id: '6',
-          name: 'Dr. David Kim',
-          title: 'Bristol University Chemistry Dept',
-          expertise: ['Research Methods', 'Chemistry', 'UK System'],
-          experience: '8 years',
-          matchScore: 85,
-          matchConfidence: 'Good',
-          availability: 'Offline',
-          responseTime: 'N/A',
-          sessionsCompleted: 45,
-          avatarColor: 'bg-indigo-600',
-          status: 'offline',
-          nextAvailability: 'Tomorrow 9:00 AM',
-          mentorshipType: 'instant',
-          menteesMarked: 15,
-          deepDialogues: 1
-        },
-        {
-          id: '7',
-          name: 'Dr. Rachel Foster',
-          title: 'University of Manchester Tutor',
-          expertise: ['UCAS Applications', 'Chemistry', 'Undergraduate Prep'],
-          experience: '14 years',
-          matchScore: 84,
-          matchConfidence: 'Good',
-          availability: 'Offline',
-          responseTime: 'N/A',
-          sessionsCompleted: 58,
-          avatarColor: 'bg-teal-600',
-          status: 'offline',
-          nextAvailability: 'Today 6:00 PM',
-          mentorshipType: 'both',
-          menteesMarked: 10,
-          deepDialogues: 1
-        },
-        // Scheduled-only mentors
-        {
-          id: '8',
-          name: 'Prof. Robert Clarke',
-          title: 'Former Oxford Admissions Director',
-          expertise: ['Strategic Planning', 'Top UK Unis', 'Long-term Prep'],
-          experience: '25 years',
-          matchScore: 96,
-          matchConfidence: 'High',
-          availability: 'By appointment',
-          responseTime: 'N/A',
-          sessionsCompleted: 215,
-          avatarColor: 'bg-slate-700',
-          status: 'offline',
-          mentorshipType: 'scheduled',
-          menteesMarked: 60,
-          deepDialogues: 15
-        },
-        {
-          id: '9',
-          name: 'Dr. Maria Gonzalez',
-          title: 'Cambridge Chemistry Fellow',
-          expertise: ['Deep Dive Sessions', 'Interview Prep', 'Subject Mastery'],
-          experience: '16 years',
-          matchScore: 94,
-          matchConfidence: 'High',
-          availability: 'By appointment',
-          responseTime: 'N/A',
-          sessionsCompleted: 142,
-          avatarColor: 'bg-rose-600',
-          status: 'offline',
-          mentorshipType: 'scheduled',
-          menteesMarked: 55,
-          deepDialogues: 12
-        }
-      ];
-      setMentorMatches(mockMatches);
+    try {
+      const keywords = Object.values(clarificationAnswers).filter(Boolean) as string[];
+      const results = await mentorshipAPI.match({
+        category: aiUnderstanding?.category || (selectedCategory ?? undefined),
+        subtype: aiUnderstanding?.subtype || undefined,
+        primary_goal: aiUnderstanding?.primaryGoal || undefined,
+        stage: selectedStage || aiUnderstanding?.stage || undefined,
+        country: aiUnderstanding?.country || countryData.country || undefined,
+        keywords: keywords.length ? keywords : undefined,
+        raw_question: quickQuestion || undefined,
+        limit: 9,
+      });
+      const mapped: MentorMatch[] = results.map((m) => ({
+        id: m.id,
+        name: m.name,
+        title: m.title,
+        expertise: m.expertise,
+        experience: m.experience,
+        matchScore: m.matchScore,
+        matchConfidence: m.matchConfidence as MentorMatch['matchConfidence'],
+        availability: m.availability,
+        responseTime: m.responseTime,
+        sessionsCompleted: m.sessionsCompleted,
+        avatarColor: m.avatarColor,
+        status: m.status as MentorMatch['status'],
+        queueLength: m.queueLength ?? undefined,
+        estimatedWaitTime: m.estimatedWaitTime ?? undefined,
+        nextAvailability: m.nextAvailability ?? undefined,
+        mentorshipType: (m.mentorshipType || undefined) as MentorMatch['mentorshipType'],
+        menteesMarked: m.menteesMarked,
+        deepDialogues: m.deepDialogues,
+      }));
+      setMentorMatches(mapped);
+    } catch (err) {
+      // Graceful: show no matches rather than breaking the flow.
+      console.warn('Mentor matching failed', err);
+      setMentorMatches([]);
+    } finally {
       setIsProcessing(false);
       setQuickQuestionStep('results');
-    }, 2000);
+    }
   };
 
   // Initial Selection Screen

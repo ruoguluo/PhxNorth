@@ -112,6 +112,28 @@ export const profileAPI = {
 
 // ─── Mentorship API ─────────────────────────────────────────────────
 
+export interface MentorMatch {
+    id: string;
+    name: string;
+    title: string;
+    expertise: string[];
+    experience: string;
+    matchScore: number;
+    matchConfidence: string;
+    availability: string;
+    responseTime: string;
+    sessionsCompleted: number;
+    avatarColor: string;
+    status: string;
+    queueLength?: number | null;
+    estimatedWaitTime?: string | null;
+    nextAvailability?: string | null;
+    mentorshipType?: string | null;
+    menteesMarked: number;
+    deepDialogues: number;
+    reasons?: string[];
+}
+
 export const mentorshipAPI = {
     getAvailability: () => fetchAPI<unknown[]>("/mentorship/availability"),
 
@@ -134,6 +156,22 @@ export const mentorshipAPI = {
         fetchAPI<unknown>("/mentorship/requests", {
             method: "POST",
             body: JSON.stringify(data),
+        }),
+
+    match: (intent: {
+        category?: string;
+        subtype?: string;
+        primary_goal?: string;
+        stage?: string;
+        country?: string;
+        keywords?: string[];
+        max_budget?: number;
+        raw_question?: string;
+        limit?: number;
+    }) =>
+        fetchAPI<MentorMatch[]>("/mentorship/match", {
+            method: "POST",
+            body: JSON.stringify(intent),
         }),
 
     respondToRequest: (id: number, action: "accept" | "decline") =>
@@ -241,6 +279,100 @@ export const adminAPI = {
         fetchAPI<unknown>(`/admin/users/${id}`, {
             method: "PUT",
             body: JSON.stringify(data),
+        }),
+};
+
+// ─── Billing API (FR-07) ────────────────────────────────────────────
+
+export interface Payment {
+    id: number;
+    session_id?: number | null;
+    mentee_id: number;
+    mentor_id: number;
+    amount: number;
+    platform_fee: number;
+    mentor_earnings: number;
+    currency: string;
+    status: string;
+    payout_id?: number | null;
+    created_at?: string;
+}
+
+export interface Payout {
+    id: number;
+    mentor_id: number;
+    amount: number;
+    currency: string;
+    status: string;
+    period_start?: string | null;
+    period_end?: string | null;
+    created_at?: string;
+}
+
+export interface BillingSummary {
+    currency: string;
+    // mentee
+    total_spent?: number;
+    captured_count?: number;
+    // mentor
+    total_earnings?: number;
+    pending_payout?: number;
+    paid_out?: number;
+    // admin
+    gmv?: number;
+    fees_collected?: number;
+    mentor_earnings?: number;
+    payment_count?: number;
+    platform_fee_pct?: number;
+}
+
+export interface PayoutRunResult {
+    payouts_created: number;
+    total_disbursed: number;
+    payouts: Payout[];
+}
+
+export const billingAPI = {
+    listPayments: () => fetchAPI<Payment[]>("/billing/payments"),
+    getPayment: (id: number) => fetchAPI<Payment>(`/billing/payments/${id}`),
+    summary: () => fetchAPI<BillingSummary>("/billing/summary"),
+    listPayouts: () => fetchAPI<Payout[]>("/billing/payouts"),
+    runPayouts: () =>
+        fetchAPI<PayoutRunResult>("/billing/payouts/run", { method: "POST" }),
+};
+
+// ─── Conversations API (FR-05) ──────────────────────────────────────
+
+export interface Conversation {
+    id: number;
+    counterparty_id: number;
+    counterparty_name: string | null;
+    counterparty_role: 'mentor' | 'mentee';
+    last_message: string | null;
+    last_message_at: string | null;
+    unread_count: number;
+}
+
+export const conversationsAPI = {
+    list: () => fetchAPI<Conversation[]>("/conversations"),
+
+    get: (id: number) => fetchAPI<Conversation>(`/conversations/${id}`),
+
+    getMessages: (id: number, opts: { q?: string; limit?: number } = {}) => {
+        const qs = new URLSearchParams();
+        if (opts.q) qs.set("q", opts.q);
+        if (opts.limit) qs.set("limit", String(opts.limit));
+        const suffix = qs.toString() ? `?${qs}` : "";
+        return fetchAPI<MessageResponse[]>(`/conversations/${id}/messages${suffix}`);
+    },
+
+    markRead: (id: number) =>
+        fetchAPI<{ status: string }>(`/conversations/${id}/read`, { method: "PUT" }),
+
+    send: (id: number, content: string) =>
+        fetchAPI<MessageResponse>(`/conversations/${id}/messages`, {
+            method: "POST",
+            body: JSON.stringify({ content }),
         }),
 };
 
