@@ -1,11 +1,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import engine, Base
-from routers import auth, profile, mentorship, admin, messages
+from database import engine, Base, SessionLocal
+from routers import auth, profile, mentorship, admin, messages, billing, conversations
+# Import models so their tables are registered on Base before create_all.
+import models.billing  # noqa: F401
+import models.conversation  # noqa: F401
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
+
+# FR-05: migrate legacy message rows and backfill conversation threads.
+try:
+    from services.conversation_store import migrate_and_backfill
+
+    _bf_db = SessionLocal()
+    try:
+        _n = migrate_and_backfill(_bf_db)
+        if _n:
+            print(f"[startup] backfilled {_n} message(s) into conversations")
+    finally:
+        _bf_db.close()
+except Exception as _e:  # never block startup on backfill
+    print(f"[startup] conversation backfill skipped: {_e}")
 
 app = FastAPI(
     title="PhxNorth API",
@@ -32,6 +49,17 @@ app.include_router(profile.router)
 app.include_router(mentorship.router)
 app.include_router(admin.router)
 app.include_router(messages.router)
+app.include_router(conversations.router)
+app.include_router(billing.router)
+
+
+@app.on_event("startup")
+def _start_payout_scheduler() -> None:
+    """Start the daily mentor payout job (FR-07)."""
+    from services.payments.scheduler import start_scheduler
+
+    if start_scheduler():
+        print("[startup] payout scheduler started")
 
 
 @app.get("/api/health")

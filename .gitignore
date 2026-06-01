@@ -1,11 +1,18 @@
 node_modules/
+dist/
 
 # Backend
 __pycache__/
 *.pyc
 *.pyo
-server/phxnorth.db
+*.db
+server/uploads/
 .env
 venv/
 .venv/
+.pytest_cache/
+
+# OS
+.DS_Store
+**/.DS_Store
 

@@ -17,8 +17,13 @@ from schemas.mentorship import (
     SessionResponse,
     SessionCompleteRequest,
     MentorStats,
+    MatchRequest,
+    MentorMatchResponse,
 )
 from utils.deps import get_current_user
+from services import billing
+from services.payments import PaymentError
+from services.mentor_matcher import MatchInput, match_mentors
 
 router = APIRouter(prefix="/api/mentorship", tags=["Mentorship"])
 
@@ -111,6 +116,32 @@ def list_requests(
     return results
 
 
+@router.post("/match", response_model=list[MentorMatchResponse])
+def match(
+    body: MatchRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Rank mentors against a mentee's structured question intent.
+
+    Built from the FR-03 ``/questions/interpret`` output. Scores topic
+    relevance, track record, and logistics now; DISC/5D behavioral
+    compatibility is a phase-2 hook (see ``mentor_matcher``).
+    """
+    intent = MatchInput(
+        category=body.category,
+        subtype=body.subtype,
+        primary_goal=body.primary_goal,
+        stage=body.stage,
+        country=body.country or current_user.current_country,
+        keywords=body.keywords,
+        max_budget=body.max_budget,
+        raw_question=body.raw_question,
+    )
+    matches = match_mentors(db, intent, mentee=current_user, limit=body.limit)
+    return matches
+
+
 @router.post("/requests", response_model=MentorshipRequestResponse, status_code=201)
 def create_request(
     req: MentorshipRequestCreate,
@@ -198,13 +229,28 @@ def respond_to_request(
             status="upcoming",
         )
         db.add(session)
+        db.commit()
+        db.refresh(session)
+        db.refresh(req)
+
+        # FR-07: authorize (hold) the mentee's payment at booking time.
+        try:
+            billing.authorize_session_payment(db, session)
+        except PaymentError:
+            # Roll back the booking if the hold fails.
+            session.status = "cancelled"
+            req.status = "pending"
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="Payment authorization failed; booking not confirmed",
+            )
     elif body.action == "decline":
         req.status = "declined"
+        db.commit()
+        db.refresh(req)
     else:
         raise HTTPException(status_code=400, detail="Action must be 'accept' or 'decline'")
-
-    db.commit()
-    db.refresh(req)
 
     mentee = db.query(User).filter(User.id == req.mentee_id).first()
     resp = MentorshipRequestResponse.model_validate(req)
@@ -290,11 +336,22 @@ def complete_session(
     if body.notes is not None:
         s.notes = body.notes
 
+    # FR-07: capture the authorized payment now that the session is complete.
+    # mentor_earnings is the payout amount (gross minus platform fee).
+    earnings = s.price
+    try:
+        captured = billing.capture_session_payment(db, s, commit=False)
+        if captured is not None:
+            earnings = captured.mentor_earnings
+    except PaymentError:
+        # Fall back to gross price for stats if capture fails (mock never does).
+        earnings = s.price
+
     # Update mentor stats
     mentor = db.query(User).filter(User.id == s.mentor_id).first()
     if mentor:
         mentor.total_sessions += 1
-        mentor.monthly_income += s.price
+        mentor.monthly_income += earnings
         # Recalculate average rating
         completed = (
             db.query(MentorSession)

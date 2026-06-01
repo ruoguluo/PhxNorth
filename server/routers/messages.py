@@ -15,6 +15,7 @@ from models.user import User
 from utils.deps import get_current_user
 from services.chat_signal_classifier import classify_message
 from services.disc_event_dispatcher import dispatch_chat_events
+from services.conversation_store import link_message
 
 router = APIRouter(prefix="/api/messages", tags=["Messages"])
 
@@ -146,6 +147,9 @@ def send_message(
     db.commit()
     db.refresh(message)
 
+    # FR-05: keep the durable conversation thread in sync.
+    link_message(db, message, session.mentor_id, session.mentee_id)
+
     resp = MessageResponse.model_validate(message)
     resp.sender_name = current_user.full_name
     return resp
@@ -233,6 +237,9 @@ async def upload_file_message(
     db.add(message)
     db.commit()
     db.refresh(message)
+
+    # FR-05: keep the durable conversation thread in sync.
+    link_message(db, message, session.mentor_id, session.mentee_id)
 
     # Dispatch behavioral signals to DISC backend (fire-and-forget)
     try:
@@ -341,6 +348,9 @@ async def websocket_endpoint(
                 db.add(message)
                 db.commit()
                 db.refresh(message)
+
+                # FR-05: keep the durable conversation thread in sync.
+                link_message(db, message, session.mentor_id, session.mentee_id)
 
                 # Dispatch behavioral signals to DISC backend (fire-and-forget)
                 try:

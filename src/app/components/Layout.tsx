@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search, ChevronDown, UserCircle, Target, MessageSquare, BookOpen, CalendarDays } from "lucide-react";
+import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcase, SlidersHorizontal, FolderOpen, GraduationCap, ShieldAlert, Search, ChevronDown, UserCircle, Target, MessageSquare, BookOpen, CalendarDays, CreditCard } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
@@ -329,6 +329,24 @@ export function Layout() {
                   >
                     <BookOpen className="w-4 h-4" />
                     Courses
+                  </Link>
+                  <Link
+                    to="/app/messages"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/messages' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Messages
+                  </Link>
+                  <Link
+                    to="/app/billing"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/billing' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    Billing
                   </Link>
                 </div>
               </>
