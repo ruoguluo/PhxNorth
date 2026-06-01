@@ -1,0 +1,50 @@
+# PhxNorth — full local stack (one compose for all three pieces).
+#
+#   cd ~/Projects/PhxNorth
+#   docker compose up -d --build
+#   open http://localhost:8080
+#
+# Brings up:
+#   web        nginx serving the built frontend, proxying /api -> demo-api and
+#              /api/v1 -> api                                  (host :8080)
+#   demo-api   FastAPI + SQLite: mentorship, billing, conversations, matching (:8081)
+#   api        behavioral backend (FastAPI)                                    (:8000)
+#   + celery-worker, celery-beat, postgres, redis, kafka  (from the backend repo)
+#
+# The behavioral services are pulled in from the sibling repo via `include`.
+# Requires Docker Compose v2.20+ (for `include`).
+#
+# Light stack only (skip the heavy behavioral backend + infra):
+#   docker compose up -d --build web demo-api
+#   (FR-03/CV/5D degrade gracefully; everything else works.)
+
+include:
+  - path: ../phxnorth-backend/docker-compose.yml
+
+services:
+  demo-api:
+    build:
+      context: ./server
+    environment:
+      - DATABASE_URL=sqlite:////data/phxnorth.db
+      - SECRET_KEY=phxnorth-dev-secret-key-change-in-production
+      - ENABLE_PAYOUT_SCHEDULER=true
+      - PAYOUT_SCHEDULE_HOUR=4
+      - PLATFORM_FEE_PCT=0.15
+      - BILLING_CURRENCY=USD
+    volumes:
+      - demo_data:/data
+    ports:
+      - "8081:8081"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - demo-api
+
+volumes:
+  demo_data:

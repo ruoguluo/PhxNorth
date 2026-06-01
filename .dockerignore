@@ -1,0 +1,12 @@
+# Web (frontend) build context. The demo server builds from ./server with its
+# own .dockerignore, so we exclude it here to keep the frontend image lean.
+node_modules/
+dist/
+server/
+.git/
+.DS_Store
+**/.DS_Store
+*.db
+*.log
+.vscode/
+.idea/
