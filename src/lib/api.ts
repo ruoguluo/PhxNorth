@@ -224,6 +224,137 @@ export const credentialAPI = {
         }).then((r) => { if (!r.ok) throw new Error("Delete failed"); }),
 };
 
+// ─── Consulting API ─────────────────────────────────────────────────
+
+export interface ConsultingProject {
+    id: number;
+    title: string;
+    description?: string;
+    client_name?: string;
+    budget_min?: number;
+    budget_max?: number;
+    duration_weeks?: number;
+    required_skills?: string[];
+    industry?: string;
+    status: string;
+    assigned_mentor_id?: number;
+    created_by: number;
+    created_at?: string;
+    updated_at?: string;
+    applications?: ProjectApplication[];
+}
+
+export interface ProjectApplication {
+    id: number;
+    project_id: number;
+    mentor_id: number;
+    proposal?: string;
+    proposed_rate?: number;
+    status: string;
+    created_at?: string;
+}
+
+export const consultingAPI = {
+    listProjects: (params?: { status?: string; industry?: string }) => {
+        const qs = new URLSearchParams();
+        if (params?.status) qs.set("status", params.status);
+        if (params?.industry) qs.set("industry", params.industry);
+        const suffix = qs.toString() ? `?${qs}` : "";
+        return fetchAPI<ConsultingProject[]>(`/consulting/projects${suffix}`);
+    },
+
+    getProject: (id: number) =>
+        fetchAPI<ConsultingProject>(`/consulting/projects/${id}`),
+
+    createProject: (data: Record<string, unknown>) =>
+        fetchAPI<ConsultingProject>("/consulting/projects", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+
+    apply: (projectId: number, data: { proposal?: string; proposed_rate?: number }) =>
+        fetchAPI<ProjectApplication>(`/consulting/projects/${projectId}/apply`, {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+
+    handleApplication: (projectId: number, appId: number, action: "approve" | "reject") =>
+        fetchAPI<ProjectApplication>(`/consulting/projects/${projectId}/applications/${appId}`, {
+            method: "PUT",
+            body: JSON.stringify({ action }),
+        }),
+
+    myApplications: () =>
+        fetchAPI<ProjectApplication[]>("/consulting/my-applications"),
+
+    completeProject: (id: number) =>
+        fetchAPI<ConsultingProject>(`/consulting/projects/${id}/complete`, { method: "PUT" }),
+};
+
+// ─── Workshop API ───────────────────────────────────────────────────
+
+export interface WorkshopEntry {
+    id: number;
+    mentor_id: number;
+    title: string;
+    description?: string;
+    scheduled_at?: string;
+    duration_minutes?: number;
+    max_participants?: number;
+    price?: number;
+    status: string;
+    tags?: string[];
+    registered_count: number;
+    created_at?: string;
+    updated_at?: string;
+    registrations?: { id: number; workshop_id: number; mentee_id: number; status: string; created_at?: string }[];
+}
+
+export const workshopAPI = {
+    list: (params?: { mine?: boolean; status?: string }) => {
+        const qs = new URLSearchParams();
+        if (params?.mine) qs.set("mine", "true");
+        if (params?.status) qs.set("status", params.status);
+        const suffix = qs.toString() ? `?${qs}` : "";
+        return fetchAPI<WorkshopEntry[]>(`/workshops${suffix}`);
+    },
+
+    get: (id: number) => fetchAPI<WorkshopEntry>(`/workshops/${id}`),
+
+    create: (data: Record<string, unknown>) =>
+        fetchAPI<WorkshopEntry>("/workshops", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+
+    update: (id: number, data: Record<string, unknown>) =>
+        fetchAPI<WorkshopEntry>(`/workshops/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(data),
+        }),
+
+    remove: (id: number) =>
+        fetch(`${API_BASE}/workshops/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${localStorage.getItem("phxnorth_token")}` },
+        }).then((r) => { if (!r.ok) throw new Error("Delete failed"); }),
+
+    publish: (id: number) =>
+        fetchAPI<WorkshopEntry>(`/workshops/${id}/publish`, { method: "PUT" }),
+
+    complete: (id: number) =>
+        fetchAPI<WorkshopEntry>(`/workshops/${id}/complete`, { method: "PUT" }),
+
+    register: (id: number) =>
+        fetchAPI<unknown>(`/workshops/${id}/register`, { method: "POST" }),
+
+    cancelRegistration: (id: number) =>
+        fetch(`${API_BASE}/workshops/${id}/register`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${localStorage.getItem("phxnorth_token")}` },
+        }).then((r) => { if (!r.ok) throw new Error("Cancel failed"); }),
+};
+
 // ─── Mentorship API ─────────────────────────────────────────────────
 
 export interface MentorMatch {
