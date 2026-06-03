@@ -79,10 +79,35 @@ class SessionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class SessionCreateRequest(BaseModel):
+    mentor_id: int
+    mentee_id: int
+    scheduled_at: datetime
+    duration_minutes: int = 30
+    topic: Optional[str] = None
+    price: float = 0.0
+
+
+class SessionUpdateRequest(BaseModel):
+    scheduled_at: Optional[datetime] = None
+    duration_minutes: Optional[int] = None
+    topic: Optional[str] = None
+    notes: Optional[str] = None
+    price: Optional[float] = None
+
+
 class SessionCompleteRequest(BaseModel):
     rating: Optional[float] = None
     feedback: Optional[str] = None
     notes: Optional[str] = None
+
+
+class MentorshipRequestUpdate(BaseModel):
+    topic: Optional[str] = None
+    message: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    proposed_datetime: Optional[datetime] = None
+    price: Optional[float] = None
 
 
 # --- Stats ---

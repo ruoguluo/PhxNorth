@@ -14,7 +14,10 @@ from schemas.mentorship import (
     MentorshipRequestCreate,
     MentorshipRequestResponse,
     MentorshipRequestRespond,
+    MentorshipRequestUpdate,
     SessionResponse,
+    SessionCreateRequest,
+    SessionUpdateRequest,
     SessionCompleteRequest,
     MentorStats,
     MatchRequest,
@@ -510,3 +513,161 @@ def get_mentor_stats(
         monthly_income=current_user.monthly_income,
         pending_requests=pending,
     )
+
+
+# --- Session CRUD ---
+
+
+@router.post("/sessions", response_model=SessionResponse, status_code=201)
+def create_session(
+    data: SessionCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Directly create a session (mentor or admin)."""
+    if current_user.role not in ("mentor", "admin"):
+        raise HTTPException(status_code=403, detail="Only mentors or admins can create sessions")
+    if current_user.role == "mentor" and data.mentor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Mentors can only create sessions for themselves")
+    session = MentorSession(
+        mentor_id=data.mentor_id,
+        mentee_id=data.mentee_id,
+        scheduled_at=data.scheduled_at,
+        duration_minutes=data.duration_minutes,
+        topic=data.topic,
+        price=data.price,
+        status="upcoming",
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    mentor = db.query(User).filter(User.id == session.mentor_id).first()
+    mentee = db.query(User).filter(User.id == session.mentee_id).first()
+    resp = SessionResponse.model_validate(session)
+    resp.mentor_name = mentor.full_name if mentor else None
+    resp.mentee_name = mentee.full_name if mentee else None
+    resp.mentor_email = mentor.email if mentor else None
+    resp.mentee_email = mentee.email if mentee else None
+    return resp
+
+
+@router.put("/sessions/{session_id}/edit", response_model=SessionResponse)
+def update_session(
+    session_id: int,
+    data: SessionUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update session details (schedule, topic, notes, price). Only mentor or admin."""
+    session = db.query(MentorSession).filter(MentorSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if current_user.role == "mentor" and session.mentor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your session")
+    if current_user.role == "mentee":
+        raise HTTPException(status_code=403, detail="Mentees cannot edit sessions")
+    if session.status == "completed":
+        raise HTTPException(status_code=400, detail="Cannot edit a completed session")
+
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(session, key, value)
+    db.commit()
+    db.refresh(session)
+    mentor = db.query(User).filter(User.id == session.mentor_id).first()
+    mentee = db.query(User).filter(User.id == session.mentee_id).first()
+    resp = SessionResponse.model_validate(session)
+    resp.mentor_name = mentor.full_name if mentor else None
+    resp.mentee_name = mentee.full_name if mentee else None
+    resp.mentor_email = mentor.email if mentor else None
+    resp.mentee_email = mentee.email if mentee else None
+    return resp
+
+
+@router.put("/sessions/{session_id}/cancel", response_model=SessionResponse)
+def cancel_session(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancel an upcoming session. Either mentor or mentee can cancel."""
+    session = db.query(MentorSession).filter(MentorSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if current_user.id not in (session.mentor_id, session.mentee_id) and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if session.status not in ("upcoming", "in_progress"):
+        raise HTTPException(status_code=400, detail="Only upcoming or in-progress sessions can be cancelled")
+
+    session.status = "cancelled"
+    db.commit()
+    db.refresh(session)
+    resp = SessionResponse.model_validate(session)
+    return resp
+
+
+@router.delete("/sessions/{session_id}", status_code=204)
+def delete_session(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Delete a session. Only admin or the mentor who owns it can delete."""
+    session = db.query(MentorSession).filter(MentorSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if current_user.role == "admin" or session.mentor_id == current_user.id:
+        db.delete(session)
+        db.commit()
+    else:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this session")
+
+
+# --- Request CRUD ---
+
+
+@router.put("/requests/{request_id}/edit", response_model=MentorshipRequestResponse)
+def update_request(
+    request_id: int,
+    data: MentorshipRequestUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update a pending mentorship request. Only the mentee who created it can edit."""
+    req = db.query(MentorshipRequest).filter(MentorshipRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if req.mentee_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not your request")
+    if req.status != "pending":
+        raise HTTPException(status_code=400, detail="Only pending requests can be edited")
+
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(req, key, value)
+    db.commit()
+    db.refresh(req)
+    mentor = db.query(User).filter(User.id == req.mentor_id).first()
+    mentee = db.query(User).filter(User.id == req.mentee_id).first()
+    resp = MentorshipRequestResponse.model_validate(req)
+    resp.mentee_name = mentee.full_name if mentee else None
+    resp.mentor_name = mentor.full_name if mentor else None
+    resp.mentee_username = mentee.username if mentee else None
+    resp.mentee_email = mentee.email if mentee else None
+    return resp
+
+
+@router.delete("/requests/{request_id}", status_code=204)
+def withdraw_request(
+    request_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Withdraw/delete a pending mentorship request. Only the mentee who created it or admin."""
+    req = db.query(MentorshipRequest).filter(MentorshipRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    if req.mentee_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Not your request")
+    if req.status != "pending":
+        raise HTTPException(status_code=400, detail="Only pending requests can be withdrawn")
+    db.delete(req)
+    db.commit()
