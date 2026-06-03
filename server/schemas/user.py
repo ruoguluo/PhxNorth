@@ -29,6 +29,16 @@ class UserResponse(BaseModel):
     total_sessions: int = 0
     monthly_income: float = 0.0
     specializations: Optional[list[str]] = None
+    summary: Optional[str] = None
+    functional_expertise: Optional[list[str]] = None
+    markets_of_interest: Optional[list[str]] = None
+    career_direction: Optional[str] = None
+    preferred_mentor_geography: Optional[str] = None
+    global_visibility: str = "public"
+    show_current_company: bool = True
+    show_full_timeline: bool = True
+    allow_enterprise_view: bool = False
+    allow_mentor_discovery: bool = True
     created_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
@@ -57,8 +67,13 @@ class UserPublicResponse(BaseModel):
 class ProfileUpdateRequest(BaseModel):
     full_name: Optional[str] = None
     bio: Optional[str] = None
+    summary: Optional[str] = None
     avatar_url: Optional[str] = None
     hourly_rate: Optional[float] = None
+    status: Optional[str] = None
+    degree_level: Optional[str] = None
+    field_of_study: Optional[str] = None
+    years_experience: Optional[str] = None
     current_country: Optional[str] = None
     interested_countries: Optional[list[str]] = None
     industry: Optional[str] = None
@@ -66,3 +81,13 @@ class ProfileUpdateRequest(BaseModel):
     sub_sector: Optional[str] = None
     interested_industries: Optional[list[str]] = None
     specializations: Optional[list[str]] = None
+    keep_name_private: Optional[bool] = None
+    functional_expertise: Optional[list[str]] = None
+    markets_of_interest: Optional[list[str]] = None
+    career_direction: Optional[str] = None
+    preferred_mentor_geography: Optional[str] = None
+    global_visibility: Optional[str] = None
+    show_current_company: Optional[bool] = None
+    show_full_timeline: Optional[bool] = None
+    allow_enterprise_view: Optional[bool] = None
+    allow_mentor_discovery: Optional[bool] = None

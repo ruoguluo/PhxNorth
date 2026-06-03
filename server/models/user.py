@@ -40,5 +40,19 @@ class User(Base):
     monthly_income = Column(Float, default=0.0)
     specializations = Column(JSON, nullable=True)
 
+    # Profile summary
+    summary = Column(Text, nullable=True)
+    functional_expertise = Column(JSON, nullable=True)
+    markets_of_interest = Column(JSON, nullable=True)
+    career_direction = Column(Text, nullable=True)
+    preferred_mentor_geography = Column(String(100), nullable=True)
+
+    # Privacy / visibility
+    global_visibility = Column(String(20), default="public")
+    show_current_company = Column(Boolean, default=True)
+    show_full_timeline = Column(Boolean, default=True)
+    allow_enterprise_view = Column(Boolean, default=False)
+    allow_mentor_discovery = Column(Boolean, default=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
