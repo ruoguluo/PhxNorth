@@ -64,6 +64,16 @@ export interface UserProfile {
     total_sessions: number;
     monthly_income: number;
     specializations?: string[];
+    summary?: string;
+    functional_expertise?: string[];
+    markets_of_interest?: string[];
+    career_direction?: string;
+    preferred_mentor_geography?: string;
+    global_visibility?: string;
+    show_current_company?: boolean;
+    show_full_timeline?: boolean;
+    allow_enterprise_view?: boolean;
+    allow_mentor_discovery?: boolean;
     created_at?: string;
 }
 
@@ -108,6 +118,110 @@ export const profileAPI = {
 
     toggleOnlineStatus: () =>
         fetchAPI<{ is_online: boolean }>("/profile/online-status", { method: "PUT" }),
+};
+
+// ─── Timeline API ───────────────────────────────────────────────────
+
+export interface TimelineEntry {
+    id: number;
+    user_id: number;
+    type: "education" | "career" | "business";
+    title: string;
+    organization?: string;
+    hide_organization: boolean;
+    start_date?: string;
+    end_date?: string;
+    is_current: boolean;
+    location?: string;
+    industry_l1?: string;
+    industry_l2?: string;
+    industry_l3?: string;
+    description?: string;
+    degree_level?: string;
+    field_of_study?: string;
+    visibility: "public" | "private";
+    sort_order: number;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export const timelineAPI = {
+    list: (type?: string) => {
+        const qs = type ? `?type=${type}` : "";
+        return fetchAPI<TimelineEntry[]>(`/profile/timeline${qs}`);
+    },
+
+    create: (data: Omit<TimelineEntry, "id" | "user_id" | "created_at" | "updated_at">) =>
+        fetchAPI<TimelineEntry>("/profile/timeline", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+
+    update: (id: number, data: Partial<Omit<TimelineEntry, "id" | "user_id" | "created_at" | "updated_at">>) =>
+        fetchAPI<TimelineEntry>(`/profile/timeline/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(data),
+        }),
+
+    remove: (id: number) =>
+        fetch(`${API_BASE}/profile/timeline/${id}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("phxnorth_token")}`,
+            },
+        }).then((r) => { if (!r.ok) throw new Error("Delete failed"); }),
+
+    reorder: (items: { id: number; sort_order: number }[]) =>
+        fetchAPI<TimelineEntry[]>("/profile/timeline/reorder", {
+            method: "PUT",
+            body: JSON.stringify(items),
+        }),
+};
+
+// ─── Credentials API ────────────────────────────────────────────────
+
+export interface CredentialEntry {
+    id: number;
+    user_id: number;
+    type: "certification" | "training" | "psychometric";
+    name: string;
+    issuer?: string;
+    date_obtained?: string;
+    expiry_date?: string;
+    credential_id?: string;
+    training_type?: string;
+    duration?: string;
+    test_type?: string;
+    result_summary?: string;
+    visibility: "public" | "private";
+    created_at?: string;
+}
+
+export const credentialAPI = {
+    list: (type?: string) => {
+        const qs = type ? `?type=${type}` : "";
+        return fetchAPI<CredentialEntry[]>(`/profile/credentials${qs}`);
+    },
+
+    create: (data: Omit<CredentialEntry, "id" | "user_id" | "created_at">) =>
+        fetchAPI<CredentialEntry>("/profile/credentials", {
+            method: "POST",
+            body: JSON.stringify(data),
+        }),
+
+    update: (id: number, data: Partial<Omit<CredentialEntry, "id" | "user_id" | "created_at">>) =>
+        fetchAPI<CredentialEntry>(`/profile/credentials/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(data),
+        }),
+
+    remove: (id: number) =>
+        fetch(`${API_BASE}/profile/credentials/${id}`, {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("phxnorth_token")}`,
+            },
+        }).then((r) => { if (!r.ok) throw new Error("Delete failed"); }),
 };
 
 // ─── Mentorship API ─────────────────────────────────────────────────
