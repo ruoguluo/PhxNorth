@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { 
   Upload, 
@@ -23,7 +23,8 @@ import {
   Shield,
 } from "lucide-react";
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
-import { discCvAPI, discCareerAPI } from "../../lib/disc-api";
+import { discCvAPI, discCareerAPI, discProfileAPI } from "../../lib/disc-api";
+import { profileAPI, timelineAPI, credentialAPI } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 
 type SectionStatus = "not-started" | "draft" | "verified";
@@ -53,6 +54,7 @@ interface TimelineEntry {
   industryL2: string;
   industryL3: string;
   visibility: "public" | "private";
+  _serverId?: number;
 }
 
 interface ModularSection {
@@ -77,10 +79,15 @@ export function MenteeProfileSetup() {
   const [showAddSectionModal, setShowAddSectionModal] = useState(false);
   const [expandedTimeline, setExpandedTimeline] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("import");
-  const [certifications, setCertifications] = useState<{id: string; name: string; issuer: string; date: string; expiry: string; credentialId: string; visibility: "public"|"private"}[]>([]);
-  const [trainings, setTrainings] = useState<{id: string; name: string; provider: string; date: string; duration: string; type: string; visibility: "public"|"private"}[]>([]);
-  const [psychTests, setPsychTests] = useState<{id: string; testType: string; date: string; result: string; provider: string; visibility: "public"|"private"}[]>([]);
+  const [certifications, setCertifications] = useState<{id: string; name: string; issuer: string; date: string; expiry: string; credentialId: string; visibility: "public"|"private"; _serverId?: number}[]>([]);
+  const [trainings, setTrainings] = useState<{id: string; name: string; provider: string; date: string; duration: string; type: string; visibility: "public"|"private"; _serverId?: number}[]>([]);
+  const [psychTests, setPsychTests] = useState<{id: string; testType: string; date: string; result: string; provider: string; visibility: "public"|"private"; _serverId?: number}[]>([]);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [summary, setSummary] = useState('');
+  const [savingSummary, setSavingSummary] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
   
   // Overview state
   const [coreIdentity, setCoreIdentity] = useState({
@@ -118,6 +125,7 @@ export function MenteeProfileSetup() {
   const sections = [
     { id: "import", label: "Import or Build Profile", status: "draft" as SectionStatus, completion: 100, weight: 0 },
     { id: "overview", label: "Overview", status: "draft" as SectionStatus, completion: 0, weight: 0 },
+    { id: "summary", label: "Summary & Tags", status: "draft" as SectionStatus, completion: 0, weight: 0 },
     { id: "education", label: "Education Timeline", status: "not-started" as SectionStatus, completion: 0, weight: 20 },
     { id: "career", label: "Career Timeline", status: "not-started" as SectionStatus, completion: 0, weight: 30 },
     { id: "business", label: "Business / Projects", status: "not-started" as SectionStatus, completion: 0, weight: 25 },
@@ -147,6 +155,179 @@ export function MenteeProfileSetup() {
     "Transportation & Logistics": ["Shipping", "Aviation", "Supply Chain", "Warehousing", "Last-Mile"],
     "Professional Services": ["Consulting", "Legal", "Accounting", "Advisory", "Recruitment"],
     "Public Sector & Education": ["Government", "Non-profit", "EdTech", "Universities", "Research"]
+  };
+
+  // ─── Load profile data from API on mount ─────────────────────────
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const [profile, timeline, creds] = await Promise.allSettled([
+          profileAPI.get(),
+          timelineAPI.list(),
+          credentialAPI.list(),
+        ]);
+
+        if (profile.status === 'fulfilled') {
+          const p = profile.value;
+          const nameParts = (p.full_name || '').split(' ');
+          setCoreIdentity(prev => ({
+            ...prev,
+            firstName: nameParts[0] ?? '',
+            lastName: nameParts.slice(1).join(' ') ?? '',
+            country: p.current_country ?? '',
+            industryL1: p.industry ?? '',
+            industryL2: p.sector ?? '',
+            yearsOfExperience: p.years_experience ?? '',
+          }));
+          setProfessionalFocus(prev => ({
+            ...prev,
+            functionalExpertise: p.functional_expertise ?? [],
+            marketsOfInterest: p.markets_of_interest ?? [],
+            careerDirection: p.career_direction ?? '',
+            preferredMentorGeography: p.preferred_mentor_geography ?? '',
+          }));
+          setVisibilitySettings(prev => ({
+            ...prev,
+            globalVisibility: (p.global_visibility as any) ?? 'public',
+            showCurrentCompany: p.show_current_company ?? true,
+            showFullCareerTimeline: p.show_full_timeline ?? true,
+            allowEnterpriseView: p.allow_enterprise_view ?? false,
+            allowMentorDiscovery: p.allow_mentor_discovery ?? true,
+          }));
+          setSummary(p.summary ?? '');
+        }
+
+        if (timeline.status === 'fulfilled') {
+          const mapped = timeline.value.map((e: any) => ({
+            id: String(e.id),
+            type: e.type,
+            startDate: e.start_date ?? '',
+            endDate: e.end_date ?? '',
+            isCurrent: e.is_current,
+            title: e.title,
+            organization: e.organization ?? '',
+            hideOrganization: e.hide_organization,
+            location: e.location ?? '',
+            industryL1: e.industry_l1 ?? '',
+            industryL2: e.industry_l2 ?? '',
+            industryL3: e.industry_l3 ?? '',
+            visibility: e.visibility,
+            _serverId: e.id,
+          }));
+          setTimelineEntries(mapped);
+        }
+
+        if (creds.status === 'fulfilled') {
+          const c = creds.value;
+          setCertifications(c.filter((x: any) => x.type === 'certification').map((x: any) => ({
+            id: String(x.id), name: x.name, issuer: x.issuer ?? '',
+            date: x.date_obtained ?? '', expiry: x.expiry_date ?? '', credentialId: x.credential_id ?? '',
+            visibility: x.visibility, _serverId: x.id,
+          })));
+          setTrainings(c.filter((x: any) => x.type === 'training').map((x: any) => ({
+            id: String(x.id), name: x.name, provider: x.issuer ?? '',
+            date: x.date_obtained ?? '', duration: x.duration ?? '', type: x.training_type ?? '',
+            visibility: x.visibility, _serverId: x.id,
+          })));
+          setPsychTests(c.filter((x: any) => x.type === 'psychometric').map((x: any) => ({
+            id: String(x.id), testType: x.test_type ?? '', provider: x.issuer ?? '',
+            date: x.date_obtained ?? '', result: x.result_summary ?? '',
+            visibility: x.visibility, _serverId: x.id,
+          })));
+        }
+      } catch (err) {
+        console.error('Failed to load profile data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  // ─── API Save Helpers ─────────────────────────────────────────────
+  const saveProfileFields = async () => {
+    await profileAPI.update({
+      full_name: `${coreIdentity.firstName} ${coreIdentity.lastName}`.trim() || undefined,
+      current_country: coreIdentity.country || undefined,
+      industry: coreIdentity.industryL1 || undefined,
+      sector: coreIdentity.industryL2 || undefined,
+      years_experience: coreIdentity.yearsOfExperience || undefined,
+      summary: summary || undefined,
+      functional_expertise: professionalFocus.functionalExpertise.length ? professionalFocus.functionalExpertise : undefined,
+      markets_of_interest: professionalFocus.marketsOfInterest.length ? professionalFocus.marketsOfInterest : undefined,
+      career_direction: professionalFocus.careerDirection || undefined,
+      preferred_mentor_geography: professionalFocus.preferredMentorGeography || undefined,
+    });
+  };
+
+  const savePrivacySettings = async () => {
+    await profileAPI.update({
+      global_visibility: visibilitySettings.globalVisibility,
+      show_current_company: visibilitySettings.showCurrentCompany,
+      show_full_timeline: visibilitySettings.showFullCareerTimeline,
+      allow_enterprise_view: visibilitySettings.allowEnterpriseView,
+      allow_mentor_discovery: visibilitySettings.allowMentorDiscovery,
+    });
+  };
+
+  const saveTimelineEntryToAPI = async (entry: any) => {
+    const payload: any = {
+      type: entry.type,
+      title: entry.title,
+      organization: entry.organization || undefined,
+      hide_organization: entry.hideOrganization ?? false,
+      start_date: entry.startDate || undefined,
+      end_date: entry.endDate || undefined,
+      is_current: entry.isCurrent ?? false,
+      location: entry.location || undefined,
+      industry_l1: entry.industryL1 || undefined,
+      industry_l2: entry.industryL2 || undefined,
+      industry_l3: entry.industryL3 || undefined,
+      visibility: entry.visibility ?? 'public',
+      sort_order: 0,
+    };
+    if (entry._serverId) {
+      return timelineAPI.update(entry._serverId, payload);
+    }
+    return timelineAPI.create(payload);
+  };
+
+  const deleteTimelineEntryFromAPI = async (entry: any) => {
+    if (entry._serverId) {
+      await timelineAPI.remove(entry._serverId);
+    }
+  };
+
+  const saveCredentialToAPI = async (item: any, credType: string) => {
+    const payload: any = {
+      type: credType,
+      name: item.name,
+      issuer: item.issuer || item.provider || undefined,
+      date_obtained: item.date || undefined,
+      visibility: item.visibility ?? 'public',
+    };
+    if (credType === 'certification') {
+      payload.expiry_date = item.expiry || undefined;
+      payload.credential_id = item.credentialId || undefined;
+    }
+    if (credType === 'training') {
+      payload.training_type = item.type || undefined;
+      payload.duration = item.duration || undefined;
+    }
+    if (credType === 'psychometric') {
+      payload.test_type = item.testType || undefined;
+      payload.result_summary = item.result || undefined;
+    }
+    if (item._serverId) {
+      return credentialAPI.update(item._serverId, payload);
+    }
+    return credentialAPI.create(payload);
+  };
+
+  const deleteCredentialFromAPI = async (item: any) => {
+    if (item._serverId) {
+      await credentialAPI.remove(item._serverId);
+    }
   };
 
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -396,27 +577,22 @@ export function MenteeProfileSetup() {
               Continue to 5D Analysis
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
+                setSavingDraft(true);
                 try {
-                  const draft = {
-                    activeSection,
-                    coreIdentity,
-                    professionalFocus,
-                    aiFields,
-                    timelineEntries,
-                    certifications,
-                    trainings,
-                    psychTests,
-                    savedAt: new Date().toISOString(),
-                  };
-                  localStorage.setItem("phxnorth_profile_draft", JSON.stringify(draft));
+                  await saveProfileFields();
                   setDraftSaved(true);
                   setTimeout(() => setDraftSaved(false), 2000);
-                } catch { /* ignore quota errors */ }
+                } catch (err) {
+                  console.error('Save draft failed:', err);
+                } finally {
+                  setSavingDraft(false);
+                }
               }}
-              className="w-full border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors text-sm"
+              disabled={savingDraft}
+              className="w-full border border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
             >
-              {draftSaved ? "Draft Saved!" : "Save Draft"}
+              {savingDraft ? "Saving..." : draftSaved ? "Draft Saved!" : "Save Draft"}
             </button>
             <button
               onClick={() => navigate("/app/dashboard")}
@@ -600,6 +776,58 @@ export function MenteeProfileSetup() {
                     Ready to continue
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Summary & Tags Section */}
+          {activeSection === "summary" && (
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">Summary & Signature Tags</h2>
+                <p className="text-gray-500">Your personal bio and AI-generated profile tags</p>
+              </div>
+
+              {/* Editable Bio */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Personal Summary</h3>
+                <textarea
+                  value={summary}
+                  onChange={(e) => setSummary(e.target.value)}
+                  placeholder="Write a brief summary about yourself, your goals, and what you're looking for in mentorship..."
+                  rows={5}
+                  maxLength={1000}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none resize-none"
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-400">{summary.length}/1000 characters</span>
+                  <button
+                    onClick={async () => {
+                      setSavingSummary(true);
+                      try { await profileAPI.update({ summary }); } catch (err) { console.error('Save failed:', err); }
+                      finally { setSavingSummary(false); }
+                    }}
+                    disabled={savingSummary}
+                    className="px-6 py-2 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 transition-colors text-sm font-semibold disabled:opacity-50"
+                  >
+                    {savingSummary ? 'Saving...' : 'Save Summary'}
+                  </button>
+                </div>
+              </div>
+
+              {/* AI Signature Tags placeholder */}
+              <div className="bg-white rounded-xl border border-gray-200 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-[#0A2463]" />
+                  <h3 className="text-lg font-semibold text-gray-900">AI Signature Tags</h3>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">Auto-generated</span>
+                </div>
+                <div className="text-center py-8 text-gray-500">
+                  <Sparkles className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                  <p className="font-medium">No Signature Tags yet</p>
+                  <p className="text-sm mt-1">Upload your CV or complete the 5D Analysis to generate AI-powered profile tags.</p>
+                  <a href="/app/cv-upload" className="inline-block mt-3 text-[#0A2463] text-sm font-semibold hover:underline">Upload CV &rarr;</a>
+                </div>
               </div>
             </div>
           )}
@@ -1589,8 +1817,21 @@ export function MenteeProfileSetup() {
 
               {/* Save Button */}
               <div className="mt-6 flex justify-end">
-                <button className="px-6 py-3 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-bold text-sm">
-                  Save Privacy Settings
+                <button
+                  onClick={async () => {
+                    setSavingPrivacy(true);
+                    try {
+                      await savePrivacySettings();
+                    } catch (err) {
+                      console.error('Save privacy settings failed:', err);
+                    } finally {
+                      setSavingPrivacy(false);
+                    }
+                  }}
+                  disabled={savingPrivacy}
+                  className="px-6 py-3 bg-[#0A2463] text-white rounded-lg hover:bg-[#0A2463]/90 font-bold text-sm disabled:opacity-50"
+                >
+                  {savingPrivacy ? 'Saving...' : 'Save Privacy Settings'}
                 </button>
               </div>
             </div>
