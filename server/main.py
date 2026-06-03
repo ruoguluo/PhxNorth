@@ -2,12 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base, SessionLocal
-from routers import auth, profile, mentorship, admin, messages, billing, conversations, timeline, credentials
+from routers import auth, profile, mentorship, admin, messages, billing, conversations, timeline, credentials, consulting, workshops
 # Import models so their tables are registered on Base before create_all.
 import models.billing  # noqa: F401
 import models.conversation  # noqa: F401
 import models.timeline_entry  # noqa: F401
 import models.credential  # noqa: F401
+import models.consulting_project  # noqa: F401
+import models.workshop  # noqa: F401
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -55,6 +57,8 @@ app.include_router(conversations.router)
 app.include_router(billing.router)
 app.include_router(timeline.router)
 app.include_router(credentials.router)
+app.include_router(consulting.router)
+app.include_router(workshops.router)
 
 
 @app.on_event("startup")

@@ -28,6 +28,8 @@ import models.mentorship_request  # noqa: E402,F401
 import models.billing  # noqa: E402,F401
 import models.timeline_entry  # noqa: E402,F401
 import models.credential  # noqa: E402,F401
+import models.consulting_project  # noqa: E402,F401
+import models.workshop  # noqa: E402,F401
 
 
 @pytest.fixture
