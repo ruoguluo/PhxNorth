@@ -27,6 +27,7 @@ import { MentorDashboard } from "./pages/MentorDashboard";
 import { MentorAvailability } from "./pages/MentorAvailability";
 import { MentorCalendar } from "./pages/MentorCalendar";
 import { MentorWorkshops } from "./pages/MentorWorkshops";
+import { MentorConsulting } from "./pages/MentorConsulting";
 import { UpcomingSessionsList } from "./pages/UpcomingSessionsList";
 import { SessionDetail } from "./pages/SessionDetail";
 import { MentorshipRequests } from "./pages/MentorshipRequests";
@@ -173,16 +174,16 @@ export const router = createBrowserRouter([
     Component: PreRoleWelcome,
   },
   {
-    path: "/app/mentee/profile-setup",
-    Component: MenteeProfileSetup,
-  },
-  {
     path: "/app",
     Component: Layout,
     children: [
       {
         index: true,
         loader: () => redirect("/app/mentor/dashboard"),
+      },
+      {
+        path: "mentee/profile-setup",
+        Component: MenteeProfileSetup,
       },
       {
         path: "dashboard",
@@ -222,6 +223,10 @@ export const router = createBrowserRouter([
           {
             path: "session/:id",
             Component: SessionDetail,
+          },
+          {
+            path: "consulting",
+            Component: MentorConsulting,
           },
           {
             path: "requests",
