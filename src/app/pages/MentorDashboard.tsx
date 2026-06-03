@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { mentorshipAPI, profileAPI } from '../../lib/api';
+import { useNavigate } from 'react-router';
+import { mentorshipAPI, profileAPI, consultingAPI, workshopAPI, type ConsultingProject, type WorkshopEntry } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 import {
   User,
@@ -50,6 +51,10 @@ export function MentorDashboard() {
   const [queue, setQueue] = useState<any[]>([]);
   const [sessions, setSessions] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [openProjects, setOpenProjects] = useState<ConsultingProject[]>([]);
+  const [myWorkshops, setMyWorkshops] = useState<WorkshopEntry[]>([]);
+
+  const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
     try {
@@ -68,7 +73,11 @@ export function MentorDashboard() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+    consultingAPI.listProjects({ status: 'open' }).then(setOpenProjects).catch(() => {});
+    workshopAPI.list({ mine: true }).then(setMyWorkshops).catch(() => {});
+  }, [fetchData]);
 
   const handleToggleOnline = async () => {
     try {
@@ -248,17 +257,24 @@ export function MentorDashboard() {
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <Users className="w-6 h-6 text-blue-600" />
                 </div>
-                <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full font-medium animate-pulse">
-                  Opportunities Available
-                </span>
+                {openProjects.length > 0 && (
+                  <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full font-medium animate-pulse">
+                    Opportunities Available
+                  </span>
+                )}
               </div>
               <h3 className="font-bold text-gray-900 mb-2">Enterprise Consulting</h3>
               <p className="text-sm text-gray-600 mb-3">Lead advisory projects for organizations seeking expert guidance</p>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                 <p className="text-xs text-blue-900 font-semibold mb-1">Project Matches</p>
-                <p className="text-lg font-bold text-blue-700">3 projects waiting</p>
+                <p className="text-lg font-bold text-blue-700">
+                  {openProjects.length > 0 ? `${openProjects.length} project${openProjects.length > 1 ? 's' : ''} waiting` : 'No projects available'}
+                </p>
               </div>
-              <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+              <button
+                onClick={() => navigate('/app/mentor/consulting')}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
                 View Projects
               </button>
             </div>
@@ -269,18 +285,25 @@ export function MentorDashboard() {
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <Award className="w-6 h-6 text-purple-600" />
                 </div>
-                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full font-medium animate-pulse">
-                  2 Invitations Pending
-                </span>
+                {myWorkshops.filter(w => w.status === 'published').length > 0 && (
+                  <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full font-medium">
+                    {myWorkshops.filter(w => w.status === 'published').length} Published
+                  </span>
+                )}
               </div>
               <h3 className="font-bold text-gray-900 mb-2">Workshop Speaker</h3>
               <p className="text-sm text-gray-600 mb-3">Lead group sessions and share expertise with multiple participants</p>
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
-                <p className="text-xs text-purple-900 font-semibold mb-1">Pending Invitations</p>
-                <p className="text-lg font-bold text-purple-700">2 requests to review</p>
+                <p className="text-xs text-purple-900 font-semibold mb-1">Your Workshops</p>
+                <p className="text-lg font-bold text-purple-700">
+                  {myWorkshops.length > 0 ? `${myWorkshops.length} workshop${myWorkshops.length > 1 ? 's' : ''}` : 'Create your first workshop'}
+                </p>
               </div>
-              <button className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
-                Review Invitations
+              <button
+                onClick={() => navigate('/app/mentor/workshops')}
+                className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+              >
+                Manage Workshops
               </button>
             </div>
           </div>
