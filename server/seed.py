@@ -13,6 +13,8 @@ from models.user import User
 from models.mentor_availability import MentorAvailability
 from models.mentorship_request import MentorshipRequest
 from models.session import Session
+from models.timeline_entry import TimelineEntry
+from models.credential import Credential
 from utils.security import hash_password
 
 
@@ -325,6 +327,54 @@ def seed():
         ]
         db.add_all(sessions)
 
+        # ─── Sample Profile Data (Sarah Chen) ───────────────────────────
+
+        mentee1.summary = "Computer Science graduate student passionate about AI/ML and SaaS product development. Seeking mentorship in product strategy and career transition to tech leadership."
+        mentee1.functional_expertise = ["Software Development", "Machine Learning", "Product Strategy"]
+        mentee1.markets_of_interest = ["United States", "Canada", "Singapore"]
+        mentee1.career_direction = "Transition into product management at a top tech company"
+
+        timeline_data = [
+            TimelineEntry(
+                user_id=mentee1.id, type="education", title="Master of Computer Science",
+                organization="Stanford University", start_date="2024-09", is_current=True,
+                location="Stanford, CA", degree_level="Master", field_of_study="Computer Science",
+                visibility="public", sort_order=0,
+            ),
+            TimelineEntry(
+                user_id=mentee1.id, type="education", title="Bachelor of Engineering",
+                organization="Tsinghua University", start_date="2020-09", end_date="2024-06",
+                location="Beijing, China", degree_level="Bachelor", field_of_study="Software Engineering",
+                visibility="public", sort_order=1,
+            ),
+            TimelineEntry(
+                user_id=mentee1.id, type="career", title="Software Engineering Intern",
+                organization="Google", start_date="2023-06", end_date="2023-09",
+                location="Mountain View, CA", industry_l1="Technology", industry_l2="Software",
+                visibility="public", sort_order=0,
+            ),
+            TimelineEntry(
+                user_id=mentee1.id, type="business", title="AI Study Assistant",
+                organization="Personal Project", start_date="2024-01", is_current=True,
+                description="Building an AI-powered study assistant using RAG and LLMs",
+                industry_l1="Technology", visibility="public", sort_order=0,
+            ),
+        ]
+        db.add_all(timeline_data)
+
+        cred_data = [
+            Credential(
+                user_id=mentee1.id, type="certification", name="AWS Cloud Practitioner",
+                issuer="Amazon Web Services", date_obtained="2023-12", visibility="public",
+            ),
+            Credential(
+                user_id=mentee1.id, type="training", name="Machine Learning Specialization",
+                issuer="Coursera / Stanford", training_type="Online Course",
+                date_obtained="2023-08", duration="3 months", visibility="public",
+            ),
+        ]
+        db.add_all(cred_data)
+
         db.commit()
         print("✅ Database seeded successfully!")
         print(f"   - 1 admin: admin@phxnorth.com / admin123")
@@ -333,6 +383,8 @@ def seed():
         print(f"   - {len(availability_data)} availability slots")
         print(f"   - 5 mentorship requests")
         print(f"   - 8 sessions (4 completed, 4 upcoming)")
+        print(f"   - {len(timeline_data)} timeline entries (Sarah Chen)")
+        print(f"   - {len(cred_data)} credentials (Sarah Chen)")
 
     except Exception as e:
         db.rollback()
