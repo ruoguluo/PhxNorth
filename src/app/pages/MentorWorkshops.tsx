@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Calendar,
@@ -17,84 +17,52 @@ import {
   Copy,
   Eye,
   Video,
+  Loader2,
 } from 'lucide-react';
-
-interface Workshop {
-  id: string;
-  title: string;
-  status: 'published' | 'draft' | 'completed';
-  attendees: number;
-  maxAttendees: number;
-  date: string;
-  duration: string;
-  revenue: number;
-  rating?: number;
-  type: 'custom' | 'platform-invited';
-}
-
-const mockWorkshops: Workshop[] = [
-  {
-    id: '1',
-    title: 'AI Product Strategy for B2B SaaS',
-    status: 'published',
-    attendees: 18,
-    maxAttendees: 25,
-    date: 'Mar 15, 2026',
-    duration: '2 hours',
-    revenue: 1800,
-    type: 'custom',
-  },
-  {
-    id: '2',
-    title: 'Leadership Transition Playbook',
-    status: 'published',
-    attendees: 12,
-    maxAttendees: 20,
-    date: 'Mar 22, 2026',
-    duration: '90 min',
-    revenue: 1200,
-    type: 'platform-invited',
-  },
-  {
-    id: '3',
-    title: 'Product Discovery Methods',
-    status: 'draft',
-    attendees: 0,
-    maxAttendees: 30,
-    date: 'Apr 5, 2026',
-    duration: '2 hours',
-    revenue: 0,
-    type: 'custom',
-  },
-  {
-    id: '4',
-    title: 'Building High-Performance Teams',
-    status: 'completed',
-    attendees: 24,
-    maxAttendees: 25,
-    date: 'Feb 10, 2026',
-    duration: '2.5 hours',
-    revenue: 2400,
-    rating: 4.9,
-    type: 'custom',
-  },
-];
+import { workshopAPI, type WorkshopEntry } from '../../lib/api';
 
 export function MentorWorkshops() {
+  const [workshops, setWorkshops] = useState<WorkshopEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'published' | 'draft' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredWorkshops = mockWorkshops.filter(workshop => {
+  useEffect(() => {
+    workshopAPI.list({ mine: true })
+      .then(setWorkshops)
+      .catch(err => console.error('Failed to load workshops:', err))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const handleDelete = async (workshopId: number) => {
+    try {
+      await workshopAPI.remove(workshopId);
+      setWorkshops(prev => prev.filter(w => w.id !== workshopId));
+    } catch (err) {
+      console.error('Failed to delete workshop:', err);
+    }
+  };
+
+  const handlePublish = async (workshopId: number) => {
+    try {
+      const updated = await workshopAPI.publish(workshopId);
+      setWorkshops(prev => prev.map(w => w.id === workshopId ? updated : w));
+    } catch (err) {
+      console.error('Failed to publish workshop:', err);
+    }
+  };
+
+  const filteredWorkshops = workshops.filter(workshop => {
     const matchesTab = activeTab === 'all' || workshop.status === activeTab;
     const matchesSearch = workshop.title.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
   const stats = {
-    totalWorkshops: mockWorkshops.length,
-    publishedWorkshops: mockWorkshops.filter(w => w.status === 'published').length,
-    totalRevenue: mockWorkshops.reduce((sum, w) => sum + w.revenue, 0),
-    totalAttendees: mockWorkshops.reduce((sum, w) => sum + w.attendees, 0),
+    totalWorkshops: workshops.length,
+    publishedWorkshops: workshops.filter(w => w.status === 'published').length,
+    totalRevenue: workshops.reduce((sum, w) => sum + (w.price ?? 0), 0),
+    totalAttendees: workshops.reduce((sum, w) => sum + w.registered_count, 0),
   };
 
   return (
@@ -194,7 +162,7 @@ export function MentorWorkshops() {
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  All ({mockWorkshops.length})
+                  All ({workshops.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('published')}
@@ -204,7 +172,7 @@ export function MentorWorkshops() {
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  Published ({mockWorkshops.filter(w => w.status === 'published').length})
+                  Published ({workshops.filter(w => w.status === 'published').length})
                 </button>
                 <button
                   onClick={() => setActiveTab('draft')}
@@ -214,7 +182,7 @@ export function MentorWorkshops() {
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  Draft ({mockWorkshops.filter(w => w.status === 'draft').length})
+                  Draft ({workshops.filter(w => w.status === 'draft').length})
                 </button>
                 <button
                   onClick={() => setActiveTab('completed')}
@@ -224,7 +192,7 @@ export function MentorWorkshops() {
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >
-                  Completed ({mockWorkshops.filter(w => w.status === 'completed').length})
+                  Completed ({workshops.filter(w => w.status === 'completed').length})
                 </button>
               </div>
 
@@ -249,7 +217,12 @@ export function MentorWorkshops() {
 
           {/* Workshop Cards */}
           <div className="p-6 space-y-4">
-            {filteredWorkshops.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-10 h-10 text-emerald-600 mx-auto mb-4 animate-spin" />
+                <p className="text-gray-600">Loading workshops...</p>
+              </div>
+            ) : filteredWorkshops.length === 0 ? (
               <div className="text-center py-12">
                 <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No workshops found</h3>
@@ -265,7 +238,7 @@ export function MentorWorkshops() {
               </div>
             ) : (
               filteredWorkshops.map((workshop) => (
-                <WorkshopCard key={workshop.id} workshop={workshop} />
+                <WorkshopCard key={workshop.id} workshop={workshop} onDelete={handleDelete} onPublish={handlePublish} />
               ))
             )}
           </div>
@@ -275,8 +248,25 @@ export function MentorWorkshops() {
   );
 }
 
-function WorkshopCard({ workshop }: { workshop: Workshop }) {
+function WorkshopCard({ workshop, onDelete, onPublish }: { workshop: WorkshopEntry; onDelete: (id: number) => void; onPublish: (id: number) => void }) {
   const [showMenu, setShowMenu] = useState(false);
+
+  const maxParticipants = workshop.max_participants ?? 0;
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'TBD';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatDuration = (minutes?: number) => {
+    if (!minutes) return 'TBD';
+    if (minutes >= 60) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return m > 0 ? `${h}h ${m}m` : `${h} hour${h > 1 ? 's' : ''}`;
+    }
+    return `${minutes} min`;
+  };
 
   const getStatusBadge = () => {
     switch (workshop.status) {
@@ -298,18 +288,13 @@ function WorkshopCard({ workshop }: { workshop: Workshop }) {
             Completed
           </span>
         );
+      default:
+        return (
+          <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+            {workshop.status}
+          </span>
+        );
     }
-  };
-
-  const getTypeBadge = () => {
-    if (workshop.type === 'platform-invited') {
-      return (
-        <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-medium">
-          Platform Invited
-        </span>
-      );
-    }
-    return null;
   };
 
   return (
@@ -321,27 +306,35 @@ function WorkshopCard({ workshop }: { workshop: Workshop }) {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="text-lg font-bold text-gray-900">{workshop.title}</h3>
-                {getTypeBadge()}
+                {workshop.tags && workshop.tags.length > 0 && (
+                  <div className="flex gap-1">
+                    {workshop.tags.map(tag => (
+                      <span key={tag} className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-medium">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{workshop.date}</span>
+                  <span>{formatDate(workshop.scheduled_at)}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{workshop.duration}</span>
+                  <span>{formatDuration(workshop.duration_minutes)}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
                   <span>
-                    {workshop.attendees}/{workshop.maxAttendees} attendees
+                    {workshop.registered_count}/{maxParticipants} attendees
                   </span>
                 </div>
-                {workshop.revenue > 0 && (
+                {workshop.price != null && workshop.price > 0 && (
                   <div className="flex items-center gap-1">
                     <DollarSign className="w-4 h-4" />
-                    <span className="font-medium">${workshop.revenue.toLocaleString()}</span>
+                    <span className="font-medium">${workshop.price.toLocaleString()}</span>
                   </div>
                 )}
               </div>
@@ -349,31 +342,19 @@ function WorkshopCard({ workshop }: { workshop: Workshop }) {
           </div>
 
           {/* Progress Bar (for published workshops) */}
-          {workshop.status === 'published' && (
+          {workshop.status === 'published' && maxParticipants > 0 && (
             <div className="mb-3">
               <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
                 <span>Registration Progress</span>
                 <span className="font-medium">
-                  {Math.round((workshop.attendees / workshop.maxAttendees) * 100)}%
+                  {Math.round((workshop.registered_count / maxParticipants) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-emerald-600 h-2 rounded-full transition-all"
-                  style={{ width: `${(workshop.attendees / workshop.maxAttendees) * 100}%` }}
+                  style={{ width: `${(workshop.registered_count / maxParticipants) * 100}%` }}
                 ></div>
-              </div>
-            </div>
-          )}
-
-          {/* Rating (for completed workshops) */}
-          {workshop.status === 'completed' && workshop.rating && (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-600">Rating:</span>
-              <div className="flex items-center gap-1">
-                <span className="font-bold text-gray-900">{workshop.rating}</span>
-                <span className="text-gray-400">/5.0</span>
-                <TrendingUp className="w-4 h-4 text-emerald-600 ml-1" />
               </div>
             </div>
           )}
@@ -382,6 +363,14 @@ function WorkshopCard({ workshop }: { workshop: Workshop }) {
         {/* Right Side - Status & Actions */}
         <div className="flex items-center gap-3">
           {getStatusBadge()}
+          {workshop.status === 'draft' && (
+            <button
+              onClick={() => onPublish(workshop.id)}
+              className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-medium hover:bg-emerald-700 transition-colors"
+            >
+              Publish
+            </button>
+          )}
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
@@ -404,7 +393,10 @@ function WorkshopCard({ workshop }: { workshop: Workshop }) {
                   Duplicate
                 </button>
                 <div className="border-t border-gray-200 my-1"></div>
-                <button className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
+                <button
+                  onClick={() => { onDelete(workshop.id); setShowMenu(false); }}
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                >
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </button>
