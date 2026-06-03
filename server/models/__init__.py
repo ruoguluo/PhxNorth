@@ -7,6 +7,8 @@ from .message import Message
 from .timeline_entry import TimelineEntry
 from .credential import Credential
 from .billing import Payment, Payout, LedgerEntry
+from .consulting_project import ConsultingProject, ProjectApplication
+from .workshop import Workshop, WorkshopRegistration
 
 __all__ = [
     "User",
@@ -20,4 +22,8 @@ __all__ = [
     "Payment",
     "Payout",
     "LedgerEntry",
+    "ConsultingProject",
+    "ProjectApplication",
+    "Workshop",
+    "WorkshopRegistration",
 ]
