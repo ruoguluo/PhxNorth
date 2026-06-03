@@ -15,6 +15,8 @@ from models.mentorship_request import MentorshipRequest
 from models.session import Session
 from models.timeline_entry import TimelineEntry
 from models.credential import Credential
+from models.consulting_project import ConsultingProject, ProjectApplication
+from models.workshop import Workshop, WorkshopRegistration
 from utils.security import hash_password
 
 
@@ -375,6 +377,96 @@ def seed():
         ]
         db.add_all(cred_data)
 
+        # ─── Consulting Projects ─────────────────────────────────────────
+
+        cp1 = ConsultingProject(
+            title="AI-Driven Customer Segmentation Strategy",
+            description="Help our retail client implement ML-based customer segmentation to improve targeting and retention.",
+            client_name="RetailCo International",
+            budget_min=8000, budget_max=15000, duration_weeks=6,
+            required_skills=["Machine Learning", "Customer Analytics", "Strategy"],
+            industry="Consumer & Retail", status="open", created_by=admin.id,
+        )
+        cp2 = ConsultingProject(
+            title="FinTech Regulatory Compliance Audit",
+            description="Assess regulatory readiness for a Series B fintech startup expanding into Southeast Asia.",
+            client_name="PayFlow Asia",
+            budget_min=12000, budget_max=20000, duration_weeks=8,
+            required_skills=["FinTech", "Regulatory", "Compliance", "APAC"],
+            industry="Financial Services", status="open", created_by=admin.id,
+        )
+        cp3 = ConsultingProject(
+            title="Digital Health Platform Architecture Review",
+            description="Independent architecture review of a telemedicine platform before Series A fundraise.",
+            client_name="MediConnect",
+            budget_min=5000, budget_max=10000, duration_weeks=3,
+            required_skills=["HealthTech", "System Design", "Cloud Architecture"],
+            industry="Healthcare & Life Sciences", status="open", created_by=admin.id,
+        )
+        cp4 = ConsultingProject(
+            title="Enterprise Data Governance Framework",
+            description="Design a data governance framework for a Fortune 500 manufacturing company.",
+            client_name="GlobalMfg Corp",
+            budget_min=20000, budget_max=35000, duration_weeks=12,
+            required_skills=["Data Governance", "Enterprise Architecture", "Manufacturing"],
+            industry="Industrial & Manufacturing", status="in_progress",
+            assigned_mentor_id=mentor1.id, created_by=admin.id,
+        )
+        db.add_all([cp1, cp2, cp3, cp4])
+        db.flush()
+
+        app1 = ProjectApplication(
+            project_id=cp4.id, mentor_id=mentor1.id,
+            proposal="I have 15+ years of experience in enterprise data systems.",
+            proposed_rate=250.0, status="approved",
+        )
+        app2 = ProjectApplication(
+            project_id=cp4.id, mentor_id=mentor2.id,
+            proposal="Extensive background in manufacturing IT governance.",
+            proposed_rate=200.0, status="rejected",
+        )
+        app3 = ProjectApplication(
+            project_id=cp1.id, mentor_id=mentor1.id,
+            proposal="ML is my core expertise, happy to lead this.",
+            proposed_rate=180.0, status="pending",
+        )
+        db.add_all([app1, app2, app3])
+
+        # ─── Workshops ──────────────────────────────────────────────────
+
+        ws1 = Workshop(
+            mentor_id=mentor1.id,
+            title="Scaling E-commerce with Microservices",
+            description="Hands-on workshop on decomposing monoliths into microservices for high-traffic e-commerce platforms.",
+            scheduled_at=now + timedelta(days=7, hours=14),
+            duration_minutes=120, max_participants=25, price=75.0,
+            status="published", tags=["Microservices", "E-commerce", "Architecture"],
+        )
+        ws2 = Workshop(
+            mentor_id=mentor1.id,
+            title="AI Product Management Fundamentals",
+            description="Learn how to manage AI/ML product development from ideation to production.",
+            scheduled_at=now + timedelta(days=14, hours=10),
+            duration_minutes=90, max_participants=30, price=50.0,
+            status="draft", tags=["AI", "Product Management", "ML"],
+        )
+        ws3 = Workshop(
+            mentor_id=mentor3.id,
+            title="HIPAA Compliance for Startups",
+            description="Everything you need to know about HIPAA compliance when building health-tech products.",
+            scheduled_at=now + timedelta(days=10, hours=16),
+            duration_minutes=60, max_participants=20, price=40.0,
+            status="published", tags=["HIPAA", "HealthTech", "Compliance"],
+        )
+        db.add_all([ws1, ws2, ws3])
+        db.flush()
+
+        db.add_all([
+            WorkshopRegistration(workshop_id=ws1.id, mentee_id=mentee1.id),
+            WorkshopRegistration(workshop_id=ws1.id, mentee_id=mentee2.id),
+            WorkshopRegistration(workshop_id=ws3.id, mentee_id=mentee3.id),
+        ])
+
         db.commit()
         print("✅ Database seeded successfully!")
         print(f"   - 1 admin: admin@phxnorth.com / admin123")
@@ -385,6 +477,8 @@ def seed():
         print(f"   - 8 sessions (4 completed, 4 upcoming)")
         print(f"   - {len(timeline_data)} timeline entries (Sarah Chen)")
         print(f"   - {len(cred_data)} credentials (Sarah Chen)")
+        print(f"   - 4 consulting projects, 3 applications")
+        print(f"   - 3 workshops, 3 registrations")
 
     except Exception as e:
         db.rollback()
