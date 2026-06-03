@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Navigate } from "react-router";
 import { mentorshipAPI } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
+import { discProfileAPI, discCareerAPI, type DISCProfile, type CareerProfile } from '../../lib/disc-api';
 
 export function MenteeDashboard() {
   const { user } = useAuth();
@@ -26,6 +27,10 @@ export function MenteeDashboard() {
   const [requests, setRequests] = useState<any[]>([]);
   const [completedSessions, setCompletedSessions] = useState<any[]>([]);
 
+  // 5D Growth Progress — real DISC data
+  const [discProfile, setDiscProfile] = useState<DISCProfile | null>(null);
+  const [careerProfile, setCareerProfile] = useState<CareerProfile | null>(null);
+
   const fetchData = useCallback(async () => {
     try {
       const [sessionsData, reqData, completedData] = await Promise.all([
@@ -39,9 +44,48 @@ export function MenteeDashboard() {
     } catch (err) {
       console.error('Failed to fetch mentee data:', err);
     }
+    // Fetch 5D data independently so failures don't affect the rest
+    try {
+      const [disc, career] = await Promise.allSettled([
+        discProfileAPI.get('me', '90d'),
+        discCareerAPI.get('me'),
+      ]);
+      if (disc.status === 'fulfilled') setDiscProfile(disc.value);
+      if (career.status === 'fulfilled') setCareerProfile(career.value);
+    } catch {
+      // 5D data is optional — card will show '--' if unavailable
+    }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // ─── 5D dimension computation (mirrors FiveDSnapshot logic) ───────
+  const fiveDDimensions = discProfile
+    ? [
+        { label: 'Capability',   value: Math.round(discProfile.scores.C),                                     color: 'bg-green-600' },
+        { label: 'Execution',    value: Math.round(discProfile.scores.D),                                     color: 'bg-blue-600' },
+        { label: 'Decision',     value: Math.round((discProfile.scores.D + discProfile.scores.C) / 2),        color: 'bg-purple-600' },
+        { label: 'Collaboration',value: Math.round((discProfile.scores.I + discProfile.scores.S) / 2),        color: 'bg-orange-500' },
+        { label: 'Growth',       value: Math.round((discProfile.scores.D + discProfile.scores.I) / 2),        color: 'bg-teal-600' },
+      ]
+    : null;
+
+  // Overall 5D progress = average of 5 dimension values (capped 0-100)
+  const fiveDOverall = fiveDDimensions
+    ? Math.min(100, Math.round(fiveDDimensions.reduce((sum, d) => sum + d.value, 0) / fiveDDimensions.length))
+    : null;
+
+  // Boost score slightly if the user has career data (mirrors FiveDSnapshot SPI logic)
+  const hasCareer = (careerProfile?.job_entries?.length ?? 0) > 0 ||
+                    (careerProfile?.analytics?.distinct_companies ?? 0) > 0;
+  const fiveDDisplay = fiveDOverall !== null
+    ? Math.min(100, fiveDOverall + (hasCareer ? 5 : 0))
+    : null;
+
+  // Show top 3 dimensions sorted by value descending
+  const topDimensions = fiveDDimensions
+    ? [...fiveDDimensions].sort((a, b) => b.value - a.value).slice(0, 3)
+    : null;
 
   // View mode: 'personal', 'talentMobility', or 'commercialConsultation'
   const [viewMode, setViewMode] = useState<'personal' | 'talentMobility' | 'commercialConsultation'>('personal');
@@ -294,10 +338,13 @@ export function MenteeDashboard() {
                   </div>
                   <div className="text-3xl font-bold text-gray-900 mb-1">{requests.filter(r => (r as any).status === 'pending' || (r as any).status === 'accepted').length}</div>
                   <div className="text-sm text-gray-600 mb-4">Active Mentorship Questions</div>
-                  <button className="w-full bg-[#0A2463] text-white px-4 py-2 rounded-lg hover:bg-[#0A2463]/90 transition-colors text-sm flex items-center justify-center gap-2">
+                  <a
+                    href="/app/question-entry"
+                    className="w-full bg-[#0A2463] text-white px-4 py-2 rounded-lg hover:bg-[#0A2463]/90 transition-colors text-sm flex items-center justify-center gap-2"
+                  >
                     Continue Question Flow
                     <ArrowRight className="w-4 h-4" />
-                  </button>
+                  </a>
                 </div>
 
                 {/* Card 2: Mentor Matches */}
@@ -309,43 +356,54 @@ export function MenteeDashboard() {
                   </div>
                   <div className="text-3xl font-bold text-gray-900 mb-1">{sessions.length}</div>
                   <div className="text-sm text-gray-600 mb-4">Active Mentor Matches</div>
-                  <button className="w-full border-2 border-[#0A2463] text-[#0A2463] px-4 py-2 rounded-lg hover:bg-[#0A2463] hover:text-white transition-colors text-sm flex items-center justify-center gap-2">
+                  <a
+                    href="/app/find-mentor"
+                    className="w-full border-2 border-[#0A2463] text-[#0A2463] px-4 py-2 rounded-lg hover:bg-[#0A2463] hover:text-white transition-colors text-sm flex items-center justify-center gap-2"
+                  >
                     View Mentors
                     <ArrowRight className="w-4 h-4" />
-                  </button>
+                  </a>
                 </div>
 
-                {/* Card 3: 5D Growth Progress */}
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
+                {/* Card 3: 5D Growth Progress — real DISC data */}
+                <a href="/app/5d-snapshot" className="block bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-4">
                     <div className="bg-green-50 p-3 rounded-lg">
                       <BarChart3 className="w-6 h-6 text-green-600" />
                     </div>
+                    {fiveDDisplay !== null && (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">Live</span>
+                    )}
                   </div>
-                  <div className="text-3xl font-bold text-gray-900 mb-1">72%</div>
+                  <div className="text-3xl font-bold text-gray-900 mb-1">
+                    {fiveDDisplay !== null ? `${fiveDDisplay}%` : '--'}
+                  </div>
                   <div className="text-sm text-gray-600 mb-3">5D Growth Progress</div>
-                  {/* Mini 5D visualization */}
+                  {/* Mini 5D visualization — top 3 real dimensions */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                        <div className="bg-green-600 h-1.5 rounded-full" style={{ width: '85%' }}></div>
+                    {topDimensions ? topDimensions.map((dim) => (
+                      <div key={dim.label} className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400 w-16 truncate">{dim.label}</span>
+                        <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className={`${dim.color} h-1.5 rounded-full transition-all duration-700`}
+                            style={{ width: `${dim.value}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 w-7 text-right">{dim.value}%</span>
                       </div>
-                      <span className="text-xs text-gray-500">85%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                        <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: '70%' }}></div>
-                      </div>
-                      <span className="text-xs text-gray-500">70%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                        <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: '65%' }}></div>
-                      </div>
-                      <span className="text-xs text-gray-500">65%</span>
-                    </div>
+                    )) : (
+                      // Skeleton bars while data is loading
+                      [1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-16 h-1.5 bg-gray-100 rounded-full animate-pulse" />
+                          <div className="flex-1 bg-gray-100 rounded-full h-1.5 animate-pulse" />
+                          <div className="w-7 h-1.5 bg-gray-100 rounded-full animate-pulse" />
+                        </div>
+                      ))
+                    )}
                   </div>
-                </div>
+                </a>
 
                 {/* Card 4: Next Session */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">

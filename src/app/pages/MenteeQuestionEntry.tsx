@@ -204,6 +204,12 @@ export function MenteeQuestionEntry() {
   const [mentorMatches, setMentorMatches] = useState<MentorMatch[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Request session modal
+  const [requestModal, setRequestModal] = useState<{ mentor: MentorMatch; sessionType: 'instant' | 'scheduled' } | null>(null);
+  const [requestForm, setRequestForm] = useState({ topic: '', message: '', duration_minutes: 30, proposed_datetime: '' });
+  const [requestStatus, setRequestStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [requestError, setRequestError] = useState('');
+
   // Default stage options used if the AI returns none / is unavailable.
   const defaultStageOptions: StageOption[] = [
     { id: 'deciding', label: 'Still deciding direction' },
@@ -314,6 +320,39 @@ export function MenteeQuestionEntry() {
     } finally {
       setIsProcessing(false);
       setQuickQuestionStep('results');
+    }
+  };
+
+  const openRequestModal = (mentor: MentorMatch, sessionType: 'instant' | 'scheduled') => {
+    const defaultTopic = selectedType === 'structured'
+      ? (`${structuredData.domain}: ${structuredData.desiredOutcome}`.trim().slice(0, 100) || 'Mentorship Session')
+      : (quickQuestion.slice(0, 100) || 'Mentorship Session');
+    setRequestForm({ topic: defaultTopic, message: '', duration_minutes: sessionType === 'instant' ? 30 : 60, proposed_datetime: '' });
+    setRequestStatus('idle');
+    setRequestError('');
+    setRequestModal({ mentor, sessionType });
+  };
+
+  const submitRequest = async () => {
+    if (!requestModal) return;
+    setRequestStatus('loading');
+    try {
+      const data: Record<string, unknown> = {
+        mentor_id: parseInt(requestModal.mentor.id),
+        type: requestModal.sessionType,
+        topic: requestForm.topic,
+        message: requestForm.message || undefined,
+        duration_minutes: requestForm.duration_minutes,
+        price: 0.0,
+      };
+      if (requestModal.sessionType === 'scheduled' && requestForm.proposed_datetime) {
+        data.proposed_datetime = new Date(requestForm.proposed_datetime).toISOString();
+      }
+      await mentorshipAPI.createRequest(data);
+      setRequestStatus('success');
+    } catch (err: unknown) {
+      setRequestStatus('error');
+      setRequestError(err instanceof Error ? err.message : 'Failed to send request. Please try again.');
     }
   };
 
@@ -850,7 +889,7 @@ export function MenteeQuestionEntry() {
                       </div>
 
                       {/* Action Button */}
-                      <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
+                      <button onClick={() => openRequestModal(mentor, 'instant')} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
                         Start Now
                       </button>
                     </div>
@@ -931,7 +970,7 @@ export function MenteeQuestionEntry() {
                       </div>
 
                       {/* Action Button */}
-                      <button className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
+                      <button onClick={() => openRequestModal(mentor, 'instant')} className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
                         Join Queue
                       </button>
                     </div>
@@ -1008,7 +1047,7 @@ export function MenteeQuestionEntry() {
                       </div>
 
                       {/* Action Button */}
-                      <button className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
+                      <button onClick={() => openRequestModal(mentor, 'scheduled')} className="w-full bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
                         Notify Me
                       </button>
                     </div>
@@ -1085,7 +1124,7 @@ export function MenteeQuestionEntry() {
                         </div>
 
                         {/* Action Button */}
-                        <button className="w-full bg-[#0A2463] hover:bg-[#0A2463]/90 text-white py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
+                        <button onClick={() => openRequestModal(mentor, 'scheduled')} className="w-full bg-[#0A2463] hover:bg-[#0A2463]/90 text-white py-3 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl">
                           Request Session
                         </button>
                       </div>
@@ -1111,6 +1150,532 @@ export function MenteeQuestionEntry() {
                 Back to Dashboard
               </button>
             </div>
+
+            {/* Request Session Modal */}
+            {requestModal && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative max-h-[90vh] overflow-y-auto">
+                  <button onClick={() => setRequestModal(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                  {requestStatus === 'success' ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"><CheckCircle className="w-10 h-10 text-emerald-600" /></div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Sent!</h2>
+                      <p className="text-gray-600 mb-6">Your request has been sent to <strong>{requestModal.mentor.name}</strong>. You'll be notified when they respond.</p>
+                      <button onClick={() => { setRequestModal(null); navigate('/app/dashboard'); }} className="bg-[#0A2463] text-white px-8 py-3 rounded-lg hover:bg-[#0A2463]/90 transition-colors font-semibold">Go to Dashboard</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className={`${requestModal.mentor.avatarColor} w-12 h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}>{requestModal.mentor.name.split(' ').map(n => n[0]).join('')}</div>
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-xl font-bold text-gray-900 truncate">{requestModal.mentor.name}</h2>
+                          <p className="text-sm text-gray-500 truncate">{requestModal.mentor.title}</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${requestModal.sessionType === 'instant' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{requestModal.sessionType === 'instant' ? '⚡ Instant' : '📅 Scheduled'}</span>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1">Session Topic <span className="text-red-500">*</span></label>
+                          <input type="text" value={requestForm.topic} onChange={(e) => setRequestForm({ ...requestForm, topic: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none" placeholder="What would you like to discuss?" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1">Duration</label>
+                          <select value={requestForm.duration_minutes} onChange={(e) => setRequestForm({ ...requestForm, duration_minutes: parseInt(e.target.value) })} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none">
+                            <option value={15}>15 minutes</option>
+                            <option value={30}>30 minutes</option>
+                            <option value={45}>45 minutes</option>
+                            <option value={60}>60 minutes</option>
+                            <option value={90}>90 minutes</option>
+                          </select>
+                        </div>
+                        {requestModal.sessionType === 'scheduled' && (
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-1">Proposed Date &amp; Time</label>
+                            <input type="datetime-local" value={requestForm.proposed_datetime} onChange={(e) => setRequestForm({ ...requestForm, proposed_datetime: e.target.value })} min={new Date().toISOString().slice(0, 16)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none" />
+                          </div>
+                        )}
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1">Message (optional)</label>
+                          <textarea value={requestForm.message} onChange={(e) => setRequestForm({ ...requestForm, message: e.target.value })} rows={3} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none resize-none" placeholder="Add any context or specific questions for your mentor..." />
+                        </div>
+                        {requestStatus === 'error' && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{requestError}</div>}
+                        <button onClick={submitRequest} disabled={!requestForm.topic.trim() || requestStatus === 'loading'} className="w-full bg-[#0A2463] hover:bg-[#0A2463]/90 text-white py-4 rounded-xl font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                          {requestStatus === 'loading' ? <><Loader2 className="w-5 h-5 animate-spin" />Sending...</> : <><CheckCircle className="w-5 h-5" />Send Request</>}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // Structured Question Flow
+  if (selectedType === 'structured') {
+    // Step 1: Fill in structured question fields
+    if (structuredStep === 1) {
+      const isValid = structuredData.domain.trim() && structuredData.backgroundContext.trim() && structuredData.desiredOutcome.trim();
+
+      const handleStructuredNext = async () => {
+        setIsProcessing(true);
+        try {
+          const result = await questionAPI.agenda(structuredData.backgroundContext, {
+            understanding: aiUnderstanding ?? undefined,
+            stage: structuredData.timeHorizon,
+            answers: { successCriteria: structuredData.successCriteria },
+          });
+          setGeneratedAgenda(result.subQuestions);
+        } catch (err) {
+          console.warn('Agenda generation failed, proceeding without AI agenda', err);
+          setGeneratedAgenda([]);
+        } finally {
+          setIsProcessing(false);
+          setStructuredStep(2);
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-gray-50 py-12 px-8">
+          <div className="max-w-3xl mx-auto">
+            <button
+              onClick={() => setSelectedType(null)}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Question Type Selection</span>
+            </button>
+
+            {/* Progress */}
+            <div className="flex items-center justify-center mb-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#0A2463] text-white flex items-center justify-center font-bold">1</div>
+                <div className="w-20 h-1 bg-gray-300" />
+                <div className="w-10 h-10 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center font-bold">2</div>
+                <div className="w-20 h-1 bg-gray-300" />
+                <div className="w-10 h-10 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center font-bold">3</div>
+              </div>
+            </div>
+
+            <div className="text-center mb-10">
+              <h1 className="text-4xl font-bold text-gray-900 mb-3">Define Your Objective</h1>
+              <p className="text-lg text-gray-600">Help us understand what you want to achieve</p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-8 space-y-6 mb-8">
+              {/* Domain */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Domain / Area <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={structuredData.domain}
+                  onChange={(e) => setStructuredData({ ...structuredData, domain: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none"
+                >
+                  <option value="">Select a domain...</option>
+                  <option value="Education">Education</option>
+                  <option value="Career">Career</option>
+                  <option value="Business">Business</option>
+                  <option value="Entrepreneurship">Entrepreneurship</option>
+                  <option value="Leadership">Leadership</option>
+                  <option value="Technology">Technology</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* Background Context */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Background & Context <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={structuredData.backgroundContext}
+                  onChange={(e) => setStructuredData({ ...structuredData, backgroundContext: e.target.value })}
+                  placeholder="Describe your current situation, relevant experience, and what led you to this question..."
+                  rows={4}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none resize-none"
+                />
+              </div>
+
+              {/* Desired Outcome */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Desired Outcome <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={structuredData.desiredOutcome}
+                  onChange={(e) => setStructuredData({ ...structuredData, desiredOutcome: e.target.value })}
+                  placeholder="What does success look like for you? What do you want to achieve?"
+                  rows={3}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none resize-none"
+                />
+              </div>
+
+              {/* Time Horizon */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">Time Horizon</label>
+                <select
+                  value={structuredData.timeHorizon}
+                  onChange={(e) => setStructuredData({ ...structuredData, timeHorizon: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none"
+                >
+                  <option value="">Select timeframe...</option>
+                  <option value="1-3 months">1–3 months</option>
+                  <option value="3-6 months">3–6 months</option>
+                  <option value="6-12 months">6–12 months</option>
+                  <option value="1-2 years">1–2 years</option>
+                  <option value="2+ years">2+ years</option>
+                </select>
+              </div>
+
+              {/* Success Criteria */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">Success Criteria</label>
+                <textarea
+                  value={structuredData.successCriteria}
+                  onChange={(e) => setStructuredData({ ...structuredData, successCriteria: e.target.value })}
+                  placeholder="How will you know when you've succeeded? What are the measurable outcomes?"
+                  rows={3}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                onClick={handleStructuredNext}
+                disabled={!isValid || isProcessing}
+                className="flex items-center gap-3 bg-[#0A2463] hover:bg-[#0A2463]/90 text-white px-12 py-5 rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <span>Generating Agenda...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Generate Agenda</span>
+                    <ArrowRight className="w-6 h-6" />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 2: AI-generated agenda review
+    if (structuredStep === 2) {
+      return (
+        <div className="min-h-screen bg-gray-50 py-12 px-8">
+          <div className="max-w-3xl mx-auto">
+            <button
+              onClick={() => setStructuredStep(1)}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </button>
+
+            {/* Progress */}
+            <div className="flex items-center justify-center mb-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#0A2463] text-white flex items-center justify-center"><CheckCircle className="w-6 h-6" /></div>
+                <div className="w-20 h-1 bg-[#0A2463]" />
+                <div className="w-10 h-10 rounded-full bg-[#0A2463] text-white flex items-center justify-center font-bold">2</div>
+                <div className="w-20 h-1 bg-gray-300" />
+                <div className="w-10 h-10 rounded-full bg-gray-300 text-gray-500 flex items-center justify-center font-bold">3</div>
+              </div>
+            </div>
+
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Sparkles className="w-8 h-8 text-[#0A2463]" />
+                <h1 className="text-4xl font-bold text-gray-900">Your Mentorship Agenda</h1>
+              </div>
+              <p className="text-lg text-gray-600">AI-powered breakdown of your objective into focused discussion topics</p>
+            </div>
+
+            {/* Summary card */}
+            <div className="bg-gradient-to-br from-[#0A2463] to-[#1e40af] rounded-2xl p-6 text-white mb-8">
+              <div className="flex items-start gap-3 mb-3">
+                <Target className="w-5 h-5 mt-0.5 text-blue-200 flex-shrink-0" />
+                <div>
+                  <div className="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-1">Domain</div>
+                  <div className="font-semibold">{structuredData.domain}</div>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Lightbulb className="w-5 h-5 mt-0.5 text-blue-200 flex-shrink-0" />
+                <div>
+                  <div className="text-xs font-semibold text-blue-200 uppercase tracking-wide mb-1">Desired Outcome</div>
+                  <div className="text-blue-100 text-sm">{structuredData.desiredOutcome}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Agenda items */}
+            {generatedAgenda.length > 0 ? (
+              <div className="space-y-4 mb-8">
+                {generatedAgenda.map((item, idx) => {
+                  const depthColors: Record<string, string> = {
+                    Foundation: 'bg-blue-100 text-blue-700',
+                    Application: 'bg-purple-100 text-purple-700',
+                    Strategic: 'bg-emerald-100 text-emerald-700',
+                  };
+                  return (
+                    <div key={item.id} className="bg-white rounded-xl border border-gray-200 p-5 flex gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#0A2463]/10 text-[#0A2463] flex items-center justify-center font-bold text-sm flex-shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${depthColors[item.depthLevel] ?? 'bg-gray-100 text-gray-700'}`}>
+                            {item.depthLevel}
+                          </span>
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {item.estimatedTime} min
+                          </span>
+                        </div>
+                        <p className="font-semibold text-gray-900 mb-1">{item.question}</p>
+                        <p className="text-sm text-gray-500">{item.purpose}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-gray-200 p-8 text-center mb-8">
+                <Lightbulb className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-600 font-medium">Agenda will be built with your mentor during the session.</p>
+                <p className="text-sm text-gray-400 mt-1">Your objective details have been saved.</p>
+              </div>
+            )}
+
+            <div className="flex justify-center">
+              <button
+                onClick={async () => {
+                  setStructuredStep(3);
+                  setIsProcessing(true);
+                  try {
+                    const results = await mentorshipAPI.match({
+                      category: structuredData.domain.toLowerCase() || undefined,
+                      primary_goal: structuredData.desiredOutcome || undefined,
+                      raw_question: structuredData.backgroundContext || undefined,
+                      limit: 9,
+                    });
+                    const mapped: MentorMatch[] = results.map((m) => ({
+                      id: m.id,
+                      name: m.name,
+                      title: m.title,
+                      expertise: m.expertise,
+                      experience: m.experience,
+                      matchScore: m.matchScore,
+                      matchConfidence: m.matchConfidence as MentorMatch['matchConfidence'],
+                      availability: m.availability,
+                      responseTime: m.responseTime,
+                      sessionsCompleted: m.sessionsCompleted,
+                      avatarColor: m.avatarColor,
+                      status: m.status as MentorMatch['status'],
+                      queueLength: m.queueLength ?? undefined,
+                      estimatedWaitTime: m.estimatedWaitTime ?? undefined,
+                      nextAvailability: m.nextAvailability ?? undefined,
+                      mentorshipType: (m.mentorshipType || undefined) as MentorMatch['mentorshipType'],
+                      menteesMarked: m.menteesMarked,
+                      deepDialogues: m.deepDialogues,
+                    }));
+                    setMentorMatches(mapped);
+                  } catch (err) {
+                    console.warn('Mentor matching failed', err);
+                    setMentorMatches([]);
+                  } finally {
+                    setIsProcessing(false);
+                  }
+                }}
+                className="flex items-center gap-3 bg-[#0A2463] hover:bg-[#0A2463]/90 text-white px-12 py-5 rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all"
+              >
+                <span>Find Mentors</span>
+                <ArrowRight className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 3: Mentor match results
+    if (structuredStep === 3) {
+      return (
+        <div className="min-h-screen bg-gray-50 py-12 px-8">
+          <div className="max-w-7xl mx-auto">
+            <button
+              onClick={() => setStructuredStep(2)}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Agenda</span>
+            </button>
+
+            {/* Progress */}
+            <div className="flex items-center justify-center mb-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#0A2463] text-white flex items-center justify-center"><CheckCircle className="w-6 h-6" /></div>
+                <div className="w-20 h-1 bg-[#0A2463]" />
+                <div className="w-10 h-10 rounded-full bg-[#0A2463] text-white flex items-center justify-center"><CheckCircle className="w-6 h-6" /></div>
+                <div className="w-20 h-1 bg-[#0A2463]" />
+                <div className="w-10 h-10 rounded-full bg-[#0A2463] text-white flex items-center justify-center font-bold">3</div>
+              </div>
+            </div>
+
+            <div className="text-center mb-10">
+              <h1 className="text-4xl font-bold text-gray-900 mb-3">Matched Mentors</h1>
+              <p className="text-lg text-gray-600">Based on your structured objective in <strong>{structuredData.domain}</strong></p>
+            </div>
+
+            {isProcessing ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-16 flex flex-col items-center gap-6">
+                <Loader2 className="w-16 h-16 animate-spin text-[#0A2463]" />
+                <p className="text-gray-600">Finding the best mentors for your goal...</p>
+              </div>
+            ) : mentorMatches.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+                <Star className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <h2 className="text-xl font-bold text-gray-900 mb-2">No mentors found</h2>
+                <p className="text-gray-600 mb-6">Try broadening your criteria or check back later.</p>
+                <button
+                  onClick={() => navigate('/app/find-mentor')}
+                  className="bg-[#0A2463] text-white px-8 py-3 rounded-lg hover:bg-[#0A2463]/90 transition-colors font-semibold"
+                >
+                  Browse All Mentors
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {mentorMatches.map((mentor) => (
+                  <div key={mentor.id} className="bg-white rounded-2xl border-2 border-gray-200 p-6 hover:border-[#0A2463] hover:shadow-xl transition-all relative">
+                    {/* Status */}
+                    <div className="flex justify-between items-center mb-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        mentor.status === 'online' ? 'bg-emerald-100 text-emerald-700' :
+                        mentor.status === 'in-session' ? 'bg-amber-100 text-amber-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {mentor.status === 'online' ? 'Available' : mentor.status === 'in-session' ? 'In Session' : 'Offline'}
+                      </span>
+                      <span className="text-xs font-bold text-[#0A2463] bg-blue-50 px-2 py-1 rounded">
+                        {mentor.matchScore}% match
+                      </span>
+                    </div>
+
+                    {/* Avatar */}
+                    <div className="flex justify-center mb-4">
+                      <div className={`${mentor.avatarColor} w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold border-4 border-[#0A2463]/20`}>
+                        {mentor.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                    </div>
+
+                    {/* Name & Title */}
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1">{mentor.name}</h3>
+                      <p className="text-sm text-gray-600 line-clamp-1">{mentor.title}</p>
+                    </div>
+
+                    {/* Expertise */}
+                    <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                      {mentor.expertise.slice(0, 3).map((exp) => (
+                        <span key={exp} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                          {exp}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Metrics */}
+                    <div className="flex items-center justify-center gap-4 text-xs text-gray-500 mb-4">
+                      <span>📊 {mentor.sessionsCompleted} sessions</span>
+                      <span>⚡ {mentor.responseTime}</span>
+                    </div>
+
+                    {/* Action */}
+                    <button onClick={() => openRequestModal(mentor, 'scheduled')} className="w-full bg-[#0A2463] hover:bg-[#0A2463]/90 text-white py-3 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg">
+                      Request Session
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex justify-center mt-10">
+              <button
+                onClick={() => navigate('/app/dashboard')}
+                className="text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+
+            {/* Request Session Modal */}
+            {requestModal && (
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative max-h-[90vh] overflow-y-auto">
+                  <button onClick={() => setRequestModal(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                  {requestStatus === 'success' ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4"><CheckCircle className="w-10 h-10 text-emerald-600" /></div>
+                      <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Sent!</h2>
+                      <p className="text-gray-600 mb-6">Your request has been sent to <strong>{requestModal.mentor.name}</strong>. You'll be notified when they respond.</p>
+                      <button onClick={() => { setRequestModal(null); navigate('/app/dashboard'); }} className="bg-[#0A2463] text-white px-8 py-3 rounded-lg hover:bg-[#0A2463]/90 transition-colors font-semibold">Go to Dashboard</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className={`${requestModal.mentor.avatarColor} w-12 h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}>{requestModal.mentor.name.split(' ').map(n => n[0]).join('')}</div>
+                        <div className="flex-1 min-w-0">
+                          <h2 className="text-xl font-bold text-gray-900 truncate">{requestModal.mentor.name}</h2>
+                          <p className="text-sm text-gray-500 truncate">{requestModal.mentor.title}</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${requestModal.sessionType === 'instant' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>{requestModal.sessionType === 'instant' ? '⚡ Instant' : '📅 Scheduled'}</span>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1">Session Topic <span className="text-red-500">*</span></label>
+                          <input type="text" value={requestForm.topic} onChange={(e) => setRequestForm({ ...requestForm, topic: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none" placeholder="What would you like to discuss?" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1">Duration</label>
+                          <select value={requestForm.duration_minutes} onChange={(e) => setRequestForm({ ...requestForm, duration_minutes: parseInt(e.target.value) })} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none">
+                            <option value={15}>15 minutes</option>
+                            <option value={30}>30 minutes</option>
+                            <option value={45}>45 minutes</option>
+                            <option value={60}>60 minutes</option>
+                            <option value={90}>90 minutes</option>
+                          </select>
+                        </div>
+                        {requestModal.sessionType === 'scheduled' && (
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-900 mb-1">Proposed Date &amp; Time</label>
+                            <input type="datetime-local" value={requestForm.proposed_datetime} onChange={(e) => setRequestForm({ ...requestForm, proposed_datetime: e.target.value })} min={new Date().toISOString().slice(0, 16)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none" />
+                          </div>
+                        )}
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1">Message (optional)</label>
+                          <textarea value={requestForm.message} onChange={(e) => setRequestForm({ ...requestForm, message: e.target.value })} rows={3} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#0A2463] focus:outline-none resize-none" placeholder="Add any context or specific questions for your mentor..." />
+                        </div>
+                        {requestStatus === 'error' && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{requestError}</div>}
+                        <button onClick={submitRequest} disabled={!requestForm.topic.trim() || requestStatus === 'loading'} className="w-full bg-[#0A2463] hover:bg-[#0A2463]/90 text-white py-4 rounded-xl font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                          {requestStatus === 'loading' ? <><Loader2 className="w-5 h-5 animate-spin" />Sending...</> : <><CheckCircle className="w-5 h-5" />Send Request</>}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       );
