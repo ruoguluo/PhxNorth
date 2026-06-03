@@ -1,8 +1,10 @@
 import { User, Mail, MapPin, Briefcase, Calendar, Award, Shield, Settings, Bell, Globe, GraduationCap, Building } from "lucide-react";
+import { useNavigate } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 
 export function Profile() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) {
     return (
@@ -58,11 +60,22 @@ export function Profile() {
               </div>
             </div>
           </div>
-          <button className="bg-[#0A2463] text-white px-6 py-2 rounded-lg hover:bg-[#0A2463]/90 transition-colors">
+          <button
+            onClick={() => navigate('/app/mentee/profile-setup')}
+            className="bg-[#0A2463] text-white px-6 py-2 rounded-lg hover:bg-[#0A2463]/90 transition-colors"
+          >
             Edit Profile
           </button>
         </div>
       </div>
+
+      {/* Summary */}
+      {user?.summary && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Summary</h3>
+          <p className="text-gray-600 whitespace-pre-line">{user.summary}</p>
+        </div>
+      )}
 
       {/* Professional Info */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
