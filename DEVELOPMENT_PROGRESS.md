@@ -3,7 +3,7 @@
 > Pick-up-anywhere log of in-flight feature work. Pair with `FEATURE_REQUIREMENTS.md`
 > (the requirement list + status audit) and `IMPLEMENTATION_PLAN_FR03_FR07.md`
 > (design rationale for FR-03/FR-07).
-> **Last updated:** 2026-05-31
+> **Last updated:** 2026-06-04
 
 ---
 
@@ -115,7 +115,7 @@ See `FEATURE_REQUIREMENTS.md` for the full table. Snapshot:
 - **FR-01 resume parsing** — 🟡 backend + CVUpload wired (pre-existing).
 - **FR-02 5D analysis** — 🟡 backend + FiveDSnapshot wired (pre-existing).
 - **FR-03 AI question structuring** — 🟡 **built this stream** (real LLM, was mocked).
-- **FR-04 video scheduling** — 🟡 scheduling only; no video provider yet.
+- **FR-04 video conferencing** — ✅ **built 2026-06-04** (Daily.co: 1v1 + workshop calls, recording, transcription, AI summaries).
 - **FR-05 conversation persistence** — ✅ **extended this stream** (durable cross-session threads + inbox).
 - **FR-06 daily AI job** — 🟡 Celery beat infra exists; chat→events bridge exists in demo server.
 - **FR-07 billing** — 🟡 **built this stream** (ledger + mock provider, scheduled payouts).
@@ -158,13 +158,65 @@ See `FEATURE_REQUIREMENTS.md` for the full table. Snapshot:
 - Frontend: `mentorshipAPI.match` + `MentorMatch` type in `src/lib/api.ts`; `MenteeQuestionEntry.proceedToMatching` now calls it (was a hardcoded list), with graceful empty-on-error.
 - Tests: `tests/test_mentor_matcher.py`.
 
+### 2026-06-03/04 — Profile management, consulting/workshops, pricing, video conferencing
+
+**Profile summary & management (2026-06-03):**
+- Extended User model with 10 new columns (summary, visibility, privacy settings).
+- New `timeline_entries` + `credentials` tables with full CRUD APIs.
+- `MenteeProfileSetup` replaced localStorage with API persistence.
+- New Summary section with editable bio + AI Signature Tags (computed from DISC/Career data).
+- Profile page wired with Edit button + privacy toggles.
+
+**Enterprise consulting & workshops (2026-06-03):**
+- `consulting_projects` + `project_applications` tables — multi-mentor bidding workflow.
+- `workshops` + `workshop_registrations` tables — mentor-created workshops with mentee registration.
+- Consulting router (8 endpoints) + Workshops router (10 endpoints).
+- New `MentorConsulting` page, `MentorWorkshops` wired to API.
+- Mentor Dashboard cards wired to real consulting/workshop data.
+
+**Pricing flow (2026-06-04):**
+- Mentor hourly rate setting UI on dashboard.
+- Request modal shows calculated price (rate × duration).
+- `submitRequest` sends real price instead of hardcoded $0.
+- Matcher API returns `hourlyRate` for each mentor.
+- Cancel session now calls `void_session_payment()` (bug fix).
+
+**Session & Request CRUD (2026-06-04):**
+- 6 new endpoints: direct session create/edit/cancel/delete, request edit/withdraw.
+
+**User identity bridge (2026-06-04):**
+- `phxnorth-backend`: added `resolve_user_id()` dependency — all 12 user-facing endpoints now accept `"me"` as `user_id`, resolving to current user's UUID from JWT.
+- `FiveDSnapshot` reads real user role from auth context (was hardcoded `'mentee'`).
+
+**Static link audit & fix (2026-06-04):**
+- Audited all 55+ authenticated pages.
+- Fixed 79 non-functional links/buttons (5 CRITICAL href="#", 36 HIGH, 28 MEDIUM, 10 LOW).
+
+**FR-04 — Video conferencing via Daily.co (2026-06-04):**
+- `server/services/daily.py` — Daily REST API wrapper (rooms, tokens, recordings).
+- `server/services/transcript_summary.py` — AI summary generation via DeepSeek LLM.
+- `server/routers/video.py` — 10 endpoints: session room CRUD, workshop room, webhook, recording/transcript/summary.
+- Session + Workshop models extended with video fields (room_name, room_url, recording_url, transcript_text, ai_summary, call timestamps).
+- Frontend: `@daily-co/daily-js` SDK with 5 custom hooks (`useDaily`, `useParticipants`, `useDevices`, `useRecording`, `useTranscription`).
+- `VideoCall.tsx` — 1v1 video call page with PiP layout, controls, live subtitles.
+- `WorkshopCall.tsx` — multi-person gallery view with hand raise.
+- 4 shared components: `VideoControls`, `ParticipantGrid`, `Subtitles`, `SessionRecording`.
+- `SessionDetail` — Join Video button + post-call recording/transcript/AI summary.
+- `MentorCalendar` — Join Session routes directly to video call.
+- `MentorWorkshops` — Start Workshop / Join Live buttons.
+- Daily webhook handles `recording.ready-to-download`, `transcription.ready-to-download`, `meeting.started`, `meeting.ended`.
+
 ---
 
 ## 5. Configuration / env vars
 
 **Behavioral backend** (`app/config.py`): `DEEPSEEK_API_KEY`, `llm_question_assist_enabled`, `llm_cv_parser_enabled`, `llm_model`, `llm_base_url`.
 
-**Demo backend** (`server/config.py`, FR-07):
+**Demo backend** (`server/.env` + `server/config.py`):
+- `DAILY_API_KEY` — Daily.co API key (required for video calls). Get from https://dashboard.daily.co.
+- `DAILY_API_URL` (default `https://api.daily.co/v1`).
+- `DEEPSEEK_API_KEY` — DeepSeek LLM key (for AI transcript summaries).
+- `DEEPSEEK_API_URL` (default `https://api.deepseek.com/v1`).
 - `PLATFORM_FEE_PCT` (default `0.15`) — platform commission.
 - `BILLING_CURRENCY` (default `USD`).
 - `PAYMENT_PROVIDER` (default `mock`).
@@ -202,11 +254,11 @@ Note: `typescript` is not currently a devDependency (Vite uses esbuild). Add it
 
 - **FR-03:** surface the structured-agenda (`/questions/agenda`) step in the UI; optionally emit a `question_structured` event to `/api/v1/events` (feeds FR-06). *(Mentor matching is now wired to real mentors — see Mentor matching below.)*
 - **Matching:** activate the DISC/5D behavioral component (`_behavioral_score`) via the behavioral backend; consider an LLM/embedding semantic step and a feedback loop from session ratings; optionally wire the results-card buttons to `createRequest`.
-- **FR-04:** pick a video provider (Zoom/Meet/Daily/WebRTC); add a meeting URL to sessions; reminders.
-- **FR-05:** capture/store video transcripts once FR-04 lands; define a retention/privacy policy; consider moving chat into `phxnorth-backend`.
+- **FR-04:** ~~pick a video provider~~ ✅ Done — Daily.co integrated. Remaining: virtual backgrounds, in-call AI suggestions, waiting room, workshop polls/Q&A (all V2).
+- **FR-05:** ~~capture/store video transcripts once FR-04 lands~~ ✅ Done — transcripts captured via Daily webhook, stored in session model. Remaining: retention/privacy policy; consider moving chat into `phxnorth-backend`.
 - **FR-06:** confirm chat events reach the behavioral backend's daily DISC recompute (the Kafka consumer bridge described in `phxnorth-backend/docs/superpowers/`).
 - **FR-07:** implement a real `PaymentProvider` (Stripe Connect) behind the existing interface; add card-collection UI; show payment status on `SessionDetail`.
-- **Cross-cutting:** unify identity between the two backends.
+- **Cross-cutting:** unify identity between the two backends (demo backend integer IDs ↔ behavioral backend UUIDs; `"me"` alias added 2026-06-04).
 
 ---
 

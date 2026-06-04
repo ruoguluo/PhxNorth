@@ -3,7 +3,7 @@
 > Living document. New requirements are appended over time. Each requirement has a stable ID so it can be referenced in plans, branches, and PRs.
 
 **Status legend:** ⬜ Not started · 🟡 In progress / partial · ✅ Done
-**Last updated:** 2026-06-01
+**Last updated:** 2026-06-04
 
 > For a function/endpoint-level inventory of what's built, see `IMPLEMENTED_FEATURES.md`.
 
@@ -19,12 +19,12 @@ A code review of both repos found that much more is built than first assumed. Su
 | FR-02 | 5D growth analysis | 🟡 Mostly done | Backend `disc-profile`, `…/history`, `career`, `preferences`, `risk`, `contradiction`, `behavioral-shift`; `disc_scorer` (+ shift detector); frontend `FiveDSnapshot` fully wired (radar, DISC bars, SPI, gaps) | Explicit progress-over-time/trajectory view (history endpoint exists but not charted); mentor-vs-mentee presentation |
 | FR-03 | AI question structuring | 🟡 Built (2026-05-30) | Real backend `/api/v1/questions/interpret` + `/agenda` (DeepSeek via shared LLM helper, graceful fallback); `MenteeQuestionEntry` now calls them instead of mocks; pytest written | Agenda UI not yet surfaced; tests not run in-sandbox (no deps) |
 | FR-08 | Mentor matching | 🟡 Built (2026-05-31) | `POST /api/mentorship/match` ranks real mentors on intent (FR-03 understanding) vs specializations/industry/bio + track record + logistics; replaces the hardcoded list in `MenteeQuestionEntry`; explainable reasons; pytest written | DISC/5D behavioral compatibility is a neutral phase-2 hook; results-card buttons don't yet create a request; tests not run in-sandbox |
-| FR-04 | Video meeting scheduling | 🟡 Scheduling only | Demo `server/` sessions (`scheduled_at`, `duration_minutes`), request→session creation, availability, calendar | **No video** — no meeting URL field, no Zoom/Meet/etc. integration |
+| FR-04 | Video meeting scheduling | ✅ Done (2026-06-04) | Daily.co integration: room management API, 1v1 VideoCall + WorkshopCall pages, cloud recording, live transcription, AI summaries (DeepSeek), screen sharing, whiteboard. Custom React UI with `@daily-co/daily-js` SDK. Session/Workshop models extended with video fields. Webhook endpoint for recording/transcription events. | Real Daily API key required for live calls; virtual backgrounds (V2) |
 | FR-05 | Conversation persistence | ✅ Extended (2026-05-31) | Session chat (CRUD + WebSocket + file upload + read receipts + DISC signal dispatch) **plus** a durable `Conversation` thread spanning sessions: `/api/conversations` (list/inbox, cross-session history, unread, mark-read, send, search), startup backfill, and a `Messages` inbox UI | Lives in demo `server/` (SQLite); video transcripts (needs FR-04); retention/privacy policy |
 | FR-06 | Daily AI job → update 5D | 🟡 Infra done | Celery Beat: daily DISC recompute (3:30 UTC), daily risk (5:00), metric aggregation, weekly contradiction; workers + `signal_extractor` | Wire demo-server chat events → `phxnorth-backend` `/events` ingestion so conversations actually feed the daily recompute |
 | FR-07 | Billing | 🟡 Built (2026-05-30) | Ledger model (Payment/Payout/LedgerEntry) + `PaymentProvider` abstraction with `MockProvider`; authorize@booking / capture@completion / void / refund hooked into session lifecycle; `/api/billing` API; daily payout scheduler + cron script; role-aware Billing UI; configurable 15% fee; pytest written | Real processor (Stripe Connect) not wired; card-collection UI for live mode; tests not run in-sandbox (no deps) |
 
-**Built since the initial audit:** FR-03 (real AI question structuring), FR-05 (durable conversations + inbox), FR-07 (billing), and FR-08 (mentor matching). **Remaining greenfield:** FR-04 video, and FR-06's end-to-end wiring.
+**Built since the initial audit:** FR-03 (real AI question structuring), FR-04 (video conferencing via Daily.co), FR-05 (durable conversations + inbox), FR-07 (billing), and FR-08 (mentor matching). **Remaining greenfield:** FR-06's end-to-end wiring (chat events → behavioral backend DISC recompute).
 
 **Architecture note:** behavioral AI lives in `phxnorth-backend` (`/api/v1`, Postgres) and the frontend calls it directly via `src/lib/disc-api.ts` / `question-api.ts` (Vite proxies `/api/v1` → `:8000`). Mentorship/messaging/billing lives in the demo `server/` (SQLite, `/api` → `:8081`). So two backends are live simultaneously — the frontend talks to both directly (the demo server is **not** a proxy). The conversation→DISC signal bridge currently sits in the demo server; FR-06 needs those signals to reach `phxnorth-backend`.
 
