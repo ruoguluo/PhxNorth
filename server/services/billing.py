@@ -87,7 +87,16 @@ def authorize_session_payment(
 
     fee, earnings = compute_split(amount)
     provider = get_provider()
-    auth = provider.authorize(amount, config.BILLING_CURRENCY, ref=f"session:{session.id}")
+    mentee = db.query(User).filter(User.id == session.mentee_id).first()
+    if provider.name == "stripe" and not getattr(mentee, "stripe_payment_method_id", None):
+        raise PaymentError("Mentee has no payment method. Please add a card before booking.")
+    auth = provider.authorize(
+        amount,
+        config.BILLING_CURRENCY,
+        ref=f"session:{session.id}",
+        customer_id=getattr(mentee, "stripe_customer_id", None),
+        payment_method_id=getattr(mentee, "stripe_payment_method_id", None),
+    )
 
     payment = Payment(
         session_id=session.id,
@@ -267,7 +276,14 @@ def process_due_payouts(db: DBSession) -> list[Payout]:
             db.flush()  # assign payout.id
 
             try:
-                result = provider.create_payout(mentor_id, total, config.BILLING_CURRENCY)
+                mentor = db.query(User).filter(User.id == mentor_id).first()
+                destination = getattr(mentor, "stripe_account_id", None) if mentor else None
+                if provider.name == "stripe" and not destination:
+                    continue  # Skip mentors without Stripe connected accounts
+                result = provider.create_payout(
+                    mentor_id, total, config.BILLING_CURRENCY,
+                    destination_account_id=destination,
+                )
                 payout.status = "paid"
                 payout.provider_payout_ref = result.payout_ref
             except PaymentError:
