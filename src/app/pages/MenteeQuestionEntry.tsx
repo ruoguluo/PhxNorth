@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { questionAPI, type AIUnderstanding as AIUnderstandingDTO } from '../../lib/question-api';
-import { mentorshipAPI } from '../../lib/api';
+import { mentorshipAPI, stripeAPI } from '../../lib/api';
 
 type QuestionType = 'structured' | 'quick' | null;
 type QuickQuestionStep = 'input' | 'assumed-goal' | 'stage' | 'clarification' | 'matching' | 'results';
@@ -350,6 +350,19 @@ export function MenteeQuestionEntry() {
   const submitRequest = async () => {
     if (!requestModal) return;
     setRequestStatus('loading');
+    // Check payment method if session has a price
+    if (requestModal.mentor.hourlyRate > 0) {
+        try {
+            const pm = await stripeAPI.getPaymentMethod();
+            if (!pm.has_card) {
+                setRequestError('Please add a payment method before booking. Go to Billing page to add a card.');
+                setRequestStatus('error');
+                return;
+            }
+        } catch {
+            // If Stripe check fails (e.g., mock mode), proceed anyway
+        }
+    }
     try {
       const data: Record<string, unknown> = {
         mentor_id: parseInt(requestModal.mentor.id),
