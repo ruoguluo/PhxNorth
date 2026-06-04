@@ -21,10 +21,14 @@ from __future__ import annotations
 
 import math
 import re
+from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlalchemy.orm import Session as DBSession
 
+from models.mentor_availability import MentorAvailability
+from models.mentorship_request import MentorshipRequest
+from models.session import Session as MentorSession
 from models.user import User
 
 WEIGHTS = {
@@ -158,10 +162,53 @@ def _confidence(score: float) -> str:
     return "Moderate"
 
 
+def _next_availability(db: DBSession, mentor_id: int) -> Optional[str]:
+    """Find the mentor's next available slot from their weekly schedule.
+
+    Returns an ISO-8601 datetime string for the next upcoming slot, or None
+    if no availability is configured.
+    """
+    slots = (
+        db.query(MentorAvailability)
+        .filter(
+            MentorAvailability.mentor_id == mentor_id,
+            MentorAvailability.is_active == True,  # noqa: E712
+        )
+        .all()
+    )
+    if not slots:
+        return None
+
+    now = datetime.utcnow()
+    current_dow = now.weekday()  # 0=Monday
+
+    best: Optional[datetime] = None
+    for slot in slots:
+        # Parse start_time "HH:MM"
+        parts = (slot.start_time or "").split(":")
+        if len(parts) != 2:
+            continue
+        try:
+            hour, minute = int(parts[0]), int(parts[1])
+        except (ValueError, TypeError):
+            continue
+
+        # Days ahead until this slot's day_of_week
+        days_ahead = (slot.day_of_week - current_dow) % 7
+        candidate = now.replace(hour=hour, minute=minute, second=0, microsecond=0) + timedelta(days=days_ahead)
+
+        # If the candidate is in the past today, push to next week
+        if candidate <= now:
+            candidate += timedelta(days=7)
+
+        if best is None or candidate < best:
+            best = candidate
+
+    return best.isoformat() + "Z" if best else None
+
+
 def _engagement_counts(db: DBSession, mentor_id: int) -> tuple[int, int]:
     """(distinct mentees, completed sessions) for display badges."""
-    from models.session import Session as MentorSession
-
     distinct_mentees = (
         db.query(MentorSession.mentee_id)
         .filter(MentorSession.mentor_id == mentor_id)
@@ -194,6 +241,21 @@ def match_mentors(
         .filter(User.role == "mentor", User.is_active == True)  # noqa: E712
         .all()
     )
+
+    # Pre-compute queue data per mentor (active sessions + pending requests)
+    active_sessions: dict[int, int] = {}
+    pending_requests: dict[int, int] = {}
+    for m in candidates:
+        active_sessions[m.id] = (
+            db.query(MentorSession)
+            .filter(MentorSession.mentor_id == m.id, MentorSession.status == "in_progress")
+            .count()
+        )
+        pending_requests[m.id] = (
+            db.query(MentorshipRequest)
+            .filter(MentorshipRequest.mentor_id == m.id, MentorshipRequest.status == "pending")
+            .count()
+        )
 
     scored: list[tuple[float, dict]] = []
     for mentor in candidates:
@@ -243,6 +305,13 @@ def match_mentors(
             "deepDialogues": deep,
             "reasons": reasons,
             "hourlyRate": mentor.hourly_rate or 0,
+            "queueLength": active_sessions.get(mentor.id, 0) + pending_requests.get(mentor.id, 0),
+            "estimatedWaitTime": (
+                f"{(active_sessions.get(mentor.id, 0) + pending_requests.get(mentor.id, 0)) * 15} min"
+                if active_sessions.get(mentor.id, 0) + pending_requests.get(mentor.id, 0) > 0
+                else None
+            ),
+            "nextAvailability": _next_availability(db, mentor.id),
         }
         scored.append((total, match))
 
