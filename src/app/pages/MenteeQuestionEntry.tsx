@@ -29,7 +29,7 @@ import { questionAPI, type AIUnderstanding as AIUnderstandingDTO } from '../../l
 import { mentorshipAPI, stripeAPI } from '../../lib/api';
 
 type QuestionType = 'structured' | 'quick' | null;
-type QuickQuestionStep = 'input' | 'assumed-goal' | 'stage' | 'clarification' | 'matching' | 'results';
+type QuickQuestionStep = 'input' | 'assumed-goal' | 'stage' | 'clarification' | 'agenda' | 'matching' | 'results';
 type Category = 'education' | 'career' | 'business' | 'entrepreneurship' | null;
 type DirectionCertainty = 'confirmed' | 'comparing' | 'exploring' | '';
 
@@ -287,7 +287,32 @@ export function MenteeQuestionEntry() {
     if (clarificationQuestions.length > 0) {
       setQuickQuestionStep('clarification');
     } else {
-      proceedToMatching();
+      generateQuickAgenda();
+    }
+  };
+
+  const generateQuickAgenda = async () => {
+    setQuickQuestionStep('agenda');
+    setIsProcessing(true);
+    try {
+      const result = await questionAPI.agenda(quickQuestion, {
+        understanding: aiUnderstanding ? {
+          country: aiUnderstanding.country,
+          category: aiUnderstanding.category,
+          subtype: aiUnderstanding.subtype,
+          stage: aiUnderstanding.stage,
+          primaryGoal: aiUnderstanding.primaryGoal,
+          timeHorizon: aiUnderstanding.timeHorizon,
+        } as any : undefined,
+        stage: selectedStage || undefined,
+        answers: clarificationAnswers,
+      });
+      setGeneratedAgenda(result.subQuestions);
+    } catch (err) {
+      console.warn('Quick agenda generation failed', err);
+      setGeneratedAgenda([]);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -364,11 +389,18 @@ export function MenteeQuestionEntry() {
         }
     }
     try {
+      let fullMessage = requestForm.message || '';
+      if (generatedAgenda.length > 0) {
+        fullMessage += '\n\n--- AI-Generated Agenda ---\n';
+        generatedAgenda.forEach((item, i) => {
+          fullMessage += `${i + 1}. [${item.depthLevel || 'general'}] ${item.question}\n`;
+        });
+      }
       const data: Record<string, unknown> = {
         mentor_id: parseInt(requestModal.mentor.id),
         type: requestModal.sessionType,
         topic: requestForm.topic,
-        message: requestForm.message || undefined,
+        message: fullMessage.trim() || undefined,
         duration_minutes: requestForm.duration_minutes,
         price: requestModal.mentor.hourlyRate > 0
           ? Math.round(requestModal.mentor.hourlyRate * (requestForm.duration_minutes / 60) * 100) / 100
@@ -791,11 +823,80 @@ export function MenteeQuestionEntry() {
 
             <div className="flex justify-center">
               <button
-                onClick={proceedToMatching}
+                onClick={generateQuickAgenda}
                 className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-12 py-5 rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all"
               >
-                <span>Find Mentors</span>
+                <span>Continue</span>
                 <ArrowRight className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 3.5: Agenda Preview
+    if (quickQuestionStep === 'agenda') {
+      return (
+        <div className="min-h-screen bg-gray-50 py-12 px-8">
+          <div className="max-w-4xl mx-auto">
+            <button
+              onClick={() => setQuickQuestionStep(clarificationQuestions.length > 0 ? 'clarification' : 'stage')}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </button>
+
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Session Agenda Preview</h2>
+                <p className="text-gray-600">AI-generated discussion points for your session</p>
+              </div>
+              {isProcessing ? (
+                <div className="bg-white rounded-2xl border border-gray-200 p-16 mb-6">
+                  <div className="flex flex-col items-center gap-6">
+                    <Loader2 className="w-16 h-16 animate-spin text-emerald-600" />
+                    <p className="text-gray-600 text-center">Generating your session agenda...</p>
+                  </div>
+                </div>
+              ) : generatedAgenda.length > 0 ? (
+                <div className="space-y-3">
+                  {generatedAgenda.map((item, i) => (
+                    <div key={item.id || i} className="bg-white rounded-lg border border-gray-200 p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="flex-shrink-0 w-7 h-7 bg-[#0A2463] text-white rounded-full flex items-center justify-center text-sm font-bold">{i + 1}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              item.depthLevel === 'Foundation' ? 'bg-blue-100 text-blue-700' :
+                              item.depthLevel === 'Application' ? 'bg-purple-100 text-purple-700' :
+                              'bg-amber-100 text-amber-700'
+                            }`}>
+                              {item.depthLevel || 'general'}
+                            </span>
+                            {item.estimatedTime && (
+                              <span className="text-xs text-gray-400">{item.estimatedTime} min</span>
+                            )}
+                          </div>
+                          <p className="text-gray-900 font-medium">{item.question}</p>
+                          {item.purpose && <p className="text-sm text-gray-500 mt-1">{item.purpose}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-6 text-center text-gray-500">
+                  <p>Agenda will be built with your mentor during the session</p>
+                </div>
+              )}
+              <button
+                onClick={() => proceedToMatching()}
+                disabled={isProcessing}
+                className="w-full bg-[#0A2463] text-white py-4 rounded-xl font-semibold text-lg hover:bg-[#0A2463]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Find Mentors →
               </button>
             </div>
           </div>
@@ -840,7 +941,7 @@ export function MenteeQuestionEntry() {
         <div className="min-h-screen bg-gray-50 py-12 px-8">
           <div className="max-w-7xl mx-auto">
             <button
-              onClick={() => setQuickQuestionStep('clarification')}
+              onClick={() => setQuickQuestionStep('agenda')}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
             >
               <ArrowLeft className="w-4 h-4" />
