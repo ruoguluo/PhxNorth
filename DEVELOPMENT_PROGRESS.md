@@ -206,6 +206,28 @@ See `FEATURE_REQUIREMENTS.md` for the full table. Snapshot:
 - `MentorWorkshops` — Start Workshop / Join Live buttons.
 - Daily webhook handles `recording.ready-to-download`, `transcription.ready-to-download`, `meeting.started`, `meeting.ended`.
 
+**FR-01 — CV upload → profile review flow (2026-06-04):**
+- CVUpload completion now links to "Review & Confirm Extracted Data" → `/app/mentee/profile-setup?from=cv`.
+- MenteeProfileSetup detects `?from=cv` param → auto-triggers `populateFromBackend()` to show AI Parsed Draft.
+- Career timeline auto-populated from CV `job_entries`.
+
+**FR-02 — 5D progress-over-time + behavioral shifts (2026-06-04):**
+- FiveDSnapshot now calls `discProfileAPI.history('me')` → renders DISC line chart (D/I/S/C over time) + confidence trend.
+- Calls `discRiskAPI.behavioralShift('me')` → renders behavioral shift cards with magnitude badges.
+- New Recharts imports: `LineChart`, `Line`, `XAxis`, `YAxis`, `CartesianGrid`, `Legend`.
+
+**FR-03 — AI agenda in Quick Question flow (2026-06-04):**
+- Quick flow now has `'agenda'` step between clarification and matching.
+- Calls `questionAPI.agenda()` with question context → displays agenda items with depth/time/purpose.
+- Agenda text appended to session request message field.
+
+**FR-08 — Mentor matching completion (2026-06-04):**
+- `_behavioral_score()` implemented: DISC complementarity scoring (S complement +0.15, D alignment ±0.05, C match +0.10, I communicator +0.05). Uses cached `disc_scores_json` on User model.
+- `queueLength` + `estimatedWaitTime` computed from live in_progress sessions + pending requests.
+- `nextAvailability` computed from `MentorAvailability` slots.
+- Frontend: `hourlyRate` and `reasons` now mapped to match results. Reasons displayed as tags on all 5 card variants.
+- 8 new behavioral scoring tests (63 total).
+
 **FR-07 — Stripe Connect payment integration (2026-06-04):**
 - `server/services/payments/stripe.py` — `StripeProvider` implementing `PaymentProvider` interface via Stripe PaymentIntent (authorize/capture/void), Refund, and Transfer APIs. Dollar-to-cents conversion.
 - `server/routers/stripe_billing.py` — 8 Stripe-specific endpoints:
