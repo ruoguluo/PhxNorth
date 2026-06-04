@@ -219,6 +219,10 @@ export function MenteeQuestionEntry() {
   const [requestForm, setRequestForm] = useState({ topic: '', message: '', duration_minutes: 30, proposed_datetime: '' });
   const [requestStatus, setRequestStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [requestError, setRequestError] = useState('');
+  const [showAllOnline, setShowAllOnline] = useState(false);
+  const [showAllInSession, setShowAllInSession] = useState(false);
+  const [showAllOffline, setShowAllOffline] = useState(false);
+  const [showAllScheduled, setShowAllScheduled] = useState(false);
 
   // Default stage options used if the AI returns none / is unavailable.
   const defaultStageOptions: StageOption[] = [
@@ -847,7 +851,7 @@ export function MenteeQuestionEntry() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {onlineMentors.slice(0, 6).map((mentor) => (
+                  {onlineMentors.slice(0, showAllOnline ? undefined : 6).map((mentor) => (
                     <div key={mentor.id} className="bg-white rounded-2xl border-2 border-emerald-200 p-6 hover:border-emerald-500 hover:shadow-xl transition-all relative">
                       {/* Status Badge */}
                       <div className="flex justify-center mb-4">
@@ -910,8 +914,8 @@ export function MenteeQuestionEntry() {
 
                 {onlineMentors.length > 6 && (
                   <div className="flex justify-center mt-6">
-                    <button className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm">
-                      View More ({onlineMentors.length - 6} more)
+                    <button onClick={() => setShowAllOnline(!showAllOnline)} className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm">
+                      {showAllOnline ? 'Show Less' : `View More (${onlineMentors.length - 6} more)`}
                     </button>
                   </div>
                 )}
@@ -928,7 +932,7 @@ export function MenteeQuestionEntry() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {inSessionMentors.slice(0, 6).map((mentor) => (
+                  {inSessionMentors.slice(0, showAllInSession ? undefined : 6).map((mentor) => (
                     <div key={mentor.id} className="bg-white rounded-2xl border-2 border-amber-200 p-6 hover:border-amber-500 hover:shadow-xl transition-all relative">
                       {/* Status Badge */}
                       <div className="flex justify-center mb-4">
@@ -991,8 +995,8 @@ export function MenteeQuestionEntry() {
 
                 {inSessionMentors.length > 6 && (
                   <div className="flex justify-center mt-6">
-                    <button className="text-amber-600 hover:text-amber-700 font-semibold text-sm">
-                      View More ({inSessionMentors.length - 6} more)
+                    <button onClick={() => setShowAllInSession(!showAllInSession)} className="text-amber-600 hover:text-amber-700 font-semibold text-sm">
+                      {showAllInSession ? 'Show Less' : `View More (${inSessionMentors.length - 6} more)`}
                     </button>
                   </div>
                 )}
@@ -1009,7 +1013,7 @@ export function MenteeQuestionEntry() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {offlineMentors.slice(0, 6).map((mentor) => (
+                  {offlineMentors.slice(0, showAllOffline ? undefined : 6).map((mentor) => (
                     <div key={mentor.id} className="bg-white rounded-2xl border-2 border-gray-200 p-6 hover:border-gray-400 hover:shadow-xl transition-all relative">
                       {/* Status Badge */}
                       <div className="flex justify-center mb-4">
@@ -1068,8 +1072,8 @@ export function MenteeQuestionEntry() {
 
                 {offlineMentors.length > 6 && (
                   <div className="flex justify-center mt-6">
-                    <button className="text-gray-600 hover:text-gray-700 font-semibold text-sm">
-                      View More ({offlineMentors.length - 6} more)
+                    <button onClick={() => setShowAllOffline(!showAllOffline)} className="text-gray-600 hover:text-gray-700 font-semibold text-sm">
+                      {showAllOffline ? 'Show Less' : `View More (${offlineMentors.length - 6} more)`}
                     </button>
                   </div>
                 )}
@@ -1086,7 +1090,7 @@ export function MenteeQuestionEntry() {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {scheduledMentors.slice(0, 6).map((mentor) => (
+                    {scheduledMentors.slice(0, showAllScheduled ? undefined : 6).map((mentor) => (
                       <div key={mentor.id} className="bg-white rounded-2xl border-2 border-blue-200 p-6 hover:border-blue-500 hover:shadow-xl transition-all relative">
                         {/* Status Badge */}
                         <div className="flex justify-center mb-4">
@@ -1145,8 +1149,8 @@ export function MenteeQuestionEntry() {
 
                   {scheduledMentors.length > 6 && (
                     <div className="flex justify-center mt-6">
-                      <button className="text-blue-600 hover:text-blue-700 font-semibold text-sm">
-                        View More ({scheduledMentors.length - 6} more)
+                      <button onClick={() => setShowAllScheduled(!showAllScheduled)} className="text-blue-600 hover:text-blue-700 font-semibold text-sm">
+                        {showAllScheduled ? 'Show Less' : `View More (${scheduledMentors.length - 6} more)`}
                       </button>
                     </div>
                   )}
