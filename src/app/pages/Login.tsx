@@ -87,7 +87,7 @@ export function Login() {
                 <input type="checkbox" className="w-4 h-4 text-[#0A2463] border-gray-300 rounded focus:ring-[#0A2463]" />
                 <span className="text-sm text-gray-600">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-[#0A2463] hover:underline">
+              <a href="#" onClick={(e) => { e.preventDefault(); alert('Password reset coming soon. Please contact support@phxnorth.com'); }} className="text-sm text-[#0A2463] hover:underline">
                 Forgot password?
               </a>
             </div>
@@ -111,9 +111,9 @@ export function Login() {
 
         <p className="text-center text-sm text-gray-500 mt-8">
           By signing in, you agree to our{" "}
-          <a href="#" className="text-[#0A2463] hover:underline">Terms of Service</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); alert('Terms of Service coming soon'); }} className="text-[#0A2463] hover:underline">Terms of Service</a>
           {" "}and{" "}
-          <a href="#" className="text-[#0A2463] hover:underline">Privacy Policy</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); alert('Privacy Policy coming soon'); }} className="text-[#0A2463] hover:underline">Privacy Policy</a>
         </p>
       </div>
     </div>

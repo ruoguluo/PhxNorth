@@ -623,9 +623,9 @@ export function CreateAccount() {
         <div className="text-center mt-8">
           <p className="text-blue-200 text-sm">
             By creating an account, you agree to our{' '}
-            <a href="#" className="text-white underline hover:text-blue-100">Terms of Service</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); alert('Terms of Service coming soon'); }} className="text-white underline hover:text-blue-100">Terms of Service</a>
             {' '}and{' '}
-            <a href="#" className="text-white underline hover:text-blue-100">Privacy Policy</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); alert('Privacy Policy coming soon'); }} className="text-white underline hover:text-blue-100">Privacy Policy</a>
           </p>
         </div>
       </div>
