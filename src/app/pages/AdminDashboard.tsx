@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { Shield, AlertTriangle, CheckCircle, Clock, DollarSign, Users, TrendingUp, FileText, Trash2, RefreshCw, Database } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { adminAPI } from '../../lib/api';
@@ -62,6 +63,7 @@ const complianceAlerts = [
 ];
 
 export function AdminDashboard() {
+  const navigate = useNavigate();
   const [platformStats, setPlatformStats] = useState<any>(null);
 
   useEffect(() => {
@@ -146,10 +148,10 @@ export function AdminDashboard() {
                 </div>
                 <p className="text-xs text-gray-500 mb-3">{user.submittedDate}</p>
                 <div className="flex gap-2">
-                  <button className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+                  <button onClick={() => alert('User approved!')} className="flex-1 bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors">
                     Approve
                   </button>
-                  <button className="flex-1 border border-gray-300 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-50 transition-colors">
+                  <button onClick={() => navigate('/app/admin')} className="flex-1 border border-gray-300 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-50 transition-colors">
                     Review
                   </button>
                 </div>
@@ -334,10 +336,10 @@ function RedFlagCard({ flag }: { flag: typeof redFlags[0] }) {
       <div className="flex items-center justify-between mt-3 pt-3 border-t border-current border-opacity-20">
         <span className="text-xs">{flag.timestamp}</span>
         <div className="flex gap-2">
-          <button className="text-sm px-3 py-1 bg-white rounded hover:bg-opacity-80 transition-colors">
+          <button onClick={() => alert('Transcript viewer coming soon')} className="text-sm px-3 py-1 bg-white rounded hover:bg-opacity-80 transition-colors">
             Review Transcript
           </button>
-          <button className="text-sm px-3 py-1 bg-white rounded hover:bg-opacity-80 transition-colors">
+          <button onClick={() => alert('Flag dismissed')} className="text-sm px-3 py-1 bg-white rounded hover:bg-opacity-80 transition-colors">
             Dismiss
           </button>
         </div>
@@ -347,6 +349,7 @@ function RedFlagCard({ flag }: { flag: typeof redFlags[0] }) {
 }
 
 function ComplianceAlertCard({ alert }: { alert: typeof complianceAlerts[0] }) {
+  const navigate = useNavigate();
   const statusColors: Record<string, string> = {
     Warning: 'bg-orange-50 text-orange-700',
     Critical: 'bg-red-50 text-red-700',
@@ -366,7 +369,7 @@ function ComplianceAlertCard({ alert }: { alert: typeof complianceAlerts[0] }) {
           <p className="text-sm text-gray-700">{alert.details}</p>
         </div>
       </div>
-      <button className="text-sm text-[#0A2463] hover:underline mt-2">
+      <button onClick={() => navigate('/app/admin')} className="text-sm text-[#0A2463] hover:underline mt-2">
         Take Action
       </button>
     </div>
@@ -380,6 +383,7 @@ function TranscriptRow({ session, participants, date, duration, complianceScore 
   duration: string;
   complianceScore: number;
 }) {
+  const navigate = useNavigate();
   return (
     <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
       <div className="flex items-center gap-4">
@@ -396,7 +400,7 @@ function TranscriptRow({ session, participants, date, duration, complianceScore 
           }`}>
           {complianceScore}%
         </div>
-        <button className="text-sm text-[#0A2463] hover:underline">View</button>
+        <button onClick={() => navigate('/app/admin')} className="text-sm text-[#0A2463] hover:underline">View</button>
       </div>
     </div>
   );
