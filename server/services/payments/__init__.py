@@ -5,17 +5,16 @@ from services.payments.mock import MockProvider
 
 
 def get_provider(name: str | None = None) -> PaymentProvider:
-    """Return the configured payment provider instance.
-
-    Only the in-process ``mock`` provider is built in for now. A real
-    provider (Stripe Connect, etc.) can be registered here behind the same
-    ``PaymentProvider`` interface without touching call sites.
-    """
+    """Return the configured payment provider instance."""
     import config
 
     name = (name or getattr(config, "PAYMENT_PROVIDER", "mock")).lower()
     if name == "mock":
         return MockProvider()
+    elif name == "stripe":
+        from .stripe import StripeProvider
+
+        return StripeProvider()
     raise ValueError(f"Unknown payment provider: {name!r}")
 
 
