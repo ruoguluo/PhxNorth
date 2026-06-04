@@ -21,7 +21,14 @@ import {
   RadarChart, 
   PolarGrid, 
   PolarAngleAxis, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
 } from 'recharts';
 import {
   discProfileAPI,
@@ -101,6 +108,8 @@ export function FiveDSnapshot() {
     disc: null, career: null, preferences: null, risk: null, contradiction: null,
   });
   const [loading, setLoading] = useState(true);
+  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [behavioralShift, setBehavioralShift] = useState<any>(null);
 
   useEffect(() => {
     async function fetchAll() {
@@ -127,6 +136,21 @@ export function FiveDSnapshot() {
       setLoading(false);
     }
     fetchAll();
+
+    discProfileAPI.history('me', {}).then(data => {
+      if (data.entries?.length) {
+        setHistoryData(data.entries.map((e: any) => ({
+          date: new Date(e.computed_at).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+          D: Math.round(e.scores.D),
+          I: Math.round(e.scores.I),
+          S: Math.round(e.scores.S),
+          C: Math.round(e.scores.C),
+          confidence: Math.round(e.confidence * 100),
+        })));
+      }
+    }).catch(() => {});
+
+    discRiskAPI.behavioralShift('me').then(setBehavioralShift).catch(() => {});
   }, []);
 
   // ─── Derived values ─────────────────────────────────────────────
@@ -640,6 +664,70 @@ export function FiveDSnapshot() {
             </div>
           </div>
         </div>
+
+        {/* 5D Progress Over Time */}
+        {historyData.length > 1 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">5D Progress Over Time</h2>
+            <p className="text-gray-500 text-sm mb-6">How your DISC behavioral scores have evolved</p>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={historyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="date" fontSize={12} tick={{ fill: '#6b7280' }} />
+                <YAxis domain={[0, 100]} fontSize={12} tick={{ fill: '#6b7280' }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="D" stroke="#ef4444" strokeWidth={2} name="Dominance" dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="I" stroke="#f59e0b" strokeWidth={2} name="Influence" dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="S" stroke="#22c55e" strokeWidth={2} name="Steadiness" dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="C" stroke="#3b82f6" strokeWidth={2} name="Conscientiousness" dot={{ r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+            {/* Confidence trend */}
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Data Confidence Trend</h3>
+              <ResponsiveContainer width="100%" height={100}>
+                <LineChart data={historyData}>
+                  <XAxis dataKey="date" fontSize={10} tick={{ fill: '#9ca3af' }} />
+                  <YAxis domain={[0, 100]} fontSize={10} tick={{ fill: '#9ca3af' }} />
+                  <Line type="monotone" dataKey="confidence" stroke="#8b5cf6" strokeWidth={2} name="Confidence %" dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* Behavioral Shifts */}
+        {behavioralShift && (
+          <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">Behavioral Shifts Detected</h2>
+            <p className="text-gray-500 text-sm mb-4">Changes in your behavioral patterns over time</p>
+            {behavioralShift.shifts?.length > 0 ? (
+              <div className="space-y-3">
+                {behavioralShift.shifts.map((shift: any, i: number) => (
+                  <div key={i} className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-gray-900">{shift.dimension || shift.type || 'Behavioral Change'}</p>
+                      <p className="text-sm text-gray-600">{shift.description || shift.detail || JSON.stringify(shift)}</p>
+                      {shift.magnitude && (
+                        <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                          shift.magnitude === 'high' ? 'bg-red-100 text-red-700' :
+                          shift.magnitude === 'medium' ? 'bg-amber-100 text-amber-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>
+                          {shift.magnitude} shift
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No significant behavioral shifts detected. Keep engaging to build more data points.</p>
+            )}
+          </div>
+        )}
 
         {/* SECTION 5: Data Gaps & Visibility Opportunities */}
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border-2 border-amber-200 p-8 mb-6">
