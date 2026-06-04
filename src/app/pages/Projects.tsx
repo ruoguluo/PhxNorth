@@ -61,7 +61,7 @@ export function Projects() {
           <h1 className="text-3xl font-bold text-gray-900">Mentorship Projects</h1>
           <p className="text-gray-600 mt-1">Structured, goal-oriented mentorship programs</p>
         </div>
-        <button className="bg-[#0A2463] text-white px-6 py-3 rounded-lg hover:bg-[#0A2463]/90 transition-colors flex items-center gap-2">
+        <button onClick={() => alert('Create project coming soon')} className="bg-[#0A2463] text-white px-6 py-3 rounded-lg hover:bg-[#0A2463]/90 transition-colors flex items-center gap-2">
           <Plus className="w-5 h-5" />
           New Project
         </button>
@@ -78,7 +78,7 @@ export function Projects() {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0A2463]"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <button onClick={() => alert('Filters coming soon')} className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
             <Filter className="w-5 h-5" />
             Filter
           </button>

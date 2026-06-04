@@ -127,7 +127,7 @@ export function ProjectDetail() {
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">KPI Tracking</h2>
-            <button className="text-sm text-[#0A2463] hover:underline flex items-center gap-2">
+            <button onClick={() => alert('AI KPI suggestions coming soon')} className="text-sm text-[#0A2463] hover:underline flex items-center gap-2">
               <Brain className="w-4 h-4" />
               AI Suggest KPIs
             </button>
