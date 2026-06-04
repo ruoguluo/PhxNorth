@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   Search,
   BookOpen,
@@ -63,6 +63,7 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 /* ─── Featured Course Hero Card ──────────────────────────────────── */
 
 function FeaturedCourseCard({ course }: { course: Course }) {
+  const navigate = useNavigate();
   return (
     <Link to={`/app/courses/${course.id}`} className="block group">
       <div
@@ -117,7 +118,10 @@ function FeaturedCourseCard({ course }: { course: Course }) {
               ${course.price}
             </div>
             <div className="text-sm text-white/70 mb-6">{course.pricingModel}</div>
-            <button className="bg-white text-gray-900 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2">
+            <button
+              onClick={(e) => { e.preventDefault(); navigate('/app/courses/' + course.id); }}
+              className="bg-white text-gray-900 font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2"
+            >
               {course.enrolled ? (
                 <>
                   <Play className="w-4 h-4" />
@@ -374,7 +378,10 @@ export function Courses() {
               className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0A2463]/20 focus:border-[#0A2463] text-sm transition-all"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <button
+            onClick={() => alert('Filters coming soon')}
+            className="flex items-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
             <Filter className="w-4 h-4" />
             Filters
           </button>
@@ -449,7 +456,10 @@ export function Courses() {
           <p className="text-gray-600 text-sm max-w-lg mx-auto mb-5">
             Share your expertise with mentees worldwide. Create structured courses, set your own pricing, and build your teaching brand.
           </p>
-          <button className="bg-[#0A2463] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#0A2463]/90 transition-colors inline-flex items-center gap-2">
+          <button
+            onClick={() => alert('Instructor application coming soon')}
+            className="bg-[#0A2463] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#0A2463]/90 transition-colors inline-flex items-center gap-2"
+          >
             <BookOpen className="w-5 h-5" />
             Become an Instructor
           </button>

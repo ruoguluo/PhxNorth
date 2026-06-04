@@ -131,11 +131,17 @@ export function CourseDetail() {
             </div>
           </div>
           <div className="flex gap-3">
-            <button className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <button
+              onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }}
+              className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
               <Share2 className="w-4 h-4" />
               Share
             </button>
-            <button className="bg-[#0A2463] text-white px-4 py-2 rounded-lg hover:bg-[#0A2463]/90 transition-colors">
+            <button
+              onClick={() => alert('Course editing coming soon')}
+              className="bg-[#0A2463] text-white px-4 py-2 rounded-lg hover:bg-[#0A2463]/90 transition-colors"
+            >
               Edit Course
             </button>
           </div>
@@ -203,7 +209,10 @@ export function CourseDetail() {
               </div>
               <p className="text-sm text-[#0A2463] break-all">{courseData.enrollmentLink}</p>
             </div>
-            <button className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2">
+            <button
+              onClick={() => { navigator.clipboard.writeText(window.location.href); alert('Link copied!'); }}
+              className="w-full bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+            >
               <Share2 className="w-4 h-4" />
               Copy Link
             </button>
@@ -230,7 +239,10 @@ export function CourseDetail() {
                 <span className="font-semibold">{courseData.enrolledStudents} enrolled</span>
               </div>
             </div>
-            <button className="w-full bg-white text-[#0A2463] px-4 py-2 rounded-lg mt-4 font-semibold hover:bg-gray-100 transition-colors">
+            <button
+              onClick={() => alert('Enrollment coming soon')}
+              className="w-full bg-white text-[#0A2463] px-4 py-2 rounded-lg mt-4 font-semibold hover:bg-gray-100 transition-colors"
+            >
               Enroll Now
             </button>
           </div>
@@ -251,7 +263,10 @@ export function CourseDetail() {
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900">Discount Management</h2>
-            <button className="text-sm text-[#0A2463] hover:underline flex items-center gap-2">
+            <button
+              onClick={() => alert('Discount management coming soon')}
+              className="text-sm text-[#0A2463] hover:underline flex items-center gap-2"
+            >
               <Percent className="w-4 h-4" />
               Add Discount
             </button>
