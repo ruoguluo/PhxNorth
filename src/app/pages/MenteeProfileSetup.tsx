@@ -157,6 +157,15 @@ export function MenteeProfileSetup() {
     "Public Sector & Education": ["Government", "Non-profit", "EdTech", "Universities", "Research"]
   };
 
+  // ─── Auto-populate from CV if arriving from CVUpload ────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('from') === 'cv') {
+      populateFromBackend();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ─── Load profile data from API on mount ─────────────────────────
   useEffect(() => {
     async function loadProfile() {
@@ -389,6 +398,30 @@ export function MenteeProfileSetup() {
 
       setAIFields(fields);
       setShowAIPanel(true);
+
+      // Auto-populate career timeline from CV data
+      if (career.job_entries?.length) {
+        const careerEntries: TimelineEntry[] = career.job_entries.map((job: any, i: number) => ({
+          id: `cv-career-${i}`,
+          type: 'career' as const,
+          title: job.title || '',
+          organization: job.company || '',
+          startDate: job.start_date || '',
+          endDate: job.end_date || '',
+          isCurrent: !job.end_date,
+          location: '',
+          industryL1: '',
+          industryL2: '',
+          industryL3: '',
+          visibility: 'public' as const,
+          hideOrganization: false,
+        }));
+        setTimelineEntries(prev => {
+          // Only add if no career entries exist yet
+          const hasCareer = prev.some(e => e.type === 'career');
+          return hasCareer ? prev : [...prev, ...careerEntries];
+        });
+      }
     } catch {
       setAIFields([
         { id: "title-0", label: "Current Title", value: "", confidence: "low", confirmed: false, required: true },

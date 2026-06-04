@@ -201,13 +201,22 @@ function StatusTracker({
                             </div>
                         </div>
                     </div>
-                    <a
-                        href="/career-analytics"
-                        className="inline-flex items-center gap-2 text-sm font-medium text-[#0A2463] hover:underline"
-                    >
-                        View Career Analytics
-                        <ArrowRight className="w-4 h-4" />
-                    </a>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <a
+                            href="/app/mentee/profile-setup?from=cv"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-[#0A2463] text-white rounded-lg font-semibold hover:bg-[#0A2463]/90 transition-colors"
+                        >
+                            Review & Confirm Extracted Data
+                            <ArrowRight className="w-4 h-4" />
+                        </a>
+                        <a
+                            href="/career-analytics"
+                            className="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                        >
+                            View Career Analytics
+                            <ArrowRight className="w-4 h-4" />
+                        </a>
+                    </div>
                 </div>
             )}
 
