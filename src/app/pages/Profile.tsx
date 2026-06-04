@@ -1,6 +1,8 @@
-import { User, Mail, MapPin, Briefcase, Calendar, Award, Shield, Settings, Bell, Globe, GraduationCap, Building } from "lucide-react";
+import { useState } from "react";
+import { User, Mail, MapPin, Briefcase, Calendar, Award, Shield, Settings, Bell, Globe, GraduationCap, Building, Eye, EyeOff, ChevronRight, Lock } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../lib/auth-context";
+import { profileAPI } from "../../lib/api";
 
 export function Profile() {
   const { user } = useAuth();
@@ -166,7 +168,47 @@ export function Profile() {
         </div>
       )}
 
-      {/* Account Info */}
+      {/* Privacy & Visibility */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Privacy & Visibility</h2>
+        <div className="space-y-4">
+          <PrivacyToggle
+            label="Profile Visibility"
+            description={`Your profile is ${user.global_visibility ?? 'public'}`}
+            icon={<Eye className="w-5 h-5 text-blue-600" />}
+            value={user.global_visibility ?? 'public'}
+            options={['public', 'private']}
+            onChange={async (val) => {
+              await profileAPI.update({ global_visibility: val });
+              window.location.reload();
+            }}
+          />
+          <PrivacyToggle
+            label="Show Current Company"
+            description={user.show_current_company ? 'Your company is visible to others' : 'Your company is hidden'}
+            icon={<Building className="w-5 h-5 text-purple-600" />}
+            value={user.show_current_company ? 'visible' : 'hidden'}
+            options={['visible', 'hidden']}
+            onChange={async (val) => {
+              await profileAPI.update({ show_current_company: val === 'visible' });
+              window.location.reload();
+            }}
+          />
+          <PrivacyToggle
+            label="Mentor Discovery"
+            description={user.allow_mentor_discovery ? 'You appear in mentor search results' : 'You are hidden from search'}
+            icon={<Globe className="w-5 h-5 text-emerald-600" />}
+            value={user.allow_mentor_discovery ? 'discoverable' : 'hidden'}
+            options={['discoverable', 'hidden']}
+            onChange={async (val) => {
+              await profileAPI.update({ allow_mentor_discovery: val === 'discoverable' });
+              window.location.reload();
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Other Settings */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Account Settings</h2>
         <div className="space-y-4">
@@ -174,16 +216,13 @@ export function Profile() {
             icon={<Bell className="w-5 h-5 text-gray-600" />}
             title="Notifications"
             description="Manage email and push notifications"
-          />
-          <SettingRow
-            icon={<Shield className="w-5 h-5 text-gray-600" />}
-            title="Privacy & Security"
-            description="Control your privacy settings and security options"
+            comingSoon
           />
           <SettingRow
             icon={<Settings className="w-5 h-5 text-gray-600" />}
             title="Preferences"
             description="Customize your platform experience"
+            comingSoon
           />
         </div>
       </div>
@@ -236,25 +275,65 @@ function StatCard({ label, value, icon }: {
   );
 }
 
-function SettingRow({ icon, title, description }: {
+function SettingRow({ icon, title, description, comingSoon }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  comingSoon?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+    <div className={`flex items-center justify-between p-4 border border-gray-200 rounded-lg transition-colors ${comingSoon ? 'opacity-60' : 'hover:bg-gray-50 cursor-pointer'}`}>
       <div className="flex items-center gap-4">
         <div className="bg-gray-50 p-3 rounded-lg">
           {icon}
         </div>
         <div>
-          <h4 className="font-semibold text-gray-900">{title}</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-gray-900">{title}</h4>
+            {comingSoon && (
+              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">Coming Soon</span>
+            )}
+          </div>
           <p className="text-sm text-gray-600">{description}</p>
         </div>
       </div>
-      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-      </svg>
+      {comingSoon ? (
+        <Lock className="w-4 h-4 text-gray-300" />
+      ) : (
+        <ChevronRight className="w-5 h-5 text-gray-400" />
+      )}
+    </div>
+  );
+}
+
+function PrivacyToggle({ label, description, icon, value, options, onChange }: {
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  value: string;
+  options: string[];
+  onChange: (val: string) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+      <div className="flex items-center gap-4">
+        <div className="bg-gray-50 p-3 rounded-lg">
+          {icon}
+        </div>
+        <div>
+          <h4 className="font-semibold text-gray-900">{label}</h4>
+          <p className="text-sm text-gray-600">{description}</p>
+        </div>
+      </div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium focus:border-[#0A2463] focus:outline-none capitalize"
+      >
+        {options.map(opt => (
+          <option key={opt} value={opt} className="capitalize">{opt}</option>
+        ))}
+      </select>
     </div>
   );
 }
