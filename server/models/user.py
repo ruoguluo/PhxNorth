@@ -54,5 +54,11 @@ class User(Base):
     allow_enterprise_view = Column(Boolean, default=False)
     allow_mentor_discovery = Column(Boolean, default=True)
 
+    # Stripe fields
+    stripe_customer_id = Column(String(100), nullable=True)
+    stripe_payment_method_id = Column(String(100), nullable=True)
+    stripe_account_id = Column(String(100), nullable=True)
+    stripe_account_status = Column(String(20), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
