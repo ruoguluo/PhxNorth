@@ -274,7 +274,7 @@ export function UpcomingSessionsList() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
-            <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+            <button onClick={() => alert('Filters coming soon')} className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
               <Filter className="w-4 h-4" />
               Filter
             </button>
@@ -378,7 +378,7 @@ export function UpcomingSessionsList() {
         {/* Load More */}
         {filteredSessions.length > 0 && filteredSessions.length >= 10 && (
           <div className="mt-8 text-center">
-            <button className="px-6 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg font-medium transition-colors">
+            <button onClick={() => alert('Load more coming soon')} className="px-6 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg font-medium transition-colors">
               Load More Sessions
             </button>
           </div>

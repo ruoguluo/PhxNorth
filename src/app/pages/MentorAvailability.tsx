@@ -219,7 +219,7 @@ export function MentorAvailability() {
                     </span>
                   ))}
                 </div>
-                <button className="text-sm text-[#0A2463] hover:underline">
+                <button onClick={() => alert('Country/region selection coming soon')} className="text-sm text-[#0A2463] hover:underline">
                   + Add Country/Region
                 </button>
               </div>
