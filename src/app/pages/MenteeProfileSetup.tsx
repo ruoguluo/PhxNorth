@@ -763,19 +763,39 @@ export function MenteeProfileSetup() {
                 ))}
               </div>
 
-              <div className="mt-6 flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-gray-700">
-                  <AlertCircle className="w-4 h-4 text-blue-600" />
-                  <span>
-                    {aiFields.filter(f => f.required && f.confirmed).length} of {aiFields.filter(f => f.required).length} required fields confirmed
-                  </span>
-                </div>
-                {allRequiredConfirmed() && (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                    <CheckCircle className="w-4 h-4" />
-                    Ready to continue
+              <div className="mt-6 p-4 bg-blue-50 rounded-lg space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <AlertCircle className="w-4 h-4 text-blue-600" />
+                    <span>
+                      {aiFields.filter(f => f.required && f.confirmed).length} of {aiFields.filter(f => f.required).length} required fields confirmed
+                    </span>
                   </div>
-                )}
+                  {allRequiredConfirmed() && (
+                    <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                      <CheckCircle className="w-4 h-4" />
+                      Ready to continue
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      await saveProfileFields();
+                      setActiveSection("overview");
+                    } catch (err) {
+                      console.error("Failed to save profile:", err);
+                    }
+                  }}
+                  disabled={!allRequiredConfirmed()}
+                  className={`w-full py-3 rounded-lg text-sm font-semibold transition-colors ${
+                    allRequiredConfirmed()
+                      ? "bg-[#0A2463] text-white hover:bg-[#0A2463]/90"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
+                  Confirm & Continue to Overview
+                </button>
               </div>
             </div>
           )}

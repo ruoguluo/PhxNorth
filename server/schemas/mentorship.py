@@ -159,3 +159,4 @@ class MentorMatchResponse(BaseModel):
     menteesMarked: int = 0
     deepDialogues: int = 0
     reasons: list[str] = []
+    hourlyRate: float = 0

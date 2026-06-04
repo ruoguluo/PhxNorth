@@ -275,9 +275,8 @@ export function MenteeDashboard() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
-                  {/* Structured Question Button */}
                   <a
-                    href="/app/question-entry"
+                    href="/app/question-entry?type=structured"
                     className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 border-2 border-white/30 hover:border-white/50 rounded-xl p-6 transition-all duration-300 hover:scale-105"
                   >
                     <div className="flex items-start gap-4">
@@ -302,7 +301,7 @@ export function MenteeDashboard() {
 
                   {/* Quick Question Button */}
                   <a
-                    href="/app/question-entry"
+                    href="/app/question-entry?type=quick"
                     className="group bg-white/10 backdrop-blur-sm hover:bg-white/20 border-2 border-white/30 hover:border-white/50 rounded-xl p-6 transition-all duration-300 hover:scale-105"
                   >
                     <div className="flex items-start gap-4">
@@ -419,8 +418,10 @@ export function MenteeDashboard() {
                     {sessions[0] ? (() => {
                       const diff = new Date(sessions[0].scheduled_at).getTime() - Date.now();
                       if (diff <= 0) return 'Now';
-                      const h = Math.floor(diff / 3600000);
+                      const d = Math.floor(diff / 86400000);
+                      const h = Math.floor((diff % 86400000) / 3600000);
                       const m = Math.floor((diff % 3600000) / 60000);
+                      if (d > 0) return `${d}d ${h}h`;
                       return h > 0 ? `${h}h ${m}m` : `${m}m`;
                     })() : '--'}
                   </div>

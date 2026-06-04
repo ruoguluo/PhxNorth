@@ -53,6 +53,8 @@ export function MentorDashboard() {
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [openProjects, setOpenProjects] = useState<ConsultingProject[]>([]);
   const [myWorkshops, setMyWorkshops] = useState<WorkshopEntry[]>([]);
+  const [hourlyRate, setHourlyRate] = useState('');
+  const [rateSaved, setRateSaved] = useState(false);
 
   const navigate = useNavigate();
 
@@ -75,6 +77,7 @@ export function MentorDashboard() {
 
   useEffect(() => {
     fetchData();
+    profileAPI.get().then(p => setHourlyRate(p.hourly_rate ? String(p.hourly_rate) : '')).catch(() => {});
     consultingAPI.listProjects({ status: 'open' }).then(setOpenProjects).catch(() => {});
     workshopAPI.list({ mine: true }).then(setMyWorkshops).catch(() => {});
   }, [fetchData]);
@@ -372,6 +375,47 @@ export function MentorDashboard() {
             <a href="#" className="text-xs text-emerald-600 hover:underline font-medium">
               View Details →
             </a>
+          </div>
+        </div>
+
+        {/* Hourly Rate Setting */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Your Hourly Rate</h3>
+              <p className="text-sm text-gray-500">This rate is shown to mentees and used to calculate session prices</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="5"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                  className="w-28 pl-7 pr-3 py-2 border-2 border-gray-300 rounded-lg text-right font-semibold focus:border-[#0A2463] focus:outline-none"
+                  placeholder="0"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">/hr</span>
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    await profileAPI.update({ hourly_rate: parseFloat(hourlyRate) || 0 });
+                    setRateSaved(true);
+                    setTimeout(() => setRateSaved(false), 2000);
+                  } catch (err) {
+                    console.error('Failed to save rate:', err);
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  rateSaved ? 'bg-emerald-100 text-emerald-700' : 'bg-[#0A2463] text-white hover:bg-[#0A2463]/90'
+                }`}
+              >
+                {rateSaved ? 'Saved!' : 'Save'}
+              </button>
+            </div>
           </div>
         </div>
 

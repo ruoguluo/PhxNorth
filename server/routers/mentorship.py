@@ -599,6 +599,11 @@ def cancel_session(
         raise HTTPException(status_code=400, detail="Only upcoming or in-progress sessions can be cancelled")
 
     session.status = "cancelled"
+    # Void any authorized payment hold
+    try:
+        billing.void_session_payment(db, session, commit=False)
+    except Exception:
+        pass  # Void is best-effort; don't block cancellation
     db.commit()
     db.refresh(session)
     resp = SessionResponse.model_validate(session)

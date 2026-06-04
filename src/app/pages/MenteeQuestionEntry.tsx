@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
   ArrowLeft,
@@ -24,7 +24,7 @@ import {
   X,
   Check
 } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { questionAPI, type AIUnderstanding as AIUnderstandingDTO } from '../../lib/question-api';
 import { mentorshipAPI } from '../../lib/api';
 
@@ -105,6 +105,7 @@ interface MentorMatch {
   mentorshipType?: 'instant' | 'scheduled' | 'both';
   menteesMarked: number;
   deepDialogues: number;
+  hourlyRate: number;
 }
 
 interface CountryData {
@@ -161,7 +162,16 @@ const categoryOptions = [
 
 export function MenteeQuestionEntry() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [selectedType, setSelectedType] = useState<QuestionType>(null);
+
+  // Auto-select type from ?type=quick or ?type=structured query param
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    if (typeParam === 'quick' || typeParam === 'structured') {
+      setSelectedType(typeParam);
+    }
+  }, [searchParams]);
   const [structuredStep, setStructuredStep] = useState(1);
   const [quickQuestionStep, setQuickQuestionStep] = useState<QuickQuestionStep>('input');
   
@@ -343,7 +353,9 @@ export function MenteeQuestionEntry() {
         topic: requestForm.topic,
         message: requestForm.message || undefined,
         duration_minutes: requestForm.duration_minutes,
-        price: 0.0,
+        price: requestModal.mentor.hourlyRate > 0
+          ? Math.round(requestModal.mentor.hourlyRate * (requestForm.duration_minutes / 60) * 100) / 100
+          : 0,
       };
       if (requestModal.sessionType === 'scheduled' && requestForm.proposed_datetime) {
         data.proposed_datetime = new Date(requestForm.proposed_datetime).toISOString();
@@ -462,11 +474,11 @@ export function MenteeQuestionEntry() {
         <div className="min-h-screen bg-gray-50 py-12 px-8">
           <div className="max-w-4xl mx-auto">
             <button
-              onClick={() => setSelectedType(null)}
+              onClick={() => searchParams.get('type') ? navigate('/app/dashboard') : setSelectedType(null)}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Question Type Selection</span>
+              <span>{searchParams.get('type') ? 'Back to Dashboard' : 'Back to Question Type Selection'}</span>
             </button>
 
             <div className="text-center mb-8">
@@ -1188,6 +1200,18 @@ export function MenteeQuestionEntry() {
                             <option value={90}>90 minutes</option>
                           </select>
                         </div>
+                        {/* Estimated Price */}
+                        {requestModal.mentor.hourlyRate > 0 && (
+                          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-emerald-900">Estimated Session Cost</p>
+                                <p className="text-xs text-emerald-700 mt-0.5">${requestModal.mentor.hourlyRate}/hr x {requestForm.duration_minutes} min</p>
+                              </div>
+                              <p className="text-2xl font-bold text-emerald-700">${(Math.round(requestModal.mentor.hourlyRate * (requestForm.duration_minutes / 60) * 100) / 100).toFixed(2)}</p>
+                            </div>
+                          </div>
+                        )}
                         {requestModal.sessionType === 'scheduled' && (
                           <div>
                             <label className="block text-sm font-semibold text-gray-900 mb-1">Proposed Date &amp; Time</label>
@@ -1656,6 +1680,18 @@ export function MenteeQuestionEntry() {
                             <option value={90}>90 minutes</option>
                           </select>
                         </div>
+                        {/* Estimated Price */}
+                        {requestModal.mentor.hourlyRate > 0 && (
+                          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-semibold text-emerald-900">Estimated Session Cost</p>
+                                <p className="text-xs text-emerald-700 mt-0.5">${requestModal.mentor.hourlyRate}/hr x {requestForm.duration_minutes} min</p>
+                              </div>
+                              <p className="text-2xl font-bold text-emerald-700">${(Math.round(requestModal.mentor.hourlyRate * (requestForm.duration_minutes / 60) * 100) / 100).toFixed(2)}</p>
+                            </div>
+                          </div>
+                        )}
                         {requestModal.sessionType === 'scheduled' && (
                           <div>
                             <label className="block text-sm font-semibold text-gray-900 mb-1">Proposed Date &amp; Time</label>

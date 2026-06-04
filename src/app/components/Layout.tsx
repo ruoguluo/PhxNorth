@@ -97,11 +97,18 @@ export function Layout() {
   const userRole = (user?.role as Role) || 'mentee';
   const [activeRoles, setActiveRoles] = useState<Role[]>(() => {
     const roles = new Set<Role>([userRole]);
-    if (isMentorPath) roles.add('mentor');
+    // Mentors also have mentee access; mentees on mentor paths get mentor activated
+    if (userRole === 'mentor') roles.add('mentee');
     if (userRole === 'mentee') roles.add('mentee');
+    if (isMentorPath) roles.add('mentor');
     return Array.from(roles);
   });
-  const [currentRole, setCurrentRole] = useState<Role>(derivedRole);
+  const [currentRole, setCurrentRole] = useState<Role>(() => {
+    // Default to the user's actual role, override by URL path
+    if (isMentorPath) return 'mentor';
+    if (userRole === 'mentor') return 'mentor';
+    return 'mentee';
+  });
   // Keep currentRole in sync with URL
   useEffect(() => {
     setCurrentRole(derivedRole);
@@ -158,9 +165,12 @@ export function Layout() {
                 <span className="text-xl font-bold text-[#0A2463]">PhxNorth</span>
               </Link>
               
-              {/* Global Role Switch Bar - All 3 Roles Always Visible */}
+              {/* Global Role Switch Bar */}
               <div className="flex items-center gap-2 border-l border-gray-200 pl-6">
                 {(Object.keys(roleConfigs) as Role[]).map((role) => {
+                  // Hide mentee tab for mentor users, hide mentor tab for mentee users
+                  if (role === 'mentee' && userRole === 'mentor') return null;
+                  if (role === 'mentor' && userRole === 'mentee' && !activeRoles.includes('mentor')) return null;
                   const config = roleConfigs[role];
                   const isActivated = activeRoles.includes(role);
                   const isCurrent = currentRole === role;
@@ -316,16 +326,22 @@ export function Layout() {
                     <Target className="w-4 h-4" />
                     Calendar
                   </Link>
+                  {user?.role !== 'mentor' && (
+                    <Link
+                      to="/app/question-entry?type=quick"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/question-entry' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Instant Mentorship
+                    </Link>
+                  )}
                   <Link
-                    to="/app/dashboard"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100`}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    Instant Mentorship
-                  </Link>
-                  <Link
-                    to="/app/dashboard"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-700 hover:bg-gray-100`}
+                    to="/app/courses"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === '/app/courses' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     <BookOpen className="w-4 h-4" />
                     Courses

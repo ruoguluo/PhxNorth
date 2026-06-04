@@ -1,0 +1,74 @@
+ALEX MORGAN
+Senior Engineering Manager | Technology Leader
+alex.morgan@email.com | +1 (415) 555-0192 | linkedin.com/in/alexmorgan | San Francisco, CA
+
+PROFESSIONAL SUMMARY
+Results-driven engineering leader with 12+ years of experience scaling high-performance engineering teams at hypergrowth technology companies. Proven track record of building distributed systems serving millions of users, driving cross-functional initiatives, and developing talent pipelines. Combines deep technical expertise in cloud-native architecture with strong business acumen and stakeholder management skills. Passionate about mentoring engineers and creating high-trust team cultures.
+
+WORK EXPERIENCE
+
+Senior Engineering Manager | Stripe | San Francisco, CA | Jan 2022 – Present
+- Lead a team of 18 engineers (3 squads) across platform infrastructure, developer experience, and internal tooling
+- Drove architectural redesign of core payment processing pipeline, reducing P99 latency by 43% and achieving 99.999% uptime across 12 global regions
+- Established quarterly technical roadmap process aligned to business OKRs, improving engineering delivery predictability by 35%
+- Grew team from 8 to 18 engineers; designed and led hiring process including competency-based rubrics for senior IC and staff levels
+- Partnered with Product, Risk, and Compliance to deliver PCI DSS Level 1 certification for three new product verticals
+- Mentored 5 direct reports through promotions; established structured 1:1 frameworks and growth plans for each engineer
+- Led incident response process redesign that reduced mean time to resolve (MTTR) by 67% across all severity levels
+
+Engineering Manager | Airbnb | San Francisco, CA | Mar 2019 – Dec 2021
+- Managed a 12-person full-stack team building host-facing financial tools and payout infrastructure
+- Delivered project migration of legacy Ruby monolith to Go microservices, enabling 4x throughput scaling
+- Introduced formal RFC (request for comments) process for technical decisions, increasing cross-team alignment and reducing rework by 28%
+- Collaborated with Data Science to ship ML-powered fraud detection model reducing chargebacks by $2.1M/quarter
+- Represented engineering in executive quarterly business reviews; created engineering narrative for board-level presentations
+- Coached 3 senior engineers into management roles; developed manager onboarding curriculum used across the engineering org
+
+Senior Software Engineer → Staff Engineer | Lyft | San Francisco, CA | Aug 2015 – Feb 2019
+- Individual contributor progressing from Senior to Staff Engineer across Payments and Core Infrastructure teams
+- Designed and implemented distributed rate-limiting system handling 2M+ requests/second across 40+ services
+- Led technical design and rollout of driver payout reconciliation system processing $500M+ in monthly transactions
+- Wrote RFCs that became org-wide standards for service mesh configuration and observability instrumentation
+- Participated actively in Lyft's Engineering Leadership Program; coached 2 junior engineers to promotion
+- Core contributor to open-source envoy-proxy configuration library (3,400+ GitHub stars)
+
+Software Engineer | Palantir Technologies | New York, NY | Jun 2013 – Jul 2015
+- Built data pipeline infrastructure supporting large-scale intelligence analysis for government clients
+- Owned development of Java/Spark ETL jobs processing 50TB+ datasets daily
+- Collaborated closely with forward-deployed engineers and clients to translate operational requirements into technical specs
+- Received "Impact Award" for delivering critical data integration ahead of schedule under adversarial conditions
+
+EDUCATION
+
+Bachelor of Science, Computer Science | MIT | Cambridge, MA | 2009 – 2013
+- GPA: 3.9/4.0 | Sigma Xi Honor Society
+- Thesis: "Adaptive Load Balancing in Heterogeneous Distributed Systems"
+- Teaching Assistant: Distributed Systems (6.824), Algorithms (6.046)
+
+SKILLS & TECHNOLOGIES
+
+Leadership: Team building, hiring & retention, technical roadmaps, OKR alignment, executive communication, performance management, engineering culture, incident response, postmortems
+
+Technical: Go, Python, Java, TypeScript, Kubernetes, AWS (EKS, RDS, S3, Lambda), GCP, Terraform, Kafka, PostgreSQL, Redis, gRPC, GraphQL, OpenTelemetry, Prometheus, Grafana
+
+Methodologies: Agile/Scrum, Systems thinking, RFC-driven design, SLO/SLI frameworks, blameless postmortems
+
+AWARDS & RECOGNITION
+- Stripe Engineering Excellence Award, 2023 – for latency reduction initiative
+- Lyft Staff Engineer Promotion, 2018 – recognized for distributed systems impact
+- Palantir Impact Award, 2014 – for client delivery under pressure
+
+SPEAKING & WRITING
+- "Scaling Engineering Teams in Hypergrowth" – QCon San Francisco 2022 (speaker)
+- "From IC to Manager: The Transition No One Prepares You For" – LeadDev London 2021 (speaker)
+- "How We Reduced Latency by 43% at Stripe" – Stripe Engineering Blog, Nov 2023
+
+MENTORING & COMMUNITY
+- Volunteer mentor on ADPList (50+ mentorship sessions completed, avg 4.9/5 rating)
+- Advisor to 3 early-stage startups in fintech and developer tooling
+- Active contributor to internal engineering mentorship program at Stripe (program lead since Q1 2023)
+
+CERTIFICATIONS
+- AWS Certified Solutions Architect – Professional (2022)
+- Certified Kubernetes Administrator (CKA) (2021)
+- Google Cloud Professional Data Engineer (2020)

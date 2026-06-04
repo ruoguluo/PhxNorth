@@ -242,6 +242,7 @@ def match_mentors(
             "menteesMarked": marked,
             "deepDialogues": deep,
             "reasons": reasons,
+            "hourlyRate": mentor.hourly_rate or 0,
         }
         scored.append((total, match))
 
