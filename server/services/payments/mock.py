@@ -26,7 +26,15 @@ class MockProvider(PaymentProvider):
     def _ref(prefix: str) -> str:
         return f"mock_{prefix}_{uuid.uuid4().hex[:16]}"
 
-    def authorize(self, amount: float, currency: str, ref: str) -> AuthResult:
+    def authorize(
+        self,
+        amount: float,
+        currency: str,
+        ref: str,
+        *,
+        customer_id: str | None = None,
+        payment_method_id: str | None = None,
+    ) -> AuthResult:
         if amount < 0:
             raise PaymentError("Authorization amount cannot be negative")
         return AuthResult(auth_ref=self._ref("auth"))
@@ -46,7 +54,14 @@ class MockProvider(PaymentProvider):
             raise PaymentError("Missing charge reference")
         return self._ref("re")
 
-    def create_payout(self, mentor_id: int, amount: float, currency: str) -> PayoutResult:
+    def create_payout(
+        self,
+        mentor_id: int,
+        amount: float,
+        currency: str,
+        *,
+        destination_account_id: str | None = None,
+    ) -> PayoutResult:
         if amount <= 0:
             raise PaymentError("Payout amount must be positive")
         return PayoutResult(payout_ref=self._ref("po"))

@@ -45,7 +45,15 @@ class PaymentProvider(abc.ABC):
     name: str = "abstract"
 
     @abc.abstractmethod
-    def authorize(self, amount: float, currency: str, ref: str) -> AuthResult:
+    def authorize(
+        self,
+        amount: float,
+        currency: str,
+        ref: str,
+        *,
+        customer_id: str | None = None,
+        payment_method_id: str | None = None,
+    ) -> AuthResult:
         """Place a hold on the mentee's funds. ``ref`` is an idempotency hint."""
 
     @abc.abstractmethod
@@ -61,5 +69,12 @@ class PaymentProvider(abc.ABC):
         """Refund a captured charge (full or partial). Returns a refund ref."""
 
     @abc.abstractmethod
-    def create_payout(self, mentor_id: int, amount: float, currency: str) -> PayoutResult:
+    def create_payout(
+        self,
+        mentor_id: int,
+        amount: float,
+        currency: str,
+        *,
+        destination_account_id: str | None = None,
+    ) -> PayoutResult:
         """Disburse ``amount`` to a mentor."""
