@@ -355,6 +355,54 @@ export const workshopAPI = {
         }).then((r) => { if (!r.ok) throw new Error("Cancel failed"); }),
 };
 
+// ─── Video API ──────────────────────────────────────────────────────
+
+export interface RoomInfo {
+    room_url: string;
+    token: string;
+    room_name: string;
+}
+
+export const videoAPI = {
+    // Session video
+    createSessionRoom: (sessionId: number) =>
+        fetchAPI<RoomInfo>(`/mentorship/sessions/${sessionId}/room`, { method: "POST" }),
+
+    getSessionRoom: (sessionId: number) =>
+        fetchAPI<{ room_exists: boolean; room_name?: string; room_url?: string }>(`/mentorship/sessions/${sessionId}/room`),
+
+    endSessionCall: (sessionId: number) =>
+        fetch(`${API_BASE}/mentorship/sessions/${sessionId}/room`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${localStorage.getItem("phxnorth_token")}` },
+        }).then((r) => { if (!r.ok) throw new Error("Failed to end call"); }),
+
+    getRecording: (sessionId: number) =>
+        fetchAPI<{ recording_url: string | null }>(`/mentorship/sessions/${sessionId}/recording`),
+
+    getTranscript: (sessionId: number) =>
+        fetchAPI<{ transcript_text: string | null }>(`/mentorship/sessions/${sessionId}/transcript`),
+
+    getSummary: (sessionId: number) =>
+        fetchAPI<Record<string, unknown>>(`/mentorship/sessions/${sessionId}/summary`),
+
+    generateSummary: (sessionId: number) =>
+        fetchAPI<Record<string, unknown>>(`/mentorship/sessions/${sessionId}/summary/generate`, { method: "POST" }),
+
+    // Workshop video
+    createWorkshopRoom: (workshopId: number) =>
+        fetchAPI<RoomInfo>(`/workshops/${workshopId}/room`, { method: "POST" }),
+
+    joinWorkshopRoom: (workshopId: number) =>
+        fetchAPI<RoomInfo>(`/workshops/${workshopId}/join`, { method: "POST" }),
+
+    endWorkshopCall: (workshopId: number) =>
+        fetch(`${API_BASE}/workshops/${workshopId}/room`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${localStorage.getItem("phxnorth_token")}` },
+        }).then((r) => { if (!r.ok) throw new Error("Failed to end call"); }),
+};
+
 // ─── Mentorship API ─────────────────────────────────────────────────
 
 export interface MentorMatch {
