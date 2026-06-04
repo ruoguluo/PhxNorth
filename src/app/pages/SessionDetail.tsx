@@ -617,7 +617,7 @@ export function SessionDetail() {
                 {/* Reschedule Button */}
                 <div className="mt-4">
                   {canReschedule ? (
-                    <button className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+                    <button onClick={() => alert('Reschedule functionality coming soon')} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
                       <Edit className="w-4 h-4" />
                       Reschedule Session
                     </button>
@@ -888,7 +888,7 @@ export function SessionDetail() {
           {/* Message Input */}
           <div className="p-4 border-t border-gray-200">
             <div className="mb-2">
-              <button className="text-xs text-[#0A2463] hover:underline flex items-center gap-1">
+              <button onClick={() => alert('AI suggestions coming soon')} className="text-xs text-[#0A2463] hover:underline flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 Get AI Suggestion
               </button>
