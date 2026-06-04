@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../lib/auth-context';
 import { 
   ArrowLeft,
   TrendingUp, 
@@ -94,7 +95,8 @@ interface AllData {
 // ─── Component ──────────────────────────────────────────────────────
 
 export function FiveDSnapshot() {
-  const [userRole] = useState<'mentee' | 'mentor'>('mentee');
+  const { user } = useAuth();
+  const userRole = (user?.role as 'mentee' | 'mentor') || 'mentee';
   const [data, setData] = useState<AllData>({
     disc: null, career: null, preferences: null, risk: null, contradiction: null,
   });

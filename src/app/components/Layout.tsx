@@ -109,10 +109,17 @@ export function Layout() {
     if (userRole === 'mentor') return 'mentor';
     return 'mentee';
   });
-  // Keep currentRole in sync with URL
+  // Keep currentRole in sync with URL, but respect user's actual role
   useEffect(() => {
-    setCurrentRole(derivedRole);
-  }, [derivedRole]);
+    if (isMentorPath) {
+      setCurrentRole('mentor');
+    } else if (userRole === 'mentor') {
+      // Mentor on non-mentor paths (e.g. /app/5d-snapshot) — stay as mentor
+      setCurrentRole('mentor');
+    } else {
+      setCurrentRole(derivedRole);
+    }
+  }, [derivedRole, isMentorPath, userRole]);
 
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [roleToActivate, setRoleToActivate] = useState<Role | null>(null);
