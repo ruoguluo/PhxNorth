@@ -409,7 +409,7 @@ export function MentorCalendar() {
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <button onClick={() => navigate('/app/session/' + selectedAppointment?.id)} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+            <button onClick={() => navigate('/app/session/' + selectedAppointment?.id + '/call')} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
               <Video className="w-5 h-5" />
               Join Session
             </button>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import {
   Plus,
   Calendar,
@@ -264,6 +265,7 @@ export function MentorWorkshops() {
 }
 
 function WorkshopCard({ workshop, onDelete, onPublish }: { workshop: WorkshopEntry; onDelete: (id: number) => void; onPublish: (id: number) => void }) {
+  const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
 
   const maxParticipants = workshop.max_participants ?? 0;
@@ -378,6 +380,24 @@ function WorkshopCard({ workshop, onDelete, onPublish }: { workshop: WorkshopEnt
         {/* Right Side - Status & Actions */}
         <div className="flex items-center gap-3">
           {getStatusBadge()}
+          {workshop.status === 'published' && (
+            <button
+              onClick={() => navigate(`/app/workshop/${workshop.id}/call`)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700"
+            >
+              <Video className="w-4 h-4" />
+              Start Workshop
+            </button>
+          )}
+          {workshop.status === 'in_progress' && (
+            <button
+              onClick={() => navigate(`/app/workshop/${workshop.id}/call`)}
+              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 animate-pulse"
+            >
+              <Video className="w-4 h-4" />
+              Join Live
+            </button>
+          )}
           {workshop.status === 'draft' && (
             <button
               onClick={() => onPublish(workshop.id)}

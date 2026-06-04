@@ -54,6 +54,8 @@ import { FindMentor } from "./pages/FindMentor";
 import { Billing } from "./pages/Billing";
 import { Messages } from "./pages/Messages";
 import { NotFound } from "./pages/NotFound";
+import { VideoCall } from "./pages/VideoCall";
+import { WorkshopCall } from "./pages/WorkshopCall";
 import { Layout } from "./components/Layout";
 
 export const router = createBrowserRouter([
@@ -297,6 +299,14 @@ export const router = createBrowserRouter([
       {
         path: "session/:id",
         Component: SessionDetail,
+      },
+      {
+        path: "session/:id/call",
+        Component: VideoCall,
+      },
+      {
+        path: "workshop/:id/call",
+        Component: WorkshopCall,
       },
     ],
   },

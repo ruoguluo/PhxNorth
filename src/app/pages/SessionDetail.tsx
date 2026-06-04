@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import {
   Calendar,
   Clock,
@@ -20,7 +20,8 @@ import {
   FileText,
   Download
 } from 'lucide-react';
-import { mentorshipAPI, profileAPI, messagesAPI } from '@/lib/api';
+import { mentorshipAPI, profileAPI, messagesAPI, videoAPI } from '@/lib/api';
+import { SessionRecording } from '../components/SessionRecording';
 import type { MessageResponse } from '@/lib/api';
 import { discProfileAPI } from '@/lib/disc-api';
 import { useAuth } from '@/lib/auth-context';
@@ -152,6 +153,7 @@ const getStatusStage = (status: string): string => {
 
 export function SessionDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -614,6 +616,19 @@ export function SessionDetail() {
                   </div>
                 </div>
 
+                {/* Join Video Call Button */}
+                {(session.status === 'upcoming' || session.status === 'in_progress') && (
+                  <div className="mt-4">
+                    <button
+                      onClick={() => navigate(`/app/session/${id}/call`)}
+                      className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold"
+                    >
+                      <Video className="w-5 h-5" />
+                      Join Video Call
+                    </button>
+                  </div>
+                )}
+
                 {/* Reschedule Button */}
                 <div className="mt-4">
                   {canReschedule ? (
@@ -790,6 +805,13 @@ export function SessionDetail() {
               </div>
             </div>
           </div>
+
+          {/* Section 4: Post-Call Recording & Summary */}
+          {session.status === 'completed' && (
+            <div className="mt-6">
+              <SessionRecording sessionId={parseInt(id!)} />
+            </div>
+          )}
         </div>
 
         {/* Section 4: Communication Panel (Right Side Fixed) */}
