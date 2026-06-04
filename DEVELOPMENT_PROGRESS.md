@@ -206,6 +206,18 @@ See `FEATURE_REQUIREMENTS.md` for the full table. Snapshot:
 - `MentorWorkshops` — Start Workshop / Join Live buttons.
 - Daily webhook handles `recording.ready-to-download`, `transcription.ready-to-download`, `meeting.started`, `meeting.ended`.
 
+**FR-07 — Stripe Connect payment integration (2026-06-04):**
+- `server/services/payments/stripe.py` — `StripeProvider` implementing `PaymentProvider` interface via Stripe PaymentIntent (authorize/capture/void), Refund, and Transfer APIs. Dollar-to-cents conversion.
+- `server/routers/stripe_billing.py` — 8 Stripe-specific endpoints:
+  - Mentor Connect: `POST /connect` (create Standard account + onboarding URL), `GET /status`, `POST /dashboard-link`
+  - Mentee cards: `POST /setup-intent` (Stripe SetupIntent), `POST/GET/DELETE /payment-method` (save/retrieve/remove card via Stripe Elements)
+  - Webhook: `POST /webhook` handling `account.updated`, `payment_intent.payment_failed`
+- `server/services/payments/base.py` — Extended `authorize()` with `customer_id`/`payment_method_id` and `create_payout()` with `destination_account_id` (backward-compatible optional params).
+- `server/services/billing.py` — `authorize_session_payment()` passes mentee Stripe info to provider; `process_due_payouts()` passes mentor connected account; skips mentors without Stripe accounts.
+- User model: 4 new Stripe fields (`stripe_customer_id`, `stripe_payment_method_id`, `stripe_account_id`, `stripe_account_status`).
+- Frontend: `@stripe/stripe-js` + `@stripe/react-stripe-js` installed; `stripeAPI` client (8 methods); Billing page updated with Mentor Connect section + Mentee Stripe Elements card form; Request modal checks for payment method before booking.
+- 9 new StripeProvider unit tests (mocked Stripe API), 55 total tests passing.
+
 ---
 
 ## 5. Configuration / env vars
@@ -219,7 +231,10 @@ See `FEATURE_REQUIREMENTS.md` for the full table. Snapshot:
 - `DEEPSEEK_API_URL` (default `https://api.deepseek.com/v1`).
 - `PLATFORM_FEE_PCT` (default `0.15`) — platform commission.
 - `BILLING_CURRENCY` (default `USD`).
-- `PAYMENT_PROVIDER` (default `mock`).
+- `PAYMENT_PROVIDER` (default `mock`; set to `stripe` for real payments).
+- `STRIPE_SECRET_KEY` — Stripe secret key (required when `PAYMENT_PROVIDER=stripe`). Get from https://dashboard.stripe.com/test/apikeys.
+- `STRIPE_PUBLISHABLE_KEY` — Stripe publishable key (frontend uses for Elements).
+- `STRIPE_WEBHOOK_SECRET` — Stripe webhook signing secret (optional for dev, required for prod).
 - `ENABLE_PAYOUT_SCHEDULER` (default `true`), `PAYOUT_SCHEDULE_HOUR` (default `4`).
   - For multi-worker/prod, set `ENABLE_PAYOUT_SCHEDULER=false` and run `run_payouts.py` from cron instead.
 
@@ -257,17 +272,15 @@ Note: `typescript` is not currently a devDependency (Vite uses esbuild). Add it
 - **FR-04:** ~~pick a video provider~~ ✅ Done — Daily.co integrated. Remaining: virtual backgrounds, in-call AI suggestions, waiting room, workshop polls/Q&A (all V2).
 - **FR-05:** ~~capture/store video transcripts once FR-04 lands~~ ✅ Done — transcripts captured via Daily webhook, stored in session model. Remaining: retention/privacy policy; consider moving chat into `phxnorth-backend`.
 - **FR-06:** confirm chat events reach the behavioral backend's daily DISC recompute (the Kafka consumer bridge described in `phxnorth-backend/docs/superpowers/`).
-- **FR-07:** implement a real `PaymentProvider` (Stripe Connect) behind the existing interface; add card-collection UI; show payment status on `SessionDetail`.
+- **FR-07:** ~~implement Stripe Connect~~ ✅ Done — `StripeProvider` + Connect onboarding + Stripe Elements card form + webhook. Remaining: multi-currency (V2); subscription billing (V2); invoice PDF (V2); float-to-cents migration (tech debt).
 - **Cross-cutting:** unify identity between the two backends (demo backend integer IDs ↔ behavioral backend UUIDs; `"me"` alias added 2026-06-04).
 
 ---
 
 ## 8. Git state (as of this update)
 
-Both repos on `main`, **work not yet committed**. New/changed files:
+Both repos on `main`, all work committed and pushed.
 
-**`phxnorth-backend`** — `app/api/v1/router.py`, `app/config.py`, `app/services/cv_parser/extractors/llm_extractor.py` (modified); `app/api/v1/questions.py`, `app/api/v1/schemas/questions.py`, `app/services/llm/`, `tests/api/v1/test_questions.py` (new).
-
-**`PhxNorth`** — `server/config.py`, `server/main.py`, `server/models/message.py`, `server/routers/mentorship.py`, `server/routers/messages.py`, `src/app/components/Layout.tsx`, `src/app/pages/MenteeQuestionEntry.tsx`, `src/app/routes.tsx`, `src/lib/api.ts` (modified); `server/models/billing.py`, `server/models/conversation.py`, `server/routers/billing.py`, `server/routers/conversations.py`, `server/run_payouts.py`, `server/schemas/billing.py`, `server/services/billing.py`, `server/services/conversation_store.py`, `server/services/payments/`, `server/tests/`, `src/app/pages/Billing.tsx`, `src/app/pages/Messages.tsx`, `src/lib/question-api.ts`, and the three planning/progress docs (new).
+**As of 2026-06-04:** 55 backend tests passing, Vite build clean. All 8 feature requirements (FR-01 through FR-08) have at least partial implementation. FR-04 (video), FR-05 (conversations), and FR-07 (billing/Stripe) are fully complete. FR-06 (daily AI job wiring) is the only remaining greenfield work.
 
 Suggested commit grouping: one commit per feature (FR-03, FR-07, FR-05) per repo. Consider adding `server/*.db` and `server/uploads/` to `.gitignore` if not already.
