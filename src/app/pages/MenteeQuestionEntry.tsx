@@ -106,6 +106,7 @@ interface MentorMatch {
   menteesMarked: number;
   deepDialogues: number;
   hourlyRate: number;
+  reasons: string[];
 }
 
 interface CountryData {
@@ -350,6 +351,8 @@ export function MenteeQuestionEntry() {
         mentorshipType: (m.mentorshipType || undefined) as MentorMatch['mentorshipType'],
         menteesMarked: m.menteesMarked,
         deepDialogues: m.deepDialogues,
+        hourlyRate: m.hourlyRate ?? 0,
+        reasons: m.reasons ?? [],
       }));
       setMentorMatches(mapped);
     } catch (err) {
@@ -1006,6 +1009,17 @@ export function MenteeQuestionEntry() {
                         ))}
                       </div>
 
+                      {/* Match Reasons */}
+                      {mentor.reasons?.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1 justify-center mb-4">
+                          {mentor.reasons.slice(0, 3).map((r, i) => (
+                            <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                              {r}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Availability Metrics */}
                       <div className="flex items-center justify-center gap-4 mb-4 text-xs text-gray-600">
                         <div className="flex items-center gap-1">
@@ -1086,6 +1100,17 @@ export function MenteeQuestionEntry() {
                           </span>
                         ))}
                       </div>
+
+                      {/* Match Reasons */}
+                      {mentor.reasons?.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1 justify-center mb-4">
+                          {mentor.reasons.slice(0, 3).map((r, i) => (
+                            <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                              {r}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Availability Metrics */}
                       <div className="flex items-center justify-center gap-4 mb-4 text-xs text-gray-600">
@@ -1168,6 +1193,17 @@ export function MenteeQuestionEntry() {
                         ))}
                       </div>
 
+                      {/* Match Reasons */}
+                      {mentor.reasons?.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1 justify-center mb-4">
+                          {mentor.reasons.slice(0, 3).map((r, i) => (
+                            <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                              {r}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Metrics */}
                       <div className="flex items-center justify-center mb-4 text-xs text-gray-600">
                         <div className="flex items-center gap-1">
@@ -1244,6 +1280,17 @@ export function MenteeQuestionEntry() {
                             </span>
                           ))}
                         </div>
+
+                        {/* Match Reasons */}
+                        {mentor.reasons?.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1 justify-center mb-4">
+                            {mentor.reasons.slice(0, 3).map((r, i) => (
+                              <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                                {r}
+                              </span>
+                            ))}
+                          </div>
+                        )}
 
                         {/* Availability Metrics */}
                         <div className="flex items-center justify-center mb-4 text-xs text-gray-600">
@@ -1631,6 +1678,8 @@ export function MenteeQuestionEntry() {
                       mentorshipType: (m.mentorshipType || undefined) as MentorMatch['mentorshipType'],
                       menteesMarked: m.menteesMarked,
                       deepDialogues: m.deepDialogues,
+                      hourlyRate: m.hourlyRate ?? 0,
+                      reasons: m.reasons ?? [],
                     }));
                     setMentorMatches(mapped);
                   } catch (err) {
@@ -1736,6 +1785,17 @@ export function MenteeQuestionEntry() {
                         </span>
                       ))}
                     </div>
+
+                    {/* Match Reasons */}
+                    {mentor.reasons?.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1 justify-center mb-4">
+                        {mentor.reasons.slice(0, 3).map((r, i) => (
+                          <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Metrics */}
                     <div className="flex items-center justify-center gap-4 text-xs text-gray-500 mb-4">
