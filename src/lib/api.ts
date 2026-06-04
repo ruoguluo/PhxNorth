@@ -403,6 +403,58 @@ export const videoAPI = {
         }).then((r) => { if (!r.ok) throw new Error("Failed to end call"); }),
 };
 
+// ─── Stripe API ─────────────────────────────────────────────────────
+
+export interface StripeConnectStatus {
+    connected: boolean;
+    account_id?: string;
+    status?: string;
+    payouts_enabled: boolean;
+    charges_enabled: boolean;
+}
+
+export interface StripePaymentMethod {
+    has_card: boolean;
+    last4?: string;
+    brand?: string;
+    exp_month?: number;
+    exp_year?: number;
+}
+
+export const stripeAPI = {
+    getPublishableKey: () =>
+        fetchAPI<{ publishable_key: string }>("/billing/stripe/publishable-key"),
+
+    // Mentor Connect
+    connect: () =>
+        fetchAPI<{ onboarding_url: string; account_id: string }>("/billing/stripe/connect", { method: "POST" }),
+
+    getStatus: () =>
+        fetchAPI<StripeConnectStatus>("/billing/stripe/status"),
+
+    getDashboardLink: () =>
+        fetchAPI<{ url: string }>("/billing/stripe/dashboard-link", { method: "POST" }),
+
+    // Mentee cards
+    createSetupIntent: () =>
+        fetchAPI<{ client_secret: string; customer_id: string }>("/billing/stripe/setup-intent", { method: "POST" }),
+
+    savePaymentMethod: (paymentMethodId: string) =>
+        fetchAPI<StripePaymentMethod>("/billing/stripe/payment-method", {
+            method: "POST",
+            body: JSON.stringify({ payment_method_id: paymentMethodId }),
+        }),
+
+    getPaymentMethod: () =>
+        fetchAPI<StripePaymentMethod>("/billing/stripe/payment-method"),
+
+    removePaymentMethod: () =>
+        fetch(`${API_BASE}/billing/stripe/payment-method`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${localStorage.getItem("phxnorth_token")}` },
+        }).then((r) => { if (!r.ok) throw new Error("Remove failed"); }),
+};
+
 // ─── Mentorship API ─────────────────────────────────────────────────
 
 export interface MentorMatch {
