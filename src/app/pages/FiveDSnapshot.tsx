@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../lib/auth-context';
+import { profileAPI } from '../../lib/api';
 import { 
   ArrowLeft,
   TrendingUp, 
@@ -134,6 +135,11 @@ export function FiveDSnapshot() {
       }
       setData(results);
       setLoading(false);
+
+      // Cache DISC scores to user profile for mentor matching (FR-08)
+      if (results.disc?.scores) {
+        profileAPI.update({ disc_scores_json: results.disc.scores } as Record<string, unknown>).catch(() => {});
+      }
     }
     fetchAll();
 

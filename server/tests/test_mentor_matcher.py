@@ -1,7 +1,9 @@
 """Tests for mentor matching (intent + profile scoring)."""
 
 from models.user import User
-from services.mentor_matcher import MatchInput, match_mentors, tokenize
+from services.mentor_matcher import (
+    MatchInput, match_mentors, tokenize, _behavioral_score,
+)
 
 
 def _mentor(db, **kw):
@@ -94,3 +96,104 @@ def test_no_intent_returns_neutral_ranking(db):
     results = match_mentors(db, intent, limit=5)
     assert len(results) == 1
     assert 0 <= results[0]["matchScore"] <= 100
+
+
+# ── Behavioral (DISC) scoring tests ─────────────────────────────────
+
+
+def _user_with_disc(disc: dict | None, **kw) -> User:
+    """Create an in-memory User with disc_scores_json (no DB needed)."""
+    defaults = dict(
+        email="u@t.com", username="u", full_name="U",
+        hashed_password="x", role="mentee", is_active=True, is_online=False,
+        rating=0.0, total_sessions=0,
+    )
+    defaults.update(kw)
+    u = User(**defaults)
+    u.disc_scores_json = disc
+    return u
+
+
+def test_behavioral_returns_neutral_when_no_disc_data():
+    mentor = _user_with_disc(None, role="mentor")
+    mentee = _user_with_disc(None)
+    assert _behavioral_score(mentor, mentee) == 0.5
+
+
+def test_behavioral_returns_neutral_when_mentee_is_none():
+    mentor = _user_with_disc({"D": 70, "I": 50, "S": 60, "C": 40}, role="mentor")
+    assert _behavioral_score(mentor, None) == 0.5
+
+
+def test_behavioral_returns_neutral_when_only_mentor_has_disc():
+    mentor = _user_with_disc({"D": 70, "I": 50, "S": 60, "C": 40}, role="mentor")
+    mentee = _user_with_disc(None)
+    assert _behavioral_score(mentor, mentee) == 0.5
+
+
+def test_behavioral_high_s_mentor_with_low_s_mentee():
+    """High-S mentor + low-S mentee should get the complementary bonus."""
+    mentor = _user_with_disc({"D": 40, "I": 50, "S": 75, "C": 50}, role="mentor")
+    mentee = _user_with_disc({"D": 40, "I": 50, "S": 30, "C": 50})
+    score = _behavioral_score(mentor, mentee)
+    assert score > 0.5, "Complementary S pairing should score above neutral"
+
+
+def test_behavioral_high_c_pair_gets_bonus():
+    """Both high-C should get the detail-oriented bonus."""
+    mentor = _user_with_disc({"D": 30, "I": 40, "S": 50, "C": 80}, role="mentor")
+    mentee = _user_with_disc({"D": 30, "I": 40, "S": 50, "C": 70})
+    score = _behavioral_score(mentor, mentee)
+    assert score > 0.5
+
+
+def test_behavioral_extreme_d_mismatch_penalised():
+    """Extreme D mismatch (diff > 40) should score below the complementary pair."""
+    # Clashing pair: high-D mentor, low-D mentee with large gap
+    clash_mentor = _user_with_disc({"D": 90, "I": 40, "S": 30, "C": 40}, role="mentor")
+    clash_mentee = _user_with_disc({"D": 20, "I": 40, "S": 30, "C": 40})
+    # Balanced pair: similar D
+    bal_mentor = _user_with_disc({"D": 50, "I": 40, "S": 30, "C": 40}, role="mentor")
+    bal_mentee = _user_with_disc({"D": 45, "I": 40, "S": 30, "C": 40})
+    clash_score = _behavioral_score(clash_mentor, clash_mentee)
+    bal_score = _behavioral_score(bal_mentor, bal_mentee)
+    assert bal_score > clash_score
+
+
+def test_behavioral_score_clamped_0_to_1():
+    """Score must always be between 0.0 and 1.0."""
+    mentor = _user_with_disc({"D": 100, "I": 100, "S": 100, "C": 100}, role="mentor")
+    mentee = _user_with_disc({"D": 0, "I": 0, "S": 0, "C": 0})
+    score = _behavioral_score(mentor, mentee)
+    assert 0.0 <= score <= 1.0
+
+
+def test_behavioral_boosts_mentor_with_disc_in_full_match(db):
+    """Mentor with DISC data matching a mentee with DISC data should score
+    higher on behavioral than a mentor without DISC data."""
+    m_with = _mentor(
+        db, username="disc_m", full_name="DISC Mentor",
+        specializations=["Finance"], rating=4.0, total_sessions=10,
+    )
+    m_with.disc_scores_json = {"D": 40, "I": 50, "S": 70, "C": 60}
+    db.commit()
+
+    m_without = _mentor(
+        db, username="nodisc_m", full_name="No DISC Mentor",
+        specializations=["Finance"], rating=4.0, total_sessions=10,
+    )
+    # m_without has no disc_scores_json
+
+    mentee = User(
+        email="mentee@t.com", username="mentee", full_name="Mentee",
+        hashed_password="x", role="mentee", is_active=True, is_online=False,
+        rating=0.0, total_sessions=0,
+    )
+    mentee.disc_scores_json = {"D": 45, "I": 55, "S": 30, "C": 55}
+    db.add(mentee)
+    db.commit()
+
+    intent = MatchInput(primary_goal="finance career")
+    results = match_mentors(db, intent, mentee=mentee, limit=5)
+    by_name = {r["name"]: r["matchScore"] for r in results}
+    assert by_name["DISC Mentor"] > by_name["No DISC Mentor"]

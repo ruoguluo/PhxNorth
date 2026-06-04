@@ -9,12 +9,13 @@ Scoring is a transparent weighted sum (each component in 0..1):
     topic       0.35   intent tokens vs specializations + industry + field + bio
     track       0.25   rating and sessions completed
     logistics   0.15   online/availability and price-within-budget
-    behavioral  0.15   DISC/5D compatibility  (PHASE 2 — neutral 0.5 for now)
+    behavioral  0.15   DISC/5D compatibility (from cached disc_scores_json)
     stage       0.10   experience appropriate to the mentee's stage
 
-The ``behavioral`` component is a stub hook: today it returns a neutral 0.5 so
-it doesn't bias results. A later phase calls the behavioral backend
-(``/api/v1/disc-profile-by-email``) for both parties and scores compatibility.
+The ``behavioral`` component reads cached DISC scores (``User.disc_scores_json``)
+written by the frontend whenever it loads a user's DISC profile from the
+behavioral backend. If scores are unavailable for either party, the component
+returns a neutral 0.5 so it doesn't bias ranking.
 """
 
 from __future__ import annotations
@@ -105,13 +106,62 @@ def _stage_score(mentor: User, req: "MatchInput") -> float:
 
 
 def _behavioral_score(mentor: User, mentee: Optional[User]) -> float:
-    """PHASE 2 hook: DISC/5D compatibility between mentee and mentor.
+    """DISC/5D compatibility between mentee and mentor.
 
-    Returns a neutral 0.5 today so it doesn't bias ranking. To activate, fetch
-    both DISC profiles from the behavioral backend and score complementarity
-    (e.g. uncertain/exploring mentees pair well with high-Steadiness mentors).
+    Scoring logic:
+    - Complementary pairing scores higher (e.g. high-S mentor + low-S mentee)
+    - Extreme mismatches on critical dimensions score lower
+    - Returns 0.5 (neutral) if DISC data is unavailable for either party
+
+    Reads cached ``disc_scores_json`` on the User model (written back by the
+    frontend when it loads DISC data from the behavioral backend).
     """
-    return 0.5
+    mentor_disc = getattr(mentor, "disc_scores_json", None)
+    mentee_disc = getattr(mentee, "disc_scores_json", None) if mentee else None
+
+    if not mentor_disc or not mentee_disc:
+        return 0.5  # No data — neutral
+
+    try:
+        md = mentor_disc if isinstance(mentor_disc, dict) else {}
+        td = mentee_disc if isinstance(mentee_disc, dict) else {}
+
+        if not md or not td:
+            return 0.5
+
+        score = 0.5  # Base
+
+        # Complementary S (Steadiness): High-S mentors are good for uncertain mentees
+        mentor_s = md.get("S", 50)
+        mentee_s = td.get("S", 50)
+        if mentor_s > 60 and mentee_s < 40:
+            score += 0.15  # Great complement
+        elif mentor_s > 50:
+            score += 0.05
+
+        # Complementary D (Dominance): Balanced is better than extreme mismatch
+        mentor_d = md.get("D", 50)
+        mentee_d = td.get("D", 50)
+        d_diff = abs(mentor_d - mentee_d)
+        if d_diff < 20:
+            score += 0.05  # Similar energy
+        elif d_diff > 40:
+            score -= 0.05  # May clash
+
+        # High-C mentors good for detail-oriented mentees
+        mentor_c = md.get("C", 50)
+        mentee_c = td.get("C", 50)
+        if mentor_c > 60 and mentee_c > 50:
+            score += 0.1  # Both detail-oriented
+
+        # High-I mentors good for mentees needing motivation
+        mentor_i = md.get("I", 50)
+        if mentor_i > 60:
+            score += 0.05  # Engaging communicator
+
+        return max(0.0, min(1.0, score))
+    except Exception:
+        return 0.5
 
 
 class MatchInput:

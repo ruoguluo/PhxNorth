@@ -39,6 +39,7 @@ class UserResponse(BaseModel):
     show_full_timeline: bool = True
     allow_enterprise_view: bool = False
     allow_mentor_discovery: bool = True
+    disc_scores_json: Optional[dict] = None
     created_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
@@ -91,3 +92,4 @@ class ProfileUpdateRequest(BaseModel):
     show_full_timeline: Optional[bool] = None
     allow_enterprise_view: Optional[bool] = None
     allow_mentor_discovery: Optional[bool] = None
+    disc_scores_json: Optional[dict] = None

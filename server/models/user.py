@@ -54,6 +54,9 @@ class User(Base):
     allow_enterprise_view = Column(Boolean, default=False)
     allow_mentor_discovery = Column(Boolean, default=True)
 
+    # Cached DISC scores from behavioral backend {D, I, S, C} (0-100 each)
+    disc_scores_json = Column(JSON, nullable=True)
+
     # Stripe fields
     stripe_customer_id = Column(String(100), nullable=True)
     stripe_payment_method_id = Column(String(100), nullable=True)

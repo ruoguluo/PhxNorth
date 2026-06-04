@@ -1,7 +1,7 @@
 import { Calendar, BookOpen, TrendingUp, FileText, Bell, CheckCircle, Clock, AlertTriangle, User, ChevronRight, ChevronDown, Target, Users, BarChart3, Sparkles, ArrowRight, MessageSquare, Video, Award, Zap, Globe, MapPin, Briefcase, Building2, Star } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Navigate, useNavigate } from "react-router";
-import { mentorshipAPI } from '../../lib/api';
+import { mentorshipAPI, profileAPI } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 import { discProfileAPI, discCareerAPI, type DISCProfile, type CareerProfile } from '../../lib/disc-api';
 
@@ -51,7 +51,13 @@ export function MenteeDashboard() {
         discProfileAPI.get('me', '90d'),
         discCareerAPI.get('me'),
       ]);
-      if (disc.status === 'fulfilled') setDiscProfile(disc.value);
+      if (disc.status === 'fulfilled') {
+        setDiscProfile(disc.value);
+        // Cache DISC scores to user profile for mentor matching (FR-08)
+        if (disc.value?.scores) {
+          profileAPI.update({ disc_scores_json: disc.value.scores } as Record<string, unknown>).catch(() => {});
+        }
+      }
       if (career.status === 'fulfilled') setCareerProfile(career.value);
     } catch {
       // 5D data is optional — card will show '--' if unavailable
