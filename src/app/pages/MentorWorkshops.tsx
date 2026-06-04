@@ -26,6 +26,8 @@ export function MentorWorkshops() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'published' | 'draft' | 'completed'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   useEffect(() => {
     workshopAPI.list({ mine: true })
@@ -76,7 +78,10 @@ export function MentorWorkshops() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Workshop Studio</h1>
               <p className="text-gray-600">Create and manage your workshops, track attendance, and grow your impact</p>
             </div>
-            <button className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2">
+            <button
+              onClick={() => setShowCreate(!showCreate)}
+              className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2"
+            >
               <Plus className="w-5 h-5" />
               Create Workshop
             </button>
@@ -140,7 +145,10 @@ export function MentorWorkshops() {
               <p className="text-gray-700 mb-4">
                 You have been matched with workshop opportunities from enterprises and the platform. These are curated based on your expertise.
               </p>
-              <button className="px-5 py-2.5 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors">
+              <button
+                onClick={() => alert('Workshop invitations coming soon')}
+                className="px-5 py-2.5 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors"
+              >
                 Review Invitations →
               </button>
             </div>
@@ -208,7 +216,11 @@ export function MentorWorkshops() {
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
-                <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                  className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  title={`Switch to ${viewMode === 'grid' ? 'list' : 'grid'} view`}
+                >
                   <Filter className="w-5 h-5 text-gray-600" />
                 </button>
               </div>
@@ -230,7 +242,10 @@ export function MentorWorkshops() {
                   {searchQuery ? 'Try adjusting your search terms' : 'Create your first workshop to get started'}
                 </p>
                 {!searchQuery && (
-                  <button className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors inline-flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCreate(true)}
+                    className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors inline-flex items-center gap-2"
+                  >
                     <Plus className="w-5 h-5" />
                     Create Workshop
                   </button>
@@ -380,15 +395,24 @@ function WorkshopCard({ workshop, onDelete, onPublish }: { workshop: WorkshopEnt
             </button>
             {showMenu && (
               <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
-                <button className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+                <button
+                  onClick={() => { alert('Workshop details coming soon'); setShowMenu(false); }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
                   <Eye className="w-4 h-4" />
                   View Details
                 </button>
-                <button className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+                <button
+                  onClick={() => { alert('Edit workshop coming soon'); setShowMenu(false); }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
                   <Edit className="w-4 h-4" />
                   Edit Workshop
                 </button>
-                <button className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+                <button
+                  onClick={() => { alert('Duplicate coming soon'); setShowMenu(false); }}
+                  className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                >
                   <Copy className="w-4 h-4" />
                   Duplicate
                 </button>
