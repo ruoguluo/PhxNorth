@@ -70,6 +70,14 @@ class SessionResponse(BaseModel):
     rating: Optional[float] = None
     feedback: Optional[str] = None
     price: float = 0.0
+    daily_room_name: Optional[str] = None
+    daily_room_url: Optional[str] = None
+    recording_url: Optional[str] = None
+    transcript_text: Optional[str] = None
+    ai_summary: Optional[str] = None
+    call_started_at: Optional[datetime] = None
+    call_ended_at: Optional[datetime] = None
+    call_duration_seconds: Optional[int] = None
     created_at: Optional[datetime] = None
     mentee_name: Optional[str] = None
     mentor_name: Optional[str] = None
@@ -160,3 +168,9 @@ class MentorMatchResponse(BaseModel):
     deepDialogues: int = 0
     reasons: list[str] = []
     hourlyRate: float = 0
+
+
+class RoomResponse(BaseModel):
+    room_url: str
+    token: str
+    room_name: str

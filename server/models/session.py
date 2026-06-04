@@ -22,4 +22,13 @@ class Session(Base):
     rating = Column(Float, nullable=True)
     feedback = Column(Text, nullable=True)
     price = Column(Float, default=0.0)
+    # Video call fields
+    daily_room_name = Column(String(100), nullable=True)
+    daily_room_url = Column(String(500), nullable=True)
+    recording_url = Column(String(500), nullable=True)
+    transcript_text = Column(Text, nullable=True)
+    ai_summary = Column(Text, nullable=True)
+    call_started_at = Column(DateTime, nullable=True)
+    call_ended_at = Column(DateTime, nullable=True)
+    call_duration_seconds = Column(Integer, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

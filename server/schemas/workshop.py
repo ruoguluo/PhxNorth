@@ -46,6 +46,10 @@ class WorkshopResponse(BaseModel):
     status: str = "draft"
     tags: Optional[list[str]] = None
     registered_count: int = 0
+    daily_room_name: Optional[str] = None
+    daily_room_url: Optional[str] = None
+    recording_url: Optional[str] = None
+    transcript_text: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

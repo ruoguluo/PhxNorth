@@ -19,6 +19,11 @@ class Workshop(Base):
     price = Column(Float, nullable=True)
     status = Column(String(20), nullable=False, default="draft")
     tags = Column(JSON, nullable=True)
+    # Video call fields
+    daily_room_name = Column(String(100), nullable=True)
+    daily_room_url = Column(String(500), nullable=True)
+    recording_url = Column(String(500), nullable=True)
+    transcript_text = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
