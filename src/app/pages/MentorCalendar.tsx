@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import {
   Calendar as CalendarIcon,
   Clock,
@@ -49,6 +50,7 @@ const availableTimezones: Timezone[] = [
 ];
 
 export function MentorCalendar() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [selectedTimezones, setSelectedTimezones] = useState<Timezone[]>([
     availableTimezones[0], // London
@@ -339,7 +341,7 @@ export function MentorCalendar() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">{selectedAppointment.menteeName}</h3>
-                <a href="#" className="text-sm text-emerald-600 hover:underline">
+                <a href="/app/5d-snapshot" className="text-sm text-emerald-600 hover:underline">
                   View 5D Profile →
                 </a>
               </div>
@@ -407,19 +409,19 @@ export function MentorCalendar() {
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <button className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+            <button onClick={() => navigate('/app/session/' + selectedAppointment?.id)} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
               <Video className="w-5 h-5" />
               Join Session
             </button>
-            <button className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+            <button onClick={() => navigate('/app/messages')} className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
               <MessageSquare className="w-5 h-5" />
               Send Message
             </button>
-            <button className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+            <button onClick={() => navigate('/app/session/' + selectedAppointment?.id)} className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
               <FileText className="w-5 h-5" />
               View Agenda
             </button>
-            <button className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+            <button onClick={() => alert('Reschedule functionality coming soon')} className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
               Reschedule
             </button>
           </div>
