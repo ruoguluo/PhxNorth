@@ -323,7 +323,7 @@ export function MentorDashboard() {
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-1">{stats?.sessions_this_week ?? 0}</h3>
             <p className="text-sm text-gray-600 mb-3">Sessions this week</p>
-            <a href="#" className="text-xs text-emerald-600 hover:underline font-medium">
+            <a href="/app/mentor/upcoming" className="text-xs text-emerald-600 hover:underline font-medium">
               View Details →
             </a>
           </div>
@@ -337,7 +337,7 @@ export function MentorDashboard() {
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-1">{stats?.active_mentees ?? 0}</h3>
             <p className="text-sm text-gray-600 mb-3">Active Mentees</p>
-            <a href="#" className="text-xs text-emerald-600 hover:underline font-medium">
+            <a href="/app/mentor/requests" className="text-xs text-emerald-600 hover:underline font-medium">
               View Details →
             </a>
           </div>
@@ -358,7 +358,7 @@ export function MentorDashboard() {
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-3">Average rating</p>
-            <a href="#" className="text-xs text-emerald-600 hover:underline font-medium">
+            <a href="/app/profile" className="text-xs text-emerald-600 hover:underline font-medium">
               View Details →
             </a>
           </div>
@@ -372,7 +372,7 @@ export function MentorDashboard() {
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-1">${stats?.monthly_income?.toLocaleString() ?? '0'}</h3>
             <p className="text-sm text-gray-600 mb-3">This month</p>
-            <a href="#" className="text-xs text-emerald-600 hover:underline font-medium">
+            <a href="/app/billing" className="text-xs text-emerald-600 hover:underline font-medium">
               View Details →
             </a>
           </div>
@@ -600,7 +600,7 @@ export function MentorDashboard() {
                 <span className="text-xs bg-white px-2 py-1 rounded border border-orange-200">AI/ML</span>
                 <span className="text-xs bg-white px-2 py-1 rounded border border-orange-200">B2B SaaS</span>
               </div>
-              <button className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors">
+              <button onClick={() => navigate('/app/mentor/workshops')} className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors">
                 Propose Workshop
               </button>
             </div>
@@ -625,7 +625,7 @@ export function MentorDashboard() {
                 <span className="text-xs bg-white px-2 py-1 rounded border border-orange-200">Engineering</span>
                 <span className="text-xs bg-white px-2 py-1 rounded border border-orange-200">Career</span>
               </div>
-              <button className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors">
+              <button onClick={() => navigate('/app/mentor/workshops')} className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors">
                 Propose Workshop
               </button>
             </div>
@@ -647,13 +647,13 @@ export function MentorDashboard() {
                 <span className="text-xs bg-gray-100 px-2 py-1 rounded">Research</span>
                 <span className="text-xs bg-gray-100 px-2 py-1 rounded">Discovery</span>
               </div>
-              <button className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors">
+              <button onClick={() => navigate('/app/mentor/workshops')} className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors">
                 Propose Workshop
               </button>
             </div>
           </div>
 
-          <button className="w-full mt-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg font-medium transition-colors">
+          <button onClick={() => navigate('/app/mentor/workshops')} className="w-full mt-4 py-2 text-emerald-600 hover:bg-emerald-50 rounded-lg font-medium transition-colors">
             View All Signals
           </button>
         </div>
@@ -741,7 +741,7 @@ export function MentorDashboard() {
                           <div className="bg-blue-600 h-2 rounded-full" style={{ width: '70%' }}></div>
                         </div>
                       </div>
-                      <button className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
+                      <button onClick={() => navigate('/app/projects')} className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
                         View Project Workspace
                       </button>
                     </div>
@@ -767,7 +767,7 @@ export function MentorDashboard() {
                           <div className="bg-green-600 h-2 rounded-full" style={{ width: '45%' }}></div>
                         </div>
                       </div>
-                      <button className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
+                      <button onClick={() => navigate('/app/projects')} className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
                         View Project Workspace
                       </button>
                     </div>
@@ -793,7 +793,7 @@ export function MentorDashboard() {
                           <div className="bg-purple-600 h-2 rounded-full" style={{ width: '60%' }}></div>
                         </div>
                       </div>
-                      <button className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
+                      <button onClick={() => navigate('/app/projects')} className="w-full px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
                         View Project Workspace
                       </button>
                     </div>
