@@ -80,31 +80,63 @@ Docker files added: `PhxNorth/Dockerfile` (frontend → nginx), `PhxNorth/nginx.
 `PhxNorth/server/Dockerfile` + `docker-entrypoint.sh`, `.dockerignore` in all three
 locations, and the root `PhxNorth/docker-compose.yml`.
 
-### Native (hot reload) — both repos at once
+### Native (hot reload) — step by step
 
-For live-reload development of both repos without rebuilding images, use the
-Makefile (`PhxNorth/Makefile`) — run `make help` to list everything:
+**Step 1: Start Docker infrastructure** (Postgres + Redis for behavioral backend):
+```bash
+cd ~/Projects/phxnorth-backend
+docker-compose up -d                  # starts postgres:5432, redis:6379, kafka
+```
+
+**Step 2: Start behavioral backend** (:8000):
+```bash
+cd ~/Projects/phxnorth-backend
+source .venv/bin/activate
+DATABASE_URL="postgresql+asyncpg://phxnorth:phxnorth@localhost:5432/phxnorth" \
+REDIS_URL="redis://localhost:6379/0" \
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**Step 3: Start demo backend** (:8081):
+```bash
+cd ~/Projects/PhxNorth/server
+source venv/bin/activate
+python seed.py                        # first time or after DB reset
+uvicorn main:app --host 0.0.0.0 --port 8081 --reload
+```
+
+**Step 4: Start frontend** (:5173):
+```bash
+cd ~/Projects/PhxNorth
+npx vite --host
+```
+
+**Shutdown everything:**
+```bash
+# Kill app processes
+lsof -ti:5173 -ti:8081 -ti:8000 | xargs kill -9
+
+# Stop Docker containers
+cd ~/Projects/phxnorth-backend && docker-compose down
+```
+
+Vite proxies `/api` → `:8081` (demo) and `/api/v1` → `:8000` (behavioral).
+
+**Light stack** (skip behavioral backend — FR-03/CV/5D degrade gracefully):
+```bash
+cd ~/Projects/PhxNorth/server && source venv/bin/activate && uvicorn main:app --port 8081 --reload
+cd ~/Projects/PhxNorth && npx vite --host
+```
+
+### Makefile shortcuts
 
 ```bash
 make dev-all     # infra (Postgres/Redis/Kafka) in Docker; the 3 apps run natively
+make dev         # demo backend + frontend only (no Docker needed)
 make infra       # just the databases (for working on the backend natively)
 make up          # the full stack in Docker (no reload)        -> :8080
 make test        # both pytest suites
 ```
-
-`make dev-all` is backed by `start-all.sh`. For the **behavioral backend only**
-(scoped to its subshell, so it never leaks into the SQLite demo server) it
-overrides `DATABASE_URL` → `localhost:5432` with the docker-compose Postgres
-creds (`phxnorth:phxnorth`), `REDIS_URL` → `localhost:6379`, and
-`KAFKA_BOOTSTRAP_SERVERS` → `localhost:29092`. The repo `.env` targets the
-in-network `postgres`/`kafka` hosts, so a natively-run backend needs these.
-It also runs `alembic upgrade head` (best-effort) first. Apps: behavioral
-`:8000`, demo `:8081`, frontend `:5173` (Vite proxies `/api`→8081, `/api/v1`→8000).
-
-> Kafka note: the broker advertises a host listener `PLAINTEXT_HOST://localhost:29092`
-> (added to `phxnorth-backend/docker-compose.yml`) so the native backend can reach
-> it; in-Docker clients still use `kafka:9092`. Recreate Kafka after pulling that
-> change: `docker compose -f ../phxnorth-backend/docker-compose.yml up -d --force-recreate kafka`.
 
 ---
 
