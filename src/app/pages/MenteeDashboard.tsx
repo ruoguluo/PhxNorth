@@ -1,12 +1,13 @@
 import { Calendar, BookOpen, TrendingUp, FileText, Bell, CheckCircle, Clock, AlertTriangle, User, ChevronRight, ChevronDown, Target, Users, BarChart3, Sparkles, ArrowRight, MessageSquare, Video, Award, Zap, Globe, MapPin, Briefcase, Building2, Star } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Navigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { mentorshipAPI } from '../../lib/api';
 import { useAuth } from '../../lib/auth-context';
 import { discProfileAPI, discCareerAPI, type DISCProfile, type CareerProfile } from '../../lib/disc-api';
 
 export function MenteeDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Redirect mentors to their own dashboard
   if (user?.role === 'mentor') {
@@ -573,7 +574,7 @@ export function MenteeDashboard() {
                   <div className="h-1 w-1 bg-emerald-600 rounded-full"></div>
                   <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">AI-Powered Job Recommendations</h2>
                 </div>
-                <button className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
+                <button onClick={() => navigate('/app/career')} className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
                   View All
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -612,10 +613,10 @@ export function MenteeDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
+                    <button onClick={() => window.open('https://jobs.phxnorth.com', '_blank')} className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
                       Apply Now
                     </button>
-                    <button className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    <button onClick={() => alert('Saved!')} className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                       Save
                     </button>
                   </div>
@@ -653,10 +654,10 @@ export function MenteeDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                    <button onClick={() => navigate('/app/messages')} className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
                       Request Referral
                     </button>
-                    <button className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    <button onClick={() => alert('Saved!')} className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                       Save
                     </button>
                   </div>
@@ -693,10 +694,10 @@ export function MenteeDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
+                    <button onClick={() => window.open('https://jobs.phxnorth.com', '_blank')} className="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
                       Apply Now
                     </button>
-                    <button className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    <button onClick={() => alert('Saved!')} className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                       Save
                     </button>
                   </div>
@@ -744,7 +745,7 @@ export function MenteeDashboard() {
                       </div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <button className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
+                      <button onClick={() => navigate('/app/career')} className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
                         View Details
                         <ArrowRight className="w-4 h-4" />
                       </button>
@@ -780,7 +781,7 @@ export function MenteeDashboard() {
                       </div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <button className="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
+                      <button onClick={() => navigate('/app/career')} className="text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1">
                         View Details
                         <ArrowRight className="w-4 h-4" />
                       </button>
@@ -816,7 +817,7 @@ export function MenteeDashboard() {
                       </div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <button className="text-sm text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1">
+                      <button onClick={() => navigate('/app/career')} className="text-sm text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1">
                         View Details
                         <ArrowRight className="w-4 h-4" />
                       </button>
@@ -952,7 +953,7 @@ export function MenteeDashboard() {
                   <div className="h-1 w-1 bg-purple-600 rounded-full"></div>
                   <h2 className="text-lg font-bold text-gray-900 uppercase tracking-wide">New Consulting Opportunities</h2>
                 </div>
-                <button className="text-sm text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1">
+                <button onClick={() => navigate('/app/mentor/consulting')} className="text-sm text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1">
                   View All
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -992,10 +993,10 @@ export function MenteeDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                    <button onClick={() => navigate('/app/mentor/consulting')} className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
                       Submit Proposal
                     </button>
-                    <button className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    <button onClick={() => alert('Saved!')} className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                       Save for Later
                     </button>
                   </div>
@@ -1033,10 +1034,10 @@ export function MenteeDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                    <button onClick={() => navigate('/app/mentor/consulting')} className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
                       Submit Proposal
                     </button>
-                    <button className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    <button onClick={() => alert('Saved!')} className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                       Save for Later
                     </button>
                   </div>
@@ -1074,10 +1075,10 @@ export function MenteeDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium">
+                    <button onClick={() => navigate('/app/mentor/consulting')} className="flex-1 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium">
                       Apply Immediately
                     </button>
-                    <button className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                    <button onClick={() => alert('Saved!')} className="px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
                       Save for Later
                     </button>
                   </div>
@@ -1143,10 +1144,10 @@ export function MenteeDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                    <button onClick={() => navigate('/app/projects')} className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
                       View Project Dashboard
                     </button>
-                    <button className="px-4 py-2 border-2 border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors text-sm font-medium">
+                    <button onClick={() => navigate('/app/messages')} className="px-4 py-2 border-2 border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition-colors text-sm font-medium">
                       Message PM
                     </button>
                   </div>
@@ -1200,10 +1201,10 @@ export function MenteeDashboard() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                    <button onClick={() => navigate('/app/projects')} className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
                       View Project Dashboard
                     </button>
-                    <button className="px-4 py-2 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors text-sm font-medium">
+                    <button onClick={() => navigate('/app/messages')} className="px-4 py-2 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors text-sm font-medium">
                       Respond to PM
                     </button>
                   </div>
@@ -1375,7 +1376,7 @@ export function MenteeDashboard() {
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="font-bold text-gray-900">Referral Progress & Updates</h3>
-                    <button className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
+                    <button onClick={() => navigate('/app/career')} className="text-sm text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1">
                       View All
                       <ArrowRight className="w-4 h-4" />
                     </button>
@@ -1863,6 +1864,7 @@ function EnterpriseProjectCard({ company, projectType, stage, progress }: {
   stage: 'Discovery' | 'Shortlisting' | 'Interview' | 'Closed';
   progress: number;
 }) {
+  const navigate = useNavigate();
   const projectTypeColors = {
     'Advisory': 'bg-purple-50 text-purple-700',
   };
@@ -1894,7 +1896,7 @@ function EnterpriseProjectCard({ company, projectType, stage, progress }: {
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xs text-gray-600 font-medium">{progress}% Complete</span>
-          <button className="text-xs text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1">
+          <button onClick={() => navigate('/app/projects')} className="text-xs text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-1">
             View Project
             <ArrowRight className="w-3 h-3" />
           </button>
