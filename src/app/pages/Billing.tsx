@@ -1,11 +1,16 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Loader2, DollarSign, RefreshCw, Receipt, Wallet } from 'lucide-react';
+import { useEffect, useState, type ReactNode, type FormEvent } from 'react';
+import { Loader2, DollarSign, RefreshCw, Receipt, Wallet, CreditCard, CheckCircle, AlertTriangle, ExternalLink, Trash2 } from 'lucide-react';
+import { loadStripe, type Stripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAuth } from '../../lib/auth-context';
 import {
   billingAPI,
+  stripeAPI,
   type Payment,
   type Payout,
   type BillingSummary,
+  type StripePaymentMethod,
+  type StripeConnectStatus,
 } from '../../lib/api';
 
 function money(value: number | undefined, currency = 'USD'): string {
@@ -50,6 +55,73 @@ function SummaryCard({ label, value, icon }: { label: string; value: string; ico
   );
 }
 
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      fontSize: '16px',
+      color: '#1f2937',
+      '::placeholder': { color: '#9ca3af' },
+    },
+    invalid: { color: '#ef4444' },
+  },
+};
+
+function CardForm({
+  clientSecret,
+  onSuccess,
+}: {
+  clientSecret: string;
+  onSuccess: (pm: StripePaymentMethod) => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setSubmitting(true);
+    setCardError(null);
+    try {
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) throw new Error('Card element not found');
+      const { error, setupIntent } = await stripe.confirmCardSetup(clientSecret, {
+        payment_method: { card: cardElement },
+      });
+      if (error) throw new Error(error.message);
+      if (!setupIntent?.payment_method) throw new Error('No payment method returned');
+      const pmId =
+        typeof setupIntent.payment_method === 'string'
+          ? setupIntent.payment_method
+          : setupIntent.payment_method.id;
+      const saved = await stripeAPI.savePaymentMethod(pmId);
+      onSuccess(saved);
+    } catch (err) {
+      setCardError(err instanceof Error ? err.message : 'Card setup failed');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="border border-gray-300 rounded-lg p-3 bg-white">
+        <CardElement options={CARD_ELEMENT_OPTIONS} />
+      </div>
+      {cardError && <p className="text-sm text-red-600">{cardError}</p>}
+      <button
+        type="submit"
+        disabled={!stripe || submitting}
+        className="inline-flex items-center gap-2 bg-[#0A2463] text-white px-4 py-2 rounded-lg hover:bg-[#0A2463]/90 disabled:opacity-50 text-sm"
+      >
+        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+        Save Card
+      </button>
+    </form>
+  );
+}
+
 export function Billing() {
   const { user } = useAuth();
   const role = user?.role || 'mentee';
@@ -61,6 +133,16 @@ export function Billing() {
   const [error, setError] = useState<string | null>(null);
   const [runningPayout, setRunningPayout] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Stripe Connect (mentor)
+  const [connectStatus, setConnectStatus] = useState<StripeConnectStatus | null>(null);
+
+  // Card management (mentee)
+  const [cardInfo, setCardInfo] = useState<StripePaymentMethod | null>(null);
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [setupSecret, setSetupSecret] = useState<string | null>(null);
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [removingCard, setRemovingCard] = useState(false);
 
   const currency = summary?.currency || 'USD';
 
@@ -92,6 +174,74 @@ export function Billing() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Load Stripe Connect status for mentors
+  useEffect(() => {
+    if (role === 'mentor') {
+      stripeAPI.getStatus().then(setConnectStatus).catch(() => {});
+    }
+  }, [role]);
+
+  // Load card info for mentees
+  useEffect(() => {
+    if (role === 'mentee') {
+      stripeAPI.getPaymentMethod().then(setCardInfo).catch(() => {});
+    }
+  }, [role]);
+
+  async function handleInitCardForm() {
+    setShowCardForm(true);
+    if (!stripePromise) {
+      const promise = stripeAPI.getPublishableKey().then((r) => loadStripe(r.publishable_key));
+      setStripePromise(promise);
+    }
+    if (!setupSecret) {
+      try {
+        const intent = await stripeAPI.createSetupIntent();
+        setSetupSecret(intent.client_secret);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create setup intent');
+      }
+    }
+  }
+
+  function handleCardSaved(pm: StripePaymentMethod) {
+    setCardInfo(pm);
+    setShowCardForm(false);
+    setSetupSecret(null);
+    setNotice('Card saved successfully.');
+  }
+
+  async function handleRemoveCard() {
+    setRemovingCard(true);
+    try {
+      await stripeAPI.removePaymentMethod();
+      setCardInfo({ has_card: false });
+      setNotice('Card removed.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to remove card');
+    } finally {
+      setRemovingCard(false);
+    }
+  }
+
+  async function handleConnectStripe() {
+    try {
+      const result = await stripeAPI.connect();
+      window.location.href = result.onboarding_url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start Stripe onboarding');
+    }
+  }
+
+  async function handleViewDashboard() {
+    try {
+      const result = await stripeAPI.getDashboardLink();
+      window.open(result.url, '_blank');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to open Stripe dashboard');
+    }
+  }
 
   async function handleRunPayouts() {
     setRunningPayout(true);
@@ -145,6 +295,69 @@ export function Billing() {
         <div className="mb-4 p-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm">{notice}</div>
       )}
 
+      {/* Stripe Connect (mentor) */}
+      {role === 'mentor' && (
+        <div className="mb-8">
+          {!connectStatus?.connected && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 text-blue-700 w-10 h-10 rounded-lg flex items-center justify-center">
+                  <ExternalLink className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-blue-900">Stripe Connect</p>
+                  <p className="text-sm text-blue-700">Connect your Stripe account to receive payouts</p>
+                </div>
+              </div>
+              <button
+                onClick={handleConnectStripe}
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-medium"
+              >
+                Connect Stripe
+              </button>
+            </div>
+          )}
+          {connectStatus?.connected && connectStatus.status === 'active' && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-100 text-emerald-700 w-10 h-10 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-emerald-900">Stripe Connected</p>
+                  <p className="text-sm text-emerald-700">Your account is active and ready to receive payouts</p>
+                </div>
+              </div>
+              <button
+                onClick={handleViewDashboard}
+                className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 text-sm font-medium"
+              >
+                <ExternalLink className="w-4 h-4" /> View Dashboard
+              </button>
+            </div>
+          )}
+          {connectStatus?.connected && !connectStatus.payouts_enabled && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-amber-100 text-amber-700 w-10 h-10 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-amber-900">Setup Incomplete</p>
+                  <p className="text-sm text-amber-700">Complete your Stripe setup to receive payouts</p>
+                </div>
+              </div>
+              <button
+                onClick={handleConnectStripe}
+                className="inline-flex items-center gap-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 text-sm font-medium"
+              >
+                Continue Setup
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {role === 'mentee' && (
@@ -186,6 +399,77 @@ export function Billing() {
           <p className="text-xs text-gray-500 mt-1">
             Payouts also run automatically on a daily schedule.
           </p>
+        </div>
+      )}
+
+      {/* Payment Method (mentee) */}
+      {role === 'mentee' && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Payment Method</h2>
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            {cardInfo?.has_card ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-gray-100 text-gray-700 w-10 h-10 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {cardInfo.brand ?? 'Card'} ending in {cardInfo.last4 ?? '••••'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Expires {String(cardInfo.exp_month ?? '--').padStart(2, '0')}/{String(cardInfo.exp_year ?? '--').slice(-2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleInitCardForm}
+                    className="inline-flex items-center gap-1.5 text-sm text-[#0A2463] hover:text-[#0A2463]/80 font-medium"
+                  >
+                    <CreditCard className="w-4 h-4" /> Change Card
+                  </button>
+                  <button
+                    onClick={handleRemoveCard}
+                    disabled={removingCard}
+                    className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700 font-medium"
+                  >
+                    {removingCard ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="text-gray-600 text-sm mb-3">No payment method on file. Add a card to pay for sessions.</p>
+                {!showCardForm && (
+                  <button
+                    onClick={handleInitCardForm}
+                    className="inline-flex items-center gap-2 bg-[#0A2463] text-white px-4 py-2 rounded-lg hover:bg-[#0A2463]/90 text-sm font-medium"
+                  >
+                    <CreditCard className="w-4 h-4" /> Add Payment Method
+                  </button>
+                )}
+              </div>
+            )}
+
+            {showCardForm && stripePromise && setupSecret && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-sm font-medium text-gray-700 mb-3">
+                  {cardInfo?.has_card ? 'Enter new card details' : 'Enter your card details'}
+                </p>
+                <Elements stripe={stripePromise}>
+                  <CardForm clientSecret={setupSecret} onSuccess={handleCardSaved} />
+                </Elements>
+              </div>
+            )}
+
+            {showCardForm && (!stripePromise || !setupSecret) && (
+              <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2 text-gray-400 text-sm">
+                <Loader2 className="w-4 h-4 animate-spin" /> Loading payment form…
+              </div>
+            )}
+          </div>
         </div>
       )}
 
