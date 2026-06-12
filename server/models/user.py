@@ -57,6 +57,9 @@ class User(Base):
     # Cached DISC scores from behavioral backend {D, I, S, C} (0-100 each)
     disc_scores_json = Column(JSON, nullable=True)
 
+    # Per-minute session rate for mentors (default $0.10)
+    per_minute_rate = Column(Float, nullable=True, default=0.10)
+
     # Stripe fields
     stripe_customer_id = Column(String(100), nullable=True)
     stripe_payment_method_id = Column(String(100), nullable=True)

@@ -13,6 +13,7 @@ import models.timeline_entry  # noqa: F401
 import models.credential  # noqa: F401
 import models.consulting_project  # noqa: F401
 import models.workshop  # noqa: F401
+import models.wallet  # noqa: F401
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
