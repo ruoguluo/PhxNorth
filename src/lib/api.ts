@@ -721,4 +721,60 @@ export const conversationsAPI = {
         }),
 };
 
+// ─── Wallet API ─────────────────────────────────────────────────────
+
+export interface WalletInfo {
+    id: number;
+    user_id: number;
+    balance: number;
+    auto_reload_enabled: boolean;
+    auto_reload_threshold: number;
+    auto_reload_amount: number;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface WalletTransactionInfo {
+    id: number;
+    wallet_id: number;
+    type: string;
+    amount: number;
+    balance_after: number;
+    session_id?: number | null;
+    description?: string | null;
+    created_at?: string;
+}
+
+export interface DebitTickResult {
+    balance: number;
+    warning: "low" | "depleted" | null;
+}
+
+export const walletAPI = {
+    get: () => fetchAPI<WalletInfo>("/wallet"),
+
+    topUp: (amount: number) =>
+        fetchAPI<WalletTransactionInfo>("/wallet/top-up", {
+            method: "POST",
+            body: JSON.stringify({ amount }),
+        }),
+
+    updateAutoReload: (settings: { enabled: boolean; threshold: number; amount: number }) =>
+        fetchAPI<WalletInfo>("/wallet/auto-reload", {
+            method: "PUT",
+            body: JSON.stringify(settings),
+        }),
+
+    debitTick: (sessionId: number) =>
+        fetchAPI<DebitTickResult>("/wallet/debit-tick", {
+            method: "POST",
+            body: JSON.stringify({ session_id: sessionId }),
+        }),
+
+    transactions: (sessionId?: number) => {
+        const qs = sessionId ? `?session_id=${sessionId}` : "";
+        return fetchAPI<WalletTransactionInfo[]>(`/wallet/transactions${qs}`);
+    },
+};
+
 export { fetchAPI };
