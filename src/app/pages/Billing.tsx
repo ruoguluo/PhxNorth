@@ -6,11 +6,14 @@ import { useAuth } from '../../lib/auth-context';
 import {
   billingAPI,
   stripeAPI,
+  walletAPI,
   type Payment,
   type Payout,
   type BillingSummary,
   type StripePaymentMethod,
   type StripeConnectStatus,
+  type WalletInfo,
+  type WalletTransactionInfo,
 } from '../../lib/api';
 
 function money(value: number | undefined, currency = 'USD'): string {
@@ -144,6 +147,16 @@ export function Billing() {
   const [showCardForm, setShowCardForm] = useState(false);
   const [removingCard, setRemovingCard] = useState(false);
 
+  // Wallet (mentee)
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [walletTxns, setWalletTxns] = useState<WalletTransactionInfo[]>([]);
+  const [topUpAmount, setTopUpAmount] = useState<number>(10);
+  const [toppingUp, setToppingUp] = useState(false);
+  const [savingReload, setSavingReload] = useState(false);
+  const [reloadEnabled, setReloadEnabled] = useState(false);
+  const [reloadThreshold, setReloadThreshold] = useState(5);
+  const [reloadAmount, setReloadAmount] = useState(20);
+
   const currency = summary?.currency || 'USD';
 
   async function load() {
@@ -162,6 +175,17 @@ export function Billing() {
         } catch {
           setPayouts([]);
         }
+      }
+      if (role === 'mentee') {
+        try {
+          const w = await walletAPI.get();
+          setWallet(w);
+          setReloadEnabled(w.auto_reload_enabled);
+          setReloadThreshold(w.auto_reload_threshold);
+          setReloadAmount(w.auto_reload_amount);
+          const txns = await walletAPI.transactions();
+          setWalletTxns(txns);
+        } catch { /* wallet may not exist yet */ }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load billing data');
@@ -256,6 +280,39 @@ export function Billing() {
       setError(e instanceof Error ? e.message : 'Payout run failed');
     } finally {
       setRunningPayout(false);
+    }
+  }
+
+  async function handleTopUp() {
+    setToppingUp(true);
+    try {
+      await walletAPI.topUp(topUpAmount);
+      const w = await walletAPI.get();
+      setWallet(w);
+      const txns = await walletAPI.transactions();
+      setWalletTxns(txns);
+      setNotice(`Added $${topUpAmount.toFixed(2)} to your wallet.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Top-up failed');
+    } finally {
+      setToppingUp(false);
+    }
+  }
+
+  async function handleSaveAutoReload() {
+    setSavingReload(true);
+    try {
+      const w = await walletAPI.updateAutoReload({
+        enabled: reloadEnabled,
+        threshold: reloadThreshold,
+        amount: reloadAmount,
+      });
+      setWallet(w);
+      setNotice('Auto-reload settings saved.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save settings');
+    } finally {
+      setSavingReload(false);
     }
   }
 
@@ -355,6 +412,152 @@ export function Billing() {
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Wallet (mentee) */}
+      {role === 'mentee' && wallet && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3">Wallet</h2>
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            {/* Balance + Top-up row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-6">
+              {/* Balance */}
+              <div className="flex items-center gap-4">
+                <div className="bg-emerald-100 text-emerald-700 w-12 h-12 rounded-lg flex items-center justify-center">
+                  <Wallet className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-gray-900">${wallet.balance.toFixed(2)}</p>
+                  <p className="text-sm text-gray-500">Available credit</p>
+                </div>
+              </div>
+
+              {/* Top-up controls */}
+              <div className="flex flex-wrap items-center gap-2">
+                {[5, 10, 20].map((amt) => (
+                  <button
+                    key={amt}
+                    onClick={() => setTopUpAmount(amt)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                      topUpAmount === amt
+                        ? 'bg-[#0A2463] text-white border-[#0A2463]'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-[#0A2463] hover:text-[#0A2463]'
+                    }`}
+                  >
+                    ${amt}
+                  </button>
+                ))}
+                <div className="flex items-center gap-1">
+                  <span className="text-gray-500 text-sm">$</span>
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={topUpAmount}
+                    onChange={(e) => setTopUpAmount(Math.max(1, Number(e.target.value)))}
+                    className="w-20 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A2463]/30 focus:border-[#0A2463]"
+                  />
+                </div>
+                <button
+                  onClick={handleTopUp}
+                  disabled={toppingUp}
+                  className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-1.5 rounded-lg hover:bg-emerald-700 disabled:opacity-50 text-sm font-medium"
+                >
+                  {toppingUp ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
+                  Top Up
+                </button>
+              </div>
+            </div>
+
+            {/* Auto-reload settings */}
+            <div className="border-t border-gray-200 pt-5 mb-6">
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="auto-reload-toggle"
+                  checked={reloadEnabled}
+                  onChange={(e) => setReloadEnabled(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded border-gray-300 text-[#0A2463] focus:ring-[#0A2463]"
+                />
+                <div className="flex-1">
+                  <label htmlFor="auto-reload-toggle" className="font-medium text-gray-900 text-sm cursor-pointer">
+                    Auto-reload
+                  </label>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Automatically add funds when your balance drops below a threshold.
+                  </p>
+
+                  {reloadEnabled && (
+                    <div className="flex flex-wrap items-center gap-4 mt-3">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-600 whitespace-nowrap">When below $</label>
+                        <input
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={reloadThreshold}
+                          onChange={(e) => setReloadThreshold(Math.max(1, Number(e.target.value)))}
+                          className="w-20 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A2463]/30 focus:border-[#0A2463]"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm text-gray-600 whitespace-nowrap">Add $</label>
+                        <input
+                          type="number"
+                          min={1}
+                          step={1}
+                          value={reloadAmount}
+                          onChange={(e) => setReloadAmount(Math.max(1, Number(e.target.value)))}
+                          className="w-20 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A2463]/30 focus:border-[#0A2463]"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={handleSaveAutoReload}
+                  disabled={savingReload}
+                  className="inline-flex items-center gap-2 bg-[#0A2463] text-white px-3 py-1.5 rounded-lg hover:bg-[#0A2463]/90 disabled:opacity-50 text-sm font-medium"
+                >
+                  {savingReload ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  Save
+                </button>
+              </div>
+            </div>
+
+            {/* Transaction history */}
+            <div className="border-t border-gray-200 pt-5">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Recent Transactions</h3>
+              {walletTxns.length === 0 ? (
+                <p className="text-sm text-gray-500">No transactions yet.</p>
+              ) : (
+                <div className="max-h-48 overflow-y-auto space-y-2">
+                  {walletTxns.map((txn) => (
+                    <div
+                      key={txn.id}
+                      className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 text-sm"
+                    >
+                      <div>
+                        <p className="text-gray-800">{txn.description || txn.type}</p>
+                        {txn.created_at && (
+                          <p className="text-xs text-gray-400">
+                            {new Date(txn.created_at).toLocaleDateString()}{' '}
+                            {new Date(txn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`font-medium ${txn.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}
+                      >
+                        {txn.amount >= 0 ? '+' : ''}${txn.amount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
