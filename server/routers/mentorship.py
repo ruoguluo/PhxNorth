@@ -27,6 +27,7 @@ from utils.deps import get_current_user
 from services import billing
 from services.payments import PaymentError
 from services.mentor_matcher import MatchInput, match_mentors
+from services.wallet import reconcile_session
 
 router = APIRouter(prefix="/api/mentorship", tags=["Mentorship"])
 
@@ -350,8 +351,13 @@ def complete_session(
         # Fall back to gross price for stats if capture fails (mock never does).
         earnings = s.price
 
-    # Update mentor stats
+    # Reconcile wallet-based per-minute billing
     mentor = db.query(User).filter(User.id == s.mentor_id).first()
+    mentee = db.query(User).filter(User.id == s.mentee_id).first()
+    if mentor and mentee:
+        reconcile_session(db, s, mentor, mentee)
+
+    # Update mentor stats
     if mentor:
         mentor.total_sessions += 1
         mentor.monthly_income += earnings

@@ -3,7 +3,7 @@
 import json
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session as DBSession
 
 from database import get_db
@@ -13,6 +13,7 @@ from models.workshop import Workshop, WorkshopRegistration
 from schemas.mentorship import RoomResponse
 from services import daily as daily_service
 from services.transcript_summary import generate_summary
+from services.wallet import get_or_create_wallet
 from utils.deps import get_current_user
 
 router = APIRouter(tags=["Video"])
@@ -49,6 +50,17 @@ def create_or_get_session_room(
     """Create a Daily room for the session or return the existing one."""
     session = db.query(MentorSession).filter(MentorSession.id == session_id).first()
     session = _require_session_participant(session, current_user)
+
+    # Wallet balance guard for mentees
+    if current_user.id == session.mentee_id:
+        mentor = db.query(User).filter(User.id == session.mentor_id).first()
+        min_rate = (mentor.per_minute_rate if mentor and mentor.per_minute_rate else 0.10)
+        w = get_or_create_wallet(db, current_user.id)
+        if w.balance < min_rate:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail=f"Insufficient wallet balance. You need at least ${min_rate:.2f} to join. Current balance: ${w.balance:.2f}",
+            )
 
     is_mentor = current_user.id == session.mentor_id
 
