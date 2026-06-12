@@ -108,8 +108,10 @@ uvicorn main:app --host 0.0.0.0 --port 8081 --reload
 **Step 4: Start frontend** (:5173):
 ```bash
 cd ~/Projects/PhxNorth
-npx vite --host
+npm run dev
 ```
+
+*Note: The frontend dev server runs over HTTPS by default (via `@vitejs/plugin-basic-ssl`) to satisfy the secure context requirement for WebRTC (Daily.co video calling). Accept the self-signed certificate warning in your browser to proceed.*
 
 **Shutdown everything:**
 ```bash
@@ -125,7 +127,7 @@ Vite proxies `/api` → `:8081` (demo) and `/api/v1` → `:8000` (behavioral).
 **Light stack** (skip behavioral backend — FR-03/CV/5D degrade gracefully):
 ```bash
 cd ~/Projects/PhxNorth/server && source venv/bin/activate && uvicorn main:app --port 8081 --reload
-cd ~/Projects/PhxNorth && npx vite --host
+cd ~/Projects/PhxNorth && npm run dev
 ```
 
 ### Makefile shortcuts

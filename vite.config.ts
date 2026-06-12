@@ -2,6 +2,7 @@ import { defineConfig, Plugin } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 /**
  * Resolves `figma:asset/<hash>.<ext>` virtual imports to the public logo
@@ -45,6 +46,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     figmaAssetPlugin(),
+    basicSsl(),
   ],
   resolve: {
     alias: {
@@ -57,6 +59,7 @@ export default defineConfig({
   assetsInclude: ['**/*.svg', '**/*.csv'],
 
   server: {
+    https: true,
     proxy: {
       // DISC behavioral intelligence backend (must come before /api)
       '/api/v1': {

@@ -22,11 +22,12 @@ BACKEND="$(cd "$ROOT/../phxnorth-backend" && pwd)"
 # globally) so the behavioral backend's Postgres URL never leaks into the
 # SQLite demo server.
 
-cleanup() { echo; echo "Stopping app processes… (infra stays up; 'make infra-down' to stop it)"; kill 0 2>/dev/null || true; }
+cleanup() { echo; echo "Stopping app processes… (infra stays up; 'make infra-down' to stop it)"; kill 0 2>/dev/null; wait 2>/dev/null; true; }
 trap cleanup EXIT INT TERM
 
-echo "==> Infra (Postgres/Redis/Kafka) via Docker"
-docker compose -f "$BACKEND/docker-compose.yml" up -d postgres redis kafka
+echo "==> Infra (Postgres/Redis) via Docker"
+docker compose -f "$BACKEND/docker-compose.yml" up -d postgres redis
+echo "    (Kafka skipped — start manually with 'make kafka' if needed)"
 
 echo "==> Behavioral backend on :8000 (phxnorth-backend)"
 (

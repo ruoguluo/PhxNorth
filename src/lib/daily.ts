@@ -13,27 +13,55 @@ import Daily, {
 
 type JoinState = "idle" | "joining" | "joined" | "error";
 
+let globalCallObject: DailyCall | null = null;
+let destroyTimeout: ReturnType<typeof setTimeout> | null = null;
+
 export function useDaily(
   roomUrl: string | null,
   token: string | null
 ) {
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
   const [joinState, setJoinState] = useState<JoinState>("idle");
+  const callObjectRef = useRef<DailyCall | null>(null);
 
-  // Create call object once on mount
+  // Create or reuse call object on mount
   useEffect(() => {
-    const co = Daily.createCallObject();
+    if (destroyTimeout) {
+      clearTimeout(destroyTimeout);
+      destroyTimeout = null;
+    }
+
+    let co = globalCallObject;
+    if (!co) {
+      co = Daily.getCallInstance() ?? Daily.createCallObject();
+      globalCallObject = co;
+    }
+
+    callObjectRef.current = co;
     setCallObject(co);
 
     return () => {
-      co.leave().catch(() => {});
-      co.destroy();
+      destroyTimeout = setTimeout(() => {
+        if (globalCallObject) {
+          globalCallObject.leave().catch(() => {});
+          globalCallObject.destroy();
+          globalCallObject = null;
+        }
+        destroyTimeout = null;
+      }, 150);
     };
   }, []);
 
   // Join / leave when roomUrl + token change
   useEffect(() => {
     if (!callObject || !roomUrl || !token) return;
+
+    // Avoid joining if already joined or joining
+    const state = callObject.meetingState();
+    if (state === "joined-meeting" || state === "joining-meeting") {
+      setJoinState(state === "joined-meeting" ? "joined" : "joining");
+      return;
+    }
 
     setJoinState("joining");
     callObject

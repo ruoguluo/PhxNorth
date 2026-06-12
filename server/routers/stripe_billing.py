@@ -207,13 +207,13 @@ def save_payment_method(
 
     # Return card info
     pm = stripe.PaymentMethod.retrieve(data.payment_method_id)
-    card = pm.card or {}
+    card = pm.card
     return PaymentMethodInfo(
         has_card=True,
-        last4=card.get("last4"),
-        brand=card.get("brand"),
-        exp_month=card.get("exp_month"),
-        exp_year=card.get("exp_year"),
+        last4=getattr(card, "last4", None),
+        brand=getattr(card, "brand", None),
+        exp_month=getattr(card, "exp_month", None),
+        exp_year=getattr(card, "exp_year", None),
     )
 
 
@@ -228,13 +228,13 @@ def get_payment_method(
     stripe.api_key = config.STRIPE_SECRET_KEY
     try:
         pm = stripe.PaymentMethod.retrieve(current_user.stripe_payment_method_id)
-        card = pm.card or {}
+        card = pm.card
         return PaymentMethodInfo(
             has_card=True,
-            last4=card.get("last4"),
-            brand=card.get("brand"),
-            exp_month=card.get("exp_month"),
-            exp_year=card.get("exp_year"),
+            last4=getattr(card, "last4", None),
+            brand=getattr(card, "brand", None),
+            exp_month=getattr(card, "exp_month", None),
+            exp_year=getattr(card, "exp_year", None),
         )
     except stripe.StripeError:
         return PaymentMethodInfo(has_card=False)

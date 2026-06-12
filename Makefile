@@ -5,6 +5,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help up up-light down down-v build rebuild logs logs-api ps \
         restart-api seed reseed dev dev-all infra infra-down \
+        kafka kafka-down stop-all \
         test test-demo test-backend
 
 ## help: list available targets
@@ -67,17 +68,32 @@ reseed:
 dev:
 	./start-dev.sh
 
-## dev-all: native hot-reload for BOTH repos (infra in Docker, apps native)
+## dev-all: native hot-reload for BOTH repos (Postgres/Redis in Docker, apps native)
 dev-all:
 	./start-all.sh
 
-## infra: start just Postgres/Redis/Kafka (for native backend dev)
+## infra: start Postgres + Redis (for native backend dev)
 infra:
-	docker compose -f ../phxnorth-backend/docker-compose.yml up -d postgres redis kafka
+	docker compose -f ../phxnorth-backend/docker-compose.yml up -d postgres redis
 
-## infra-down: stop the Postgres/Redis/Kafka infra containers
+## infra-down: stop the Postgres + Redis infra containers
 infra-down:
-	docker compose -f ../phxnorth-backend/docker-compose.yml stop postgres redis kafka
+	docker compose -f ../phxnorth-backend/docker-compose.yml stop postgres redis
+
+## kafka: start Kafka (optional, for event streaming features)
+kafka:
+	docker compose -f ../phxnorth-backend/docker-compose.yml up -d kafka
+
+## kafka-down: stop Kafka
+kafka-down:
+	docker compose -f ../phxnorth-backend/docker-compose.yml stop kafka
+
+## stop-all: stop everything (app processes + all infra containers incl. Kafka)
+stop-all:
+	-pkill -f "uvicorn.*8000" 2>/dev/null
+	-pkill -f "uvicorn.*8081" 2>/dev/null
+	-pkill -f "vite" 2>/dev/null
+	docker compose -f ../phxnorth-backend/docker-compose.yml stop postgres redis kafka 2>/dev/null || true
 
 ## test: run both test suites (demo server + behavioral backend)
 test: test-demo test-backend
