@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Globe,
 } from 'lucide-react';
-import { mentorshipAPI } from '../../lib/api';
+import { mentorshipAPI, walletAPI } from '../../lib/api';
+import { useAuth } from '@/lib/auth-context';
 
 type ViewMode = 'day' | 'week' | 'month';
 
@@ -51,6 +52,7 @@ const availableTimezones: Timezone[] = [
 
 export function MentorCalendar() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [selectedTimezones, setSelectedTimezones] = useState<Timezone[]>([
     availableTimezones[0], // London
@@ -60,6 +62,14 @@ export function MentorCalendar() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+
+  // Wallet balance check state
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [requiredRate, setRequiredRate] = useState(0.10);
+  const [topUpAmount, setTopUpAmount] = useState(10);
+  const [toppingUp, setToppingUp] = useState(false);
+  const [topUpError, setTopUpError] = useState<string | null>(null);
 
   const fetchCalendar = useCallback(async () => {
     try {
@@ -145,6 +155,40 @@ export function MentorCalendar() {
       return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
   };
+
+  async function handleJoinSession(appointmentId: string) {
+    if (user?.role === 'mentee') {
+      try {
+        const w = await walletAPI.get();
+        setWalletBalance(w.balance);
+        if (w.balance < requiredRate) {
+          setShowTopUpModal(true);
+          return;
+        }
+      } catch {
+        // If wallet check fails, let them attempt to join (server will guard)
+      }
+    }
+    navigate(`/app/session/${appointmentId}/call`);
+  }
+
+  async function handlePreJoinTopUp() {
+    setToppingUp(true);
+    setTopUpError(null);
+    try {
+      await walletAPI.topUp(topUpAmount);
+      const w = await walletAPI.get();
+      setWalletBalance(w.balance);
+      if (w.balance >= requiredRate) {
+        setShowTopUpModal(false);
+        navigate(`/app/session/${selectedAppointment?.id}/call`);
+      }
+    } catch (e) {
+      setTopUpError(e instanceof Error ? e.message : 'Top-up failed');
+    } finally {
+      setToppingUp(false);
+    }
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -409,7 +453,7 @@ export function MentorCalendar() {
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <button onClick={() => navigate('/app/session/' + selectedAppointment?.id + '/call')} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+            <button onClick={() => handleJoinSession(selectedAppointment?.id ?? '')} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
               <Video className="w-5 h-5" />
               Join Session
             </button>
@@ -424,6 +468,47 @@ export function MentorCalendar() {
             <button onClick={() => alert('Reschedule functionality coming soon')} className="w-full px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
               Reschedule
             </button>
+          </div>
+        </div>
+      )}
+
+      {showTopUpModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm mx-4 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Insufficient Credit</h3>
+            <p className="text-sm text-gray-600">
+              You need at least ${requiredRate.toFixed(2)} to join this session.
+              Your balance: ${walletBalance?.toFixed(2) ?? '0.00'}
+            </p>
+            <div className="flex items-center gap-2">
+              {[5, 10, 20].map((amt) => (
+                <button
+                  key={amt}
+                  onClick={() => setTopUpAmount(amt)}
+                  className={`px-3 py-1.5 rounded-lg text-sm border ${
+                    topUpAmount === amt ? 'border-[#0A2463] bg-[#0A2463] text-white' : 'border-gray-300 text-gray-700'
+                  }`}
+                >
+                  ${amt}
+                </button>
+              ))}
+            </div>
+            {topUpError && <p className="text-sm text-red-600">{topUpError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={handlePreJoinTopUp}
+                disabled={toppingUp}
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {toppingUp ? 'Adding…' : `Top Up $${topUpAmount}`}
+              </button>
+              <button
+                onClick={() => setShowTopUpModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -20,7 +20,7 @@ import {
   FileText,
   Download
 } from 'lucide-react';
-import { mentorshipAPI, profileAPI, messagesAPI, videoAPI } from '@/lib/api';
+import { mentorshipAPI, profileAPI, messagesAPI, videoAPI, walletAPI } from '@/lib/api';
 import { SessionRecording } from '../components/SessionRecording';
 import type { MessageResponse } from '@/lib/api';
 import { discProfileAPI } from '@/lib/disc-api';
@@ -174,6 +174,14 @@ export function SessionDetail() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+
+  // Wallet balance check state
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [requiredRate, setRequiredRate] = useState(0.10);
+  const [topUpAmount, setTopUpAmount] = useState(10);
+  const [toppingUp, setToppingUp] = useState(false);
+  const [topUpError, setTopUpError] = useState<string | null>(null);
 
   // Mock agenda for now - this would come from a session prep/agenda API
   const [aiAgenda] = useState<AgendaItem[]>([
@@ -464,6 +472,40 @@ export function SessionDetail() {
     return () => clearInterval(interval);
   }, [session]);
 
+  async function handleJoinSession(sessionId: string) {
+    if (user?.role === 'mentee') {
+      try {
+        const w = await walletAPI.get();
+        setWalletBalance(w.balance);
+        if (w.balance < requiredRate) {
+          setShowTopUpModal(true);
+          return;
+        }
+      } catch {
+        // If wallet check fails, let them attempt to join (server will guard)
+      }
+    }
+    navigate(`/app/session/${sessionId}/call`);
+  }
+
+  async function handlePreJoinTopUp() {
+    setToppingUp(true);
+    setTopUpError(null);
+    try {
+      await walletAPI.topUp(topUpAmount);
+      const w = await walletAPI.get();
+      setWalletBalance(w.balance);
+      if (w.balance >= requiredRate) {
+        setShowTopUpModal(false);
+        navigate(`/app/session/${id}/call`);
+      }
+    } catch (e) {
+      setTopUpError(e instanceof Error ? e.message : 'Top-up failed');
+    } finally {
+      setToppingUp(false);
+    }
+  }
+
   const completedQuestions = aiAgenda.filter(q => q.completed).length;
   const totalQuestions = aiAgenda.length;
   const progressPercentage = Math.round((completedQuestions / totalQuestions) * 100);
@@ -620,7 +662,7 @@ export function SessionDetail() {
                 {(session.status === 'upcoming' || session.status === 'in_progress') && (
                   <div className="mt-4">
                     <button
-                      onClick={() => navigate(`/app/session/${id}/call`)}
+                      onClick={() => handleJoinSession(id!)}
                       className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold"
                     >
                       <Video className="w-5 h-5" />
@@ -957,6 +999,47 @@ export function SessionDetail() {
           </div>
         </div>
       </div>
+
+      {showTopUpModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-sm mx-4 space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Insufficient Credit</h3>
+            <p className="text-sm text-gray-600">
+              You need at least ${requiredRate.toFixed(2)} to join this session.
+              Your balance: ${walletBalance?.toFixed(2) ?? '0.00'}
+            </p>
+            <div className="flex items-center gap-2">
+              {[5, 10, 20].map((amt) => (
+                <button
+                  key={amt}
+                  onClick={() => setTopUpAmount(amt)}
+                  className={`px-3 py-1.5 rounded-lg text-sm border ${
+                    topUpAmount === amt ? 'border-[#0A2463] bg-[#0A2463] text-white' : 'border-gray-300 text-gray-700'
+                  }`}
+                >
+                  ${amt}
+                </button>
+              ))}
+            </div>
+            {topUpError && <p className="text-sm text-red-600">{topUpError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={handlePreJoinTopUp}
+                disabled={toppingUp}
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {toppingUp ? 'Adding…' : `Top Up $${topUpAmount}`}
+              </button>
+              <button
+                onClick={() => setShowTopUpModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
