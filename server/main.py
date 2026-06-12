@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base, SessionLocal
-from routers import auth, profile, mentorship, admin, messages, billing, conversations, timeline, credentials, consulting, workshops, video, stripe_billing
+from routers import auth, profile, mentorship, admin, messages, billing, conversations, timeline, credentials, consulting, workshops, video, stripe_billing, wallet
 # Import models so their tables are registered on Base before create_all.
 import models.billing  # noqa: F401
 import models.conversation  # noqa: F401
@@ -65,6 +65,7 @@ app.include_router(consulting.router)
 app.include_router(workshops.router)
 app.include_router(video.router)
 app.include_router(stripe_billing.router)
+app.include_router(wallet.router)
 
 
 @app.on_event("startup")
