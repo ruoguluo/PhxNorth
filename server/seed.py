@@ -17,6 +17,7 @@ from models.timeline_entry import TimelineEntry
 from models.credential import Credential
 from models.consulting_project import ConsultingProject, ProjectApplication
 from models.workshop import Workshop, WorkshopRegistration
+from models.wallet import Wallet
 from utils.security import hash_password
 
 
@@ -60,6 +61,7 @@ def seed():
             total_sessions=87,
             monthly_income=3450.0,
             specializations=["Product Strategy", "AI/ML", "Leadership", "Career Transition"],
+            per_minute_rate=0.10,
         )
 
         mentor2 = User(
@@ -82,6 +84,7 @@ def seed():
             total_sessions=62,
             monthly_income=5200.0,
             specializations=["M&A Advisory", "Capital Markets", "FinTech", "Career Development"],
+            per_minute_rate=0.10,
         )
 
         mentor3 = User(
@@ -104,6 +107,7 @@ def seed():
             total_sessions=45,
             monthly_income=2100.0,
             specializations=["HealthTech", "Engineering Leadership", "Startups", "System Design"],
+            per_minute_rate=0.10,
         )
 
         mentee1 = User(
@@ -193,6 +197,14 @@ def seed():
         )
 
         db.add_all([admin, mentor1, mentor2, mentor3, mentee1, mentee2, mentee3, mentee4, mentee5])
+        db.flush()
+
+        # ─── Wallets (for mentees) ───────────────────────────────────────
+        mentee_users = db.query(User).filter(User.role == "mentee").all()
+        wallets = []
+        for mu in mentee_users:
+            wallets.append(Wallet(user_id=mu.id, balance=10.0))  # $10 starting credit
+        db.add_all(wallets)
         db.flush()
 
         # ─── Mentor Availability ─────────────────────────────────────────
@@ -472,6 +484,7 @@ def seed():
         print(f"   - 1 admin: admin@phxnorth.com / admin123")
         print(f"   - 3 mentors: *@phxnorth.com / mentor123")
         print(f"   - 5 mentees: *@phxnorth.com / mentee123")
+        print(f"   - {len(wallets)} mentee wallets (each with $10.00 starting balance)")
         print(f"   - {len(availability_data)} availability slots")
         print(f"   - 5 mentorship requests")
         print(f"   - 8 sessions (4 completed, 4 upcoming)")
