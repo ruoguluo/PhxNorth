@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, Loader2, Clock } from "lucide-react";
-import { videoAPI } from "../../lib/api";
+import { videoAPI, walletAPI } from "../../lib/api";
 import {
   useDaily,
   useParticipants,
@@ -50,6 +50,17 @@ export function VideoCall() {
   // Call duration timer
   const [callDuration, setCallDuration] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Billing state
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [billingWarning, setBillingWarning] = useState<"low" | "depleted" | null>(null);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [topUpAmount, setTopUpAmount] = useState(10);
+  const [toppingUp, setToppingUp] = useState(false);
+  const [topUpError, setTopUpError] = useState<string | null>(null);
+  const billingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Daily hooks
   const { callObject, joinState } = useDaily(roomUrl, token);
@@ -139,6 +150,122 @@ export function VideoCall() {
       );
     };
   }, [callObject]);
+
+  // -----------------------------------------------------------------------
+  // Billing loop – mentee debits every 60s
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    if (joinState !== "joined" || !sessionId || user?.role !== "mentee") return;
+    walletAPI
+      .get()
+      .then((w) => setWalletBalance(w.balance))
+      .catch(() => {});
+
+    billingIntervalRef.current = setInterval(async () => {
+      try {
+        const result = await walletAPI.debitTick(sessionId);
+        setWalletBalance(result.balance);
+        if (result.warning && result.warning !== billingWarning) {
+          setBillingWarning(result.warning);
+          setShowWarningModal(true);
+          if (callObject) {
+            callObject.sendAppMessage({
+              type: "credit-warning",
+              level: result.warning,
+            });
+          }
+          if (result.warning === "depleted" && countdown === null) {
+            setCountdown(180);
+          }
+        } else if (!result.warning && billingWarning) {
+          setBillingWarning(null);
+          setShowWarningModal(false);
+          setCountdown(null);
+          if (callObject) {
+            callObject.sendAppMessage({
+              type: "credit-warning",
+              level: "resolved",
+            });
+          }
+        }
+      } catch {
+        /* retry next tick */
+      }
+    }, 60_000);
+
+    return () => {
+      if (billingIntervalRef.current) clearInterval(billingIntervalRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joinState, sessionId, user?.role, callObject]);
+
+  // -----------------------------------------------------------------------
+  // Countdown timer – force-ends call when credits depleted
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      callObject?.leave().catch(() => {});
+      if (sessionId) videoAPI.endSessionCall(sessionId).catch(() => {});
+      navigate(`/app/session/${id}`);
+      return;
+    }
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countdown === null ? "inactive" : countdown > 0 ? "active" : "done"]);
+
+  // -----------------------------------------------------------------------
+  // Mentor app-message listener for credit warnings
+  // -----------------------------------------------------------------------
+  useEffect(() => {
+    if (!callObject || user?.role !== "mentor") return;
+    const handleAppMessage = (evt: any) => {
+      if (evt?.data?.type === "credit-warning") {
+        const level = evt.data.level;
+        if (level === "resolved") {
+          setBillingWarning(null);
+          setShowWarningModal(false);
+          setCountdown(null);
+        } else {
+          setBillingWarning(level);
+          setShowWarningModal(true);
+          if (level === "depleted") setCountdown(180);
+        }
+      }
+    };
+    callObject.on("app-message", handleAppMessage);
+    return () => {
+      callObject.off("app-message", handleAppMessage);
+    };
+  }, [callObject, user?.role]);
+
+  // -----------------------------------------------------------------------
+  // Mid-call top-up handler
+  // -----------------------------------------------------------------------
+  async function handleMidCallTopUp() {
+    setToppingUp(true);
+    setTopUpError(null);
+    try {
+      await walletAPI.topUp(topUpAmount);
+      const w = await walletAPI.get();
+      setWalletBalance(w.balance);
+      setBillingWarning(null);
+      setShowWarningModal(false);
+      setCountdown(null);
+      if (callObject) {
+        callObject.sendAppMessage({ type: "credit-warning", level: "resolved" });
+      }
+    } catch (e) {
+      setTopUpError(e instanceof Error ? e.message : "Top-up failed");
+    } finally {
+      setToppingUp(false);
+    }
+  }
 
   // -----------------------------------------------------------------------
   // Control handlers
@@ -324,6 +451,17 @@ export function VideoCall() {
               REC
             </span>
           )}
+          {user?.role === "mentee" && walletBalance !== null && (
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-medium mr-2 ${
+                walletBalance <= 1
+                  ? "bg-red-100 text-red-700"
+                  : "bg-emerald-100 text-emerald-700"
+              }`}
+            >
+              Credit: ${walletBalance.toFixed(2)}
+            </span>
+          )}
           <Clock className="w-4 h-4" />
           <span className="font-mono">{formatDuration(callDuration)}</span>
         </div>
@@ -356,6 +494,132 @@ export function VideoCall() {
           onEndCall={handleEndCall}
         />
       </div>
+
+      {/* Credit warning / depleted modal */}
+      {showWarningModal && billingWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gray-800 rounded-2xl shadow-xl max-w-sm w-full mx-4 overflow-hidden">
+            {/* Header */}
+            <div
+              className={`px-6 py-4 ${
+                billingWarning === "depleted"
+                  ? "bg-red-600"
+                  : "bg-amber-500"
+              }`}
+            >
+              <h2 className="text-white text-lg font-semibold">
+                {billingWarning === "depleted"
+                  ? "Credits Depleted"
+                  : "Low Credit Balance"}
+              </h2>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
+              {/* Mentor view */}
+              {user?.role === "mentor" && (
+                <p className="text-gray-300 text-sm">
+                  {billingWarning === "depleted"
+                    ? "The mentee's credits have been depleted. The call will end automatically unless they add more credits."
+                    : "The mentee's credit balance is running low."}
+                </p>
+              )}
+
+              {/* Mentee view */}
+              {user?.role !== "mentor" && (
+                <>
+                  <p className="text-gray-300 text-sm">
+                    {billingWarning === "depleted" ? (
+                      <>
+                        Your credits have been depleted. Add more credits to
+                        continue this session.
+                      </>
+                    ) : (
+                      <>
+                        Your credit balance is low
+                        {walletBalance !== null && (
+                          <> &mdash; approximately{" "}
+                            <strong className="text-white">
+                              {Math.max(1, Math.floor(walletBalance / 0.50))}{" "}
+                              minutes
+                            </strong>{" "}
+                            remaining</>
+                        )}
+                        . Add credits to avoid interruption.
+                      </>
+                    )}
+                  </p>
+
+                  {walletBalance !== null && (
+                    <p className="text-gray-400 text-xs">
+                      Current balance:{" "}
+                      <span className="text-white font-medium">
+                        ${walletBalance.toFixed(2)}
+                      </span>
+                    </p>
+                  )}
+
+                  {/* Top-up presets */}
+                  <div className="flex gap-2">
+                    {[5, 10, 20].map((amt) => (
+                      <button
+                        key={amt}
+                        onClick={() => setTopUpAmount(amt)}
+                        className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          topUpAmount === amt
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        }`}
+                      >
+                        ${amt}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={handleMidCallTopUp}
+                    disabled={toppingUp}
+                    className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                  >
+                    {toppingUp ? "Processing…" : `Add $${topUpAmount} Credit`}
+                  </button>
+
+                  {topUpError && (
+                    <p className="text-red-400 text-xs text-center">
+                      {topUpError}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {/* Countdown timer (both roles) */}
+              {billingWarning === "depleted" && countdown !== null && (
+                <div className="text-center pt-2 border-t border-gray-700">
+                  <p className="text-gray-400 text-xs mb-1">
+                    Call ends in
+                  </p>
+                  <span className="text-2xl font-mono text-red-400 font-bold">
+                    {String(Math.floor(countdown / 60)).padStart(2, "0")}:
+                    {String(countdown % 60).padStart(2, "0")}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer – dismiss only for low balance or mentor */}
+            {(billingWarning === "low" || user?.role === "mentor") && (
+              <div className="px-6 pb-5">
+                <button
+                  onClick={() => setShowWarningModal(false)}
+                  className="w-full py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-sm font-medium transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
