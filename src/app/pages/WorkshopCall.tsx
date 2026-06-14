@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Hand, Users, Clock, Mic, MicOff } from "lucide-react";
+import { Hand, Users, Clock, Mic, MicOff, Maximize2, Minimize2 } from "lucide-react";
 import { videoAPI, type RoomInfo } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import {
@@ -49,6 +49,7 @@ export function WorkshopCall() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const workshopId = parseInt(id ?? "0", 10);
   const isMentor = user?.role === "mentor";
@@ -224,7 +225,7 @@ export function WorkshopCall() {
   // --------------------------------------------------
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-950">
+      <div className={`flex items-center justify-center ${isFullscreen ? "fixed inset-0 z-50 h-screen" : "h-[calc(100vh-73px)] w-full"} bg-gray-950`}>
         <div className="text-center">
           <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Joining workshop call…</p>
@@ -235,7 +236,7 @@ export function WorkshopCall() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-950">
+      <div className={`flex items-center justify-center ${isFullscreen ? "fixed inset-0 z-50 h-screen" : "h-[calc(100vh-73px)] w-full"} bg-gray-950`}>
         <div className="text-center max-w-md">
           <p className="text-red-400 text-lg font-medium mb-2">Unable to join call</p>
           <p className="text-gray-500 text-sm mb-6">{error}</p>
@@ -251,7 +252,7 @@ export function WorkshopCall() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-950 text-white overflow-hidden">
+    <div className={`${isFullscreen ? "fixed inset-0 z-50 h-screen" : "relative w-full h-[calc(100vh-73px)]"} flex bg-gray-950 text-white overflow-hidden`}>
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
@@ -265,6 +266,16 @@ export function WorkshopCall() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Fullscreen Toggle Button */}
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
+              title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              <span className="text-xs font-semibold">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+            </button>
+
             <span className="flex items-center gap-1 text-sm text-gray-400 font-mono">
               <Clock className="w-4 h-4" />
               {duration}

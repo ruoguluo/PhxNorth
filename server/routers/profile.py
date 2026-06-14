@@ -82,8 +82,16 @@ def toggle_online_status(
 
 @router.get("/{username}", response_model=UserPublicResponse)
 def get_public_profile(username: str, db: Session = Depends(get_db)):
-    """Get a user's public profile by username."""
-    user = db.query(User).filter(User.username == username).first()
+    """Get a user's public profile by username, ID, or full name."""
+    user = None
+    if username.isdigit():
+        user = db.query(User).filter(User.id == int(username)).first()
+    if not user:
+        user = db.query(User).filter(User.username == username).first()
+    if not user:
+        from sqlalchemy import func
+        user = db.query(User).filter(func.lower(User.full_name) == func.lower(username)).first()
+        
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

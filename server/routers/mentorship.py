@@ -277,7 +277,10 @@ def list_sessions(
         | (MentorSession.mentee_id == current_user.id)
     )
     if status_filter:
-        query = query.filter(MentorSession.status == status_filter)
+        if status_filter == "upcoming":
+            query = query.filter(MentorSession.status.in_(["upcoming", "in_progress"]))
+        else:
+            query = query.filter(MentorSession.status == status_filter)
 
     sessions = query.order_by(MentorSession.scheduled_at.desc()).all()
 

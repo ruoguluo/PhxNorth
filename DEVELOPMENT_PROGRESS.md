@@ -3,7 +3,7 @@
 > Pick-up-anywhere log of in-flight feature work. Pair with `FEATURE_REQUIREMENTS.md`
 > (the requirement list + status audit) and `IMPLEMENTATION_PLAN_FR03_FR07.md`
 > (design rationale for FR-03/FR-07).
-> **Last updated:** 2026-06-04
+> **Last updated:** 2026-06-14
 
 ---
 
@@ -274,6 +274,34 @@ See `FEATURE_REQUIREMENTS.md` for the full table. Snapshot:
 - Frontend: `@stripe/stripe-js` + `@stripe/react-stripe-js` installed; `stripeAPI` client (8 methods); Billing page updated with Mentor Connect section + Mentee Stripe Elements card form; Request modal checks for payment method before booking.
 - 9 new StripeProvider unit tests (mocked Stripe API), 55 total tests passing.
 
+### 2026-06-14 — Notification bell, inline video calls, session visibility, local dev fixes
+
+**Payment provider fix for local dev:**
+- Switched `PAYMENT_PROVIDER` from `stripe` to `mock` in `server/.env` for local development. Seeded test users lack Stripe Customer/PaymentMethod profiles, causing `402 Payment Required` errors when mentors accept bookings under Stripe mode.
+
+**Notification bell — live polling (Layout.tsx):**
+- Replaced the hardcoded `alert('Notifications coming soon')` bell button with a fully functional notification system.
+- For **mentors/admins**: polls `GET /api/mentorship/requests?role=mentor&status_filter=pending` every 15s to surface incoming mentorship requests.
+- For **all users**: polls `GET /api/conversations` to surface conversations with `unread_count > 0`.
+- Red pulsing dot on the bell icon when there are unread notifications; clicking opens a styled dropdown panel with notification items categorized by type (request vs message), each linking to the relevant page.
+- Empty state shows a bouncing bell icon with "All caught up!" message.
+
+**Inline/fullscreen video call toggle (VideoCall.tsx, WorkshopCall.tsx):**
+- Video calls now default to an **inline/embedded view** within the normal dashboard layout (sidebar + header remain visible).
+- Added a fullscreen toggle button that switches between inline and fullscreen (fixed overlay with high z-index).
+- Both `VideoCall` and `WorkshopCall` components updated with `isFullscreen` state management.
+
+**Sessions filter fix (server/routers/mentorship.py):**
+- When a user joins a session call room, the session status moves to `in_progress`, which caused it to vanish from "upcoming" session lists.
+- Updated `list_sessions` so `status_filter=upcoming` returns both `upcoming` and `in_progress` sessions.
+
+**Role-aware sidebar separation (Layout.tsx):**
+- Split the sidebar into distinct **Mentor** and **Mentee** navigation sections with role-appropriate links.
+- Mentor sidebar: Dashboard, Requests, Sessions, Calendar, Availability, Workshops, Consulting, Messages, Billing.
+- Mentee sidebar: Dashboard, Find Mentor, Profile, Calendar, Instant Mentorship, Courses, Messages, Billing.
+- Added `useEffect` to sync `activeRoles` when user data finishes loading, ensuring mentors always see both role tabs.
+- Removed stale conditional hiding of role tabs in the top bar.
+
 ---
 
 ## 5. Configuration / env vars
@@ -337,6 +365,6 @@ Note: `typescript` is not currently a devDependency (Vite uses esbuild). Add it
 
 Both repos on `main`, all work committed and pushed.
 
-**As of 2026-06-04:** 55 backend tests passing, Vite build clean. All 8 feature requirements (FR-01 through FR-08) have at least partial implementation. FR-04 (video), FR-05 (conversations), and FR-07 (billing/Stripe) are fully complete. FR-06 (daily AI job wiring) is the only remaining greenfield work.
+**As of 2026-06-14:** 55 backend tests passing, Vite build clean. All 8 feature requirements (FR-01 through FR-08) have at least partial implementation. FR-04 (video), FR-05 (conversations), and FR-07 (billing/Stripe) are fully complete. FR-06 (daily AI job wiring) is the only remaining greenfield work. Notification bell is functional with live polling for mentorship requests and unread messages; notification enhancement (mentee status updates, session reminders, localStorage-based read/dismiss tracking) is planned.
 
 Suggested commit grouping: one commit per feature (FR-03, FR-07, FR-05) per repo. Consider adding `server/*.db` and `server/uploads/` to `.gitignore` if not already.

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router";
-import { ArrowLeft, Loader2, Clock } from "lucide-react";
+import { ArrowLeft, Loader2, Clock, Maximize2, Minimize2 } from "lucide-react";
 import { videoAPI, walletAPI } from "../../lib/api";
 import {
   useDaily,
@@ -34,6 +34,7 @@ export function VideoCall() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const sessionId = parseInt(id ?? "0", 10);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Room creation state
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
@@ -343,7 +344,7 @@ export function VideoCall() {
   // -----------------------------------------------------------------------
   if (error) {
     return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
+      <div className={`${isFullscreen ? "fixed inset-0 z-50" : "relative w-full h-[calc(100vh-73px)]"} bg-gray-900 flex items-center justify-center`}>
         <div className="text-center max-w-md px-6">
           <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
             <span className="text-red-400 text-2xl">!</span>
@@ -376,7 +377,7 @@ export function VideoCall() {
   // -----------------------------------------------------------------------
   if (isConnecting || joinState === "joining") {
     return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
+      <div className={`${isFullscreen ? "fixed inset-0 z-50" : "relative w-full h-[calc(100vh-73px)]"} bg-gray-900 flex items-center justify-center`}>
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-300 text-lg">
@@ -392,7 +393,7 @@ export function VideoCall() {
   // -----------------------------------------------------------------------
   if (joinState === "error") {
     return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
+      <div className={`${isFullscreen ? "fixed inset-0 z-50" : "relative w-full h-[calc(100vh-73px)]"} bg-gray-900 flex items-center justify-center`}>
         <div className="text-center max-w-md px-6">
           <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
             <span className="text-red-400 text-2xl">!</span>
@@ -426,7 +427,7 @@ export function VideoCall() {
   // Active call layout
   // -----------------------------------------------------------------------
   return (
-    <div className="fixed inset-0 bg-gray-900 flex flex-col overflow-hidden">
+    <div className={`${isFullscreen ? "fixed inset-0 z-50" : "relative w-full h-[calc(100vh-73px)]"} bg-gray-900 flex flex-col overflow-hidden`}>
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-gray-900/80 backdrop-blur border-b border-gray-800 z-20">
         <div className="flex items-center gap-3">
@@ -444,16 +445,16 @@ export function VideoCall() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-gray-400 text-sm">
+        <div className="flex items-center gap-3 text-gray-400 text-sm">
           {isRecording && (
-            <span className="flex items-center gap-1.5 text-red-400 text-xs font-medium mr-2">
+            <span className="flex items-center gap-1.5 text-red-400 text-xs font-medium mr-1">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               REC
             </span>
           )}
           {user?.role === "mentee" && walletBalance !== null && (
             <span
-              className={`px-3 py-1 rounded-full text-xs font-medium mr-2 ${
+              className={`px-3 py-1 rounded-full text-xs font-medium mr-1 ${
                 walletBalance <= 1
                   ? "bg-red-100 text-red-700"
                   : "bg-emerald-100 text-emerald-700"
@@ -462,8 +463,21 @@ export function VideoCall() {
               Credit: ${walletBalance.toFixed(2)}
             </span>
           )}
-          <Clock className="w-4 h-4" />
-          <span className="font-mono">{formatDuration(callDuration)}</span>
+
+          {/* Fullscreen Toggle Button */}
+          <button
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            <span className="text-xs font-semibold">{isFullscreen ? "Exit Fullscreen" : "Fullscreen"}</span>
+          </button>
+
+          <span className="flex items-center gap-1 font-mono">
+            <Clock className="w-4 h-4" />
+            <span>{formatDuration(callDuration)}</span>
+          </span>
         </div>
       </div>
 

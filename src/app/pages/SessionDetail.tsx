@@ -456,7 +456,7 @@ export function SessionDetail() {
         wsRef.current = null;
       }
     };
-  }, [id]);
+  }, [id, user]);
 
   // Update reschedule check periodically
   useEffect(() => {

@@ -3,6 +3,7 @@ import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcas
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
+import { mentorshipAPI, conversationsAPI } from "../../lib/api";
 
 type Role = 'mentee' | 'mentor' | 'consultant';
 
@@ -92,6 +93,78 @@ export function Layout() {
   // Derive current role from URL path
   const isMentorPath = location.pathname.includes('/mentor');
   const derivedRole: Role = isMentorPath ? 'mentor' : 'mentee';
+
+  // Notifications functionality
+  interface NotificationItem {
+    id: string;
+    type: 'request' | 'message';
+    title: string;
+    description: string;
+    timestamp: string;
+    link: string;
+    read: boolean;
+  }
+
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchNotifications = async () => {
+      try {
+        const items: NotificationItem[] = [];
+
+        // 1. Fetch pending requests if mentor/admin
+        if (user.role === 'mentor' || user.role === 'admin') {
+          try {
+            const requests = await mentorshipAPI.listRequests('mentor', 'pending');
+            requests.forEach((req: any) => {
+              items.push({
+                id: `request_${req.id}`,
+                type: 'request',
+                title: 'New Mentorship Request',
+                description: `${req.mentee_name || 'A mentee'} requested a session: "${req.topic || 'Mentorship Session'}"`,
+                timestamp: req.created_at ? new Date(req.created_at).toLocaleDateString() : 'Just now',
+                link: '/app/mentor/requests',
+                read: false,
+              });
+            });
+          } catch (err) {
+            console.error('Failed to fetch request notifications:', err);
+          }
+        }
+
+        // 2. Fetch unread messages
+        try {
+          const convos = await conversationsAPI.list();
+          convos.forEach((convo: any) => {
+            if (convo.unread_count > 0) {
+              items.push({
+                id: `message_${convo.id}`,
+                type: 'message',
+                title: `Unread from ${convo.counterparty_name || 'User'}`,
+                description: convo.last_message || 'New message received',
+                timestamp: convo.last_message_at ? new Date(convo.last_message_at).toLocaleDateString() : 'Just now',
+                link: '/app/messages',
+                read: false,
+              });
+            }
+          });
+        } catch (err) {
+          console.error('Failed to fetch message notifications:', err);
+        }
+
+        setNotifications(items);
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 15000);
+    return () => clearInterval(interval);
+  }, [user]);
   
   // Role management state
   const userRole = (user?.role as Role) || 'mentee';
@@ -120,6 +193,18 @@ export function Layout() {
       setCurrentRole(derivedRole);
     }
   }, [derivedRole, isMentorPath, userRole]);
+
+  // Keep activeRoles synced when user finishes loading
+  useEffect(() => {
+    if (user) {
+      const roles = new Set<Role>([user.role as Role]);
+      if (user.role === 'mentor') {
+        roles.add('mentee');
+        roles.add('mentor');
+      }
+      setActiveRoles(Array.from(roles));
+    }
+  }, [user]);
 
   const [showActivationModal, setShowActivationModal] = useState(false);
   const [roleToActivate, setRoleToActivate] = useState<Role | null>(null);
@@ -175,9 +260,6 @@ export function Layout() {
               {/* Global Role Switch Bar */}
               <div className="flex items-center gap-2 border-l border-gray-200 pl-6">
                 {(Object.keys(roleConfigs) as Role[]).map((role) => {
-                  // Hide mentee tab for mentor users, hide mentor tab for mentee users
-                  if (role === 'mentee' && userRole === 'mentor') return null;
-                  if (role === 'mentor' && userRole === 'mentee' && !activeRoles.includes('mentor')) return null;
                   const config = roleConfigs[role];
                   const isActivated = activeRoles.includes(role);
                   const isCurrent = currentRole === role;
@@ -227,10 +309,73 @@ export function Layout() {
 
             {/* Right Side - Notifications + User */}
             <div className="flex items-center gap-4">
-              <button onClick={() => alert('Notifications coming soon')} className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {notifications.length > 0 && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)} />
+                    <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-40 overflow-hidden">
+                      {/* Header */}
+                      <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                        <span className="font-semibold text-gray-900 text-sm">Notifications</span>
+                        {notifications.length > 0 && (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">
+                            {notifications.length} New
+                          </span>
+                        )}
+                      </div>
+                      {/* List */}
+                      <div className="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-8 text-center text-gray-500">
+                            <Bell className="w-8 h-8 text-gray-300 mx-auto mb-2 animate-bounce" />
+                            <p className="text-sm font-medium">All caught up!</p>
+                            <p className="text-xs text-gray-400 mt-0.5">No new notifications</p>
+                          </div>
+                        ) : (
+                          notifications.map((item) => (
+                            <button
+                              key={item.id}
+                              onClick={() => {
+                                setShowNotifications(false);
+                                navigate(item.link);
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex gap-3 items-start"
+                            >
+                              <div className="mt-1 flex-shrink-0">
+                                {item.type === 'request' ? (
+                                  <div className="bg-emerald-50 text-emerald-600 p-1.5 rounded-lg">
+                                    <FileText className="w-4 h-4" />
+                                  </div>
+                                ) : (
+                                  <div className="bg-blue-50 text-blue-600 p-1.5 rounded-lg">
+                                    <MessageSquare className="w-4 h-4" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-gray-900">{item.title}</p>
+                                <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">{item.description}</p>
+                                <p className="text-[10px] text-gray-400 mt-1">{item.timestamp}</p>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
               <Link to="/app/profile" className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <div className="w-8 h-8 bg-[#0A2463] text-white rounded-full flex items-center justify-center text-sm font-bold">
                   {user?.full_name?.charAt(0)?.toUpperCase() || user?.username?.charAt(0)?.toUpperCase() || <User className="w-5 h-5" />}
@@ -287,17 +432,112 @@ export function Layout() {
             ) : (
               /* ── Mentee / Mentor Sidebar ── */
               <>
-                <div className="space-y-1">
-                  <Link
-                    to="/app/dashboard"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/dashboard' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <LayoutDashboard className="w-4 h-4" />
-                    Dashboard
-                  </Link>
-                  {user?.role !== 'mentor' && (
+                {currentRole === 'mentor' ? (
+                  /* ── Mentor Sidebar ── */
+                  <div className="space-y-1">
+                    <Link
+                      to="/app/mentor/dashboard"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/mentor/dashboard' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Mentor Dashboard
+                    </Link>
+
+                    <Link
+                      to="/app/mentor/requests"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/mentor/requests' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Mentorship Requests
+                    </Link>
+
+                    <Link
+                      to="/app/mentor/upcoming"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/mentor/upcoming' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <CalendarDays className="w-4 h-4" />
+                      My Sessions
+                    </Link>
+
+                    <Link
+                      to="/app/mentor/calendar"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/mentor/calendar' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Target className="w-4 h-4" />
+                      Calendar
+                    </Link>
+
+                    <Link
+                      to="/app/mentor/availability"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/mentor/availability' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <SlidersHorizontal className="w-4 h-4" />
+                      Availability
+                    </Link>
+
+                    <Link
+                      to="/app/mentor/workshops"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/mentor/workshops' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      Workshops
+                    </Link>
+
+                    <Link
+                      to="/app/mentor/consulting"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/mentor/consulting' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Briefcase className="w-4 h-4" />
+                      Consulting Projects
+                    </Link>
+
+                    <Link
+                      to="/app/messages"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/messages' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Messages
+                    </Link>
+
+                    <Link
+                      to="/app/billing"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/billing' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Billing
+                    </Link>
+                  </div>
+                ) : (
+                  /* ── Mentee Sidebar ── */
+                  <div className="space-y-1">
+                    <Link
+                      to="/app/dashboard"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/dashboard' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </Link>
+
                     <Link
                       to="/app/find-mentor"
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -307,33 +547,20 @@ export function Layout() {
                       <Search className="w-4 h-4" />
                       Find Mentor
                     </Link>
-                  )}
 
-                  {/* My Sessions — links to dashboard with sessions visible */}
-                  <Link
-                    to="/app/mentor/upcoming"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/mentor/upcoming' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <CalendarDays className="w-4 h-4" />
-                    My Sessions
-                  </Link>
+                    {/* My Profile — collapsible */}
+                    <ProfileSubmenu currentPath={location.pathname} />
 
-                  {/* My Profile — collapsible */}
-                  <ProfileSubmenu currentPath={location.pathname} />
+                    <Link
+                      to="/app/mentor/calendar"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/mentor/calendar' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Target className="w-4 h-4" />
+                      Calendar
+                    </Link>
 
-                  {/* Mentorship */}
-                  <Link
-                    to="/app/mentor/calendar"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/mentor/calendar' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <Target className="w-4 h-4" />
-                    Calendar
-                  </Link>
-                  {user?.role !== 'mentor' && (
                     <Link
                       to="/app/question-entry?type=quick"
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -343,35 +570,38 @@ export function Layout() {
                       <MessageSquare className="w-4 h-4" />
                       Instant Mentorship
                     </Link>
-                  )}
-                  <Link
-                    to="/app/courses"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/courses' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    Courses
-                  </Link>
-                  <Link
-                    to="/app/messages"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/messages' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    Messages
-                  </Link>
-                  <Link
-                    to="/app/billing"
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === '/app/billing' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <CreditCard className="w-4 h-4" />
-                    Billing
-                  </Link>
-                </div>
+
+                    <Link
+                      to="/app/courses"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/courses' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      Courses
+                    </Link>
+
+                    <Link
+                      to="/app/messages"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/messages' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Messages
+                    </Link>
+
+                    <Link
+                      to="/app/billing"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/billing' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Billing
+                    </Link>
+                  </div>
+                )}
               </>
             )}
           </nav>
