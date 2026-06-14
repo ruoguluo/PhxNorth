@@ -65,8 +65,11 @@ export function useDaily(
 
     setJoinState("joining");
     callObject
-      .join({ url: roomUrl, token })
-      .catch(() => setJoinState("error"));
+      .join({ url: roomUrl, token, showLocalVideo: false, showParticipantsBar: false })
+      .catch((err: unknown) => {
+        console.error("[Daily] join() failed:", err);
+        setJoinState("error");
+      });
   }, [callObject, roomUrl, token]);
 
   // Track join state via events

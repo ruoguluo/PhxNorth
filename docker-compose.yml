@@ -25,9 +25,11 @@ services:
   demo-api:
     build:
       context: ./server
+    env_file:
+      - ./server/.env
     environment:
       - DATABASE_URL=sqlite:////data/phxnorth.db
-      - SECRET_KEY=phxnorth-dev-secret-key-change-in-production
+      - SECRET_KEY=***
       - ENABLE_PAYOUT_SCHEDULER=true
       - PAYOUT_SCHEDULE_HOUR=4
       - PLATFORM_FEE_PCT=0.15
