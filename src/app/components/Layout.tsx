@@ -3,7 +3,7 @@ import { Bell, User, X, Lock, LogOut, LayoutDashboard, FileText, Radar, Briefcas
 import logo from "figma:asset/b1f426d4ba424225ba35199a602ba050b5c13573.png";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
-import { mentorshipAPI, conversationsAPI } from "../../lib/api";
+import { mentorshipAPI, conversationsAPI, profileAPI } from "../../lib/api";
 
 type Role = 'mentee' | 'mentor' | 'consultant';
 
@@ -164,6 +164,17 @@ export function Layout() {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 15000);
     return () => clearInterval(interval);
+  }, [user]);
+
+  // Heartbeat: ping server every 30s so online status is accurate
+  useEffect(() => {
+    if (!user) return;
+    // Send initial heartbeat immediately
+    profileAPI.heartbeat().catch(() => {});
+    const hbInterval = setInterval(() => {
+      profileAPI.heartbeat().catch(() => {});
+    }, 30_000);
+    return () => clearInterval(hbInterval);
   }, [user]);
   
   // Role management state

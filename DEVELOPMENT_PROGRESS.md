@@ -3,7 +3,7 @@
 > Pick-up-anywhere log of in-flight feature work. Pair with `FEATURE_REQUIREMENTS.md`
 > (the requirement list + status audit) and `IMPLEMENTATION_PLAN_FR03_FR07.md`
 > (design rationale for FR-03/FR-07).
-> **Last updated:** 2026-06-14
+> **Last updated:** 2026-06-15
 
 ---
 
@@ -361,10 +361,43 @@ Note: `typescript` is not currently a devDependency (Vite uses esbuild). Add it
 
 ---
 
-## 8. Git state (as of this update)
+## 8. Changes — 2026-06-15
+
+### Wallet & per-minute credit metering (FR-07 enhancement)
+- **Wallet system:** New `Wallet` and `WalletTransaction` models; mentees must have credit to join video calls
+- **Per-minute billing:** Frontend 60-second debit loop during calls; mentor sets own `per_minute_rate` (default $0.10/min)
+- **Warnings:** Low-balance ($1) and depleted ($0) modals shown to both parties; 3-minute countdown on depletion; forced disconnect
+- **Mid-call top-up:** Mentees can add credit without leaving the call
+- **Auto-reload:** Configurable threshold + amount; charges saved card automatically during calls
+- **Reconciliation:** Post-call adjustment comparing Daily.co duration vs wallet debits
+- **Billing page:** Wallet card with balance display, top-up, auto-reload settings, transaction history
+- **Pre-join gate:** Balance check modal on SessionDetail and MentorCalendar before joining calls
+- **Spec:** `docs/superpowers/specs/2026-06-12-wallet-credit-metering-design.md`
+- **Plan:** `docs/superpowers/plans/2026-06-12-wallet-credit-metering.md`
+
+### Heartbeat-based online status
+- **Problem:** Mentor online status was a static boolean; seeded mentors showed "online" forever
+- **Fix:** Added `last_heartbeat` timestamp on User; `POST /api/profile/heartbeat` endpoint; frontend pings every 30s; mentor listing checks heartbeat freshness (2-min timeout); mentors auto-offline when they close browser
+- **Seed data:** All mentors now seed as offline (become online only when logged in)
+
+### Scheduled session datetime picker
+- **Problem:** "Scheduled" mentorship requests had no way to specify when
+- **Fix:** Added `proposed_datetime` datetime-local picker to FindMentor request modal; required for scheduled sessions; sent to backend as ISO datetime
+
+### Edit details goal form
+- **Problem:** "Edit details" button on assumed-goal step was a no-op stub
+- **Fix:** Fields start read-only; clicking "Edit details" enables editing with visual feedback (white bg, blue border, shadow, auto-focus)
+
+### Auth & UX improvements
+- **Auto-logout on 401:** `fetchAPI` now clears stale tokens and redirects to `/login` on authentication failures
+- **Wallet-based booking check:** Replaced Stripe card-on-file requirement with wallet balance check in MenteeQuestionEntry
+- **Kafka startup timeout:** Added 10-second `asyncio.wait_for` to Kafka producer/consumer `start()` so the behavioral backend doesn't hang when Kafka is unavailable
+- **Stripe SDK fix:** Replaced `card.get("last4")` with `getattr(card, "last4", None)` for newer Stripe Python SDK compatibility
+
+## 9. Git state (as of this update)
 
 Both repos on `main`, all work committed and pushed.
 
-**As of 2026-06-14:** 55 backend tests passing, Vite build clean. All 8 feature requirements (FR-01 through FR-08) have at least partial implementation. FR-04 (video), FR-05 (conversations), and FR-07 (billing/Stripe) are fully complete. FR-06 (daily AI job wiring) is the only remaining greenfield work. Notification bell is functional with live polling for mentorship requests and unread messages; notification enhancement (mentee status updates, session reminders, localStorage-based read/dismiss tracking) is planned.
+**As of 2026-06-15:** Vite build clean. Wallet credit metering fully implemented across backend and frontend. Heartbeat-based online status replaces static boolean. All FR-04 through FR-08 features have working implementations.
 
 Suggested commit grouping: one commit per feature (FR-03, FR-07, FR-05) per repo. Consider adding `server/*.db` and `server/uploads/` to `.gitignore` if not already.

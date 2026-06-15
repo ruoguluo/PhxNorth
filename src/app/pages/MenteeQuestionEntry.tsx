@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { questionAPI, type AIUnderstanding as AIUnderstandingDTO } from '../../lib/question-api';
-import { mentorshipAPI, stripeAPI } from '../../lib/api';
+import { mentorshipAPI, stripeAPI, walletAPI } from '../../lib/api';
 
 type QuestionType = 'structured' | 'quick' | null;
 type QuickQuestionStep = 'input' | 'assumed-goal' | 'stage' | 'clarification' | 'agenda' | 'matching' | 'results';
@@ -189,6 +189,7 @@ export function MenteeQuestionEntry() {
   // Quick Question Data
   const [quickQuestion, setQuickQuestion] = useState('');
   const [assumedGoal, setAssumedGoal] = useState<AssumedGoal | null>(null);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [selectedStage, setSelectedStage] = useState('');
   const [stageOptions, setStageOptions] = useState<StageOption[]>([]);
   const [clarificationQuestions, setClarificationQuestions] = useState<ClarificationQuestion[]>([]);
@@ -276,9 +277,12 @@ export function MenteeQuestionEntry() {
   };
 
   const editAssumedGoal = () => {
-    // Allow user to edit the assumed goal
-    // For now, just show an editable form
-    setIsProcessing(false);
+    setIsEditingGoal(true);
+    // Focus the first input after render
+    setTimeout(() => {
+      const el = document.getElementById('goal-institution');
+      if (el) el.focus();
+    }, 100);
   };
 
   const handleStageSelection = (stageId: string) => {
@@ -378,17 +382,18 @@ export function MenteeQuestionEntry() {
   const submitRequest = async () => {
     if (!requestModal) return;
     setRequestStatus('loading');
-    // Check payment method if session has a price
+    // Check wallet balance if session has a cost
     if (requestModal.mentor.hourlyRate > 0) {
         try {
-            const pm = await stripeAPI.getPaymentMethod();
-            if (!pm.has_card) {
-                setRequestError('Please add a payment method before booking. Go to Billing page to add a card.');
+            const w = await walletAPI.get();
+            const perMinRate = 0.10; // default per-minute rate
+            if (w.balance < perMinRate) {
+                setRequestError('Insufficient wallet balance. Please top up your wallet on the Billing page before booking.');
                 setRequestStatus('error');
                 return;
             }
         } catch {
-            // If Stripe check fails (e.g., mock mode), proceed anyway
+            // If wallet check fails, proceed anyway (server will guard)
         }
     }
     try {
@@ -602,18 +607,20 @@ export function MenteeQuestionEntry() {
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 mb-6">
+            <div className={`border-2 rounded-2xl p-8 mb-6 transition-all ${isEditingGoal ? 'bg-white border-blue-500 shadow-lg' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200'}`}>
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-semibold text-blue-900 mb-2">
                     Institution <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="goal-institution"
                     type="text"
+                    readOnly={!isEditingGoal}
                     value={assumedGoal?.institution || ''}
                     onChange={(e) => setAssumedGoal({ ...assumedGoal!, institution: e.target.value })}
                     placeholder="e.g., University of Oxford"
-                    className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none bg-white"
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
                   />
                 </div>
 
@@ -623,9 +630,10 @@ export function MenteeQuestionEntry() {
                       Program Level <span className="text-red-500">*</span>
                     </label>
                     <select
+                      disabled={!isEditingGoal}
                       value={assumedGoal?.programLevel || ''}
                       onChange={(e) => setAssumedGoal({ ...assumedGoal!, programLevel: e.target.value })}
-                      className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none bg-white"
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
                     >
                       <option value="">Select...</option>
                       <option value="Undergraduate">Undergraduate</option>
@@ -640,10 +648,11 @@ export function MenteeQuestionEntry() {
                     </label>
                     <input
                       type="text"
+                      readOnly={!isEditingGoal}
                       value={assumedGoal?.major || ''}
                       onChange={(e) => setAssumedGoal({ ...assumedGoal!, major: e.target.value })}
                       placeholder="e.g., Chemistry"
-                      className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none bg-white"
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
                     />
                   </div>
                 </div>
@@ -655,10 +664,11 @@ export function MenteeQuestionEntry() {
                     </label>
                     <input
                       type="text"
+                      readOnly={!isEditingGoal}
                       value={assumedGoal?.targetIntake || ''}
                       onChange={(e) => setAssumedGoal({ ...assumedGoal!, targetIntake: e.target.value })}
                       placeholder="e.g., Fall 2027"
-                      className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none bg-white"
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
                     />
                   </div>
 
@@ -667,9 +677,10 @@ export function MenteeQuestionEntry() {
                       Country/Region <span className="text-red-500">*</span>
                     </label>
                     <select
+                      disabled={!isEditingGoal}
                       value={assumedGoal?.country || ''}
                       onChange={(e) => setAssumedGoal({ ...assumedGoal!, country: e.target.value })}
-                      className="w-full px-4 py-3 border-2 border-blue-300 rounded-lg focus:border-blue-600 focus:outline-none bg-white"
+                      className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
                     >
                       <option value="United States">United States</option>
                       <option value="United Kingdom">United Kingdom</option>

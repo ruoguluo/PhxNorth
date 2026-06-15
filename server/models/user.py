@@ -17,6 +17,7 @@ class User(Base):
     role = Column(String(20), nullable=False, default="mentee")  # mentee, mentor, admin
     is_active = Column(Boolean, default=True)
     is_online = Column(Boolean, default=False)
+    last_heartbeat = Column(DateTime, nullable=True)
 
     # Registration details
     status = Column(String(20), nullable=True)  # studying, professional

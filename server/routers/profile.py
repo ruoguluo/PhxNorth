@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -8,6 +10,9 @@ from schemas.user import UserResponse, UserPublicResponse, ProfileUpdateRequest
 from utils.deps import get_current_user
 
 router = APIRouter(prefix="/api/profile", tags=["Profile"])
+
+# A mentor is considered online if their last heartbeat was within this window
+HEARTBEAT_TIMEOUT = timedelta(minutes=2)
 
 
 @router.get("", response_model=UserResponse)
@@ -52,10 +57,17 @@ def list_mentors(
 
     mentors = query.offset(skip).limit(limit).all()
 
-    # Respect keep_name_private
+    # Compute real online status from heartbeat and respect keep_name_private
+    now = datetime.utcnow()
     results = []
     for mentor in mentors:
+        # A mentor is online only if they sent a heartbeat recently
+        actually_online = (
+            mentor.last_heartbeat is not None
+            and (now - mentor.last_heartbeat) < HEARTBEAT_TIMEOUT
+        )
         data = UserPublicResponse.model_validate(mentor)
+        data.is_online = actually_online
         if mentor.keep_name_private:
             data.full_name = None
         results.append(data)
@@ -75,9 +87,26 @@ def toggle_online_status(
             detail="Only mentors can toggle online status",
         )
     current_user.is_online = not current_user.is_online
+    # If going online, set heartbeat so they appear online immediately
+    if current_user.is_online:
+        current_user.last_heartbeat = datetime.utcnow()
+    else:
+        current_user.last_heartbeat = None
     db.commit()
     db.refresh(current_user)
     return {"is_online": current_user.is_online}
+
+
+@router.post("/heartbeat")
+def heartbeat(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update the user's heartbeat timestamp. Call every 30-60s to stay online."""
+    current_user.last_heartbeat = datetime.utcnow()
+    current_user.is_online = True
+    db.commit()
+    return {"status": "ok"}
 
 
 @router.get("/{username}", response_model=UserPublicResponse)
@@ -98,6 +127,12 @@ def get_public_profile(username: str, db: Session = Depends(get_db)):
             detail="User not found",
         )
     data = UserPublicResponse.model_validate(user)
+    # Compute real online status from heartbeat
+    now = datetime.utcnow()
+    data.is_online = (
+        user.last_heartbeat is not None
+        and (now - user.last_heartbeat) < HEARTBEAT_TIMEOUT
+    )
     if user.keep_name_private:
         data.full_name = None
     return data

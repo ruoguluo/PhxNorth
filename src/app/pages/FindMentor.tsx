@@ -109,6 +109,7 @@ interface RequestForm {
   message: string;
   type: "instant" | "scheduled";
   duration_minutes: number;
+  proposed_datetime: string;
 }
 
 // ─── Component ──────────────────────────────────────────────────────
@@ -139,6 +140,7 @@ export function FindMentor() {
     message: "",
     type: "scheduled",
     duration_minutes: 60,
+    proposed_datetime: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState<{
@@ -217,13 +219,17 @@ export function FindMentor() {
     setSubmitResult(null);
 
     try {
-      await mentorshipAPI.createRequest({
+      const reqData: Record<string, unknown> = {
         mentor_id: selectedMentor.id,
         type: requestForm.type,
         topic: requestForm.topic.trim(),
         message: requestForm.message.trim() || undefined,
         duration_minutes: requestForm.duration_minutes,
-      });
+      };
+      if (requestForm.type === "scheduled" && requestForm.proposed_datetime) {
+        reqData.proposed_datetime = new Date(requestForm.proposed_datetime).toISOString();
+      }
+      await mentorshipAPI.createRequest(reqData);
       setSubmitResult({ ok: true, msg: "Mentorship request sent successfully!" });
       setTimeout(() => setModalOpen(false), 1500);
     } catch (err: any) {
@@ -630,6 +636,24 @@ export function FindMentor() {
                 </RadioGroup>
               </div>
 
+              {/* Proposed Date/Time (scheduled only) */}
+              {requestForm.type === "scheduled" && (
+                <div className="space-y-2">
+                  <Label htmlFor="req-datetime">
+                    Preferred Date & Time <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="req-datetime"
+                    type="datetime-local"
+                    value={requestForm.proposed_datetime}
+                    onChange={(e) =>
+                      setRequestForm((f) => ({ ...f, proposed_datetime: e.target.value }))
+                    }
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                </div>
+              )}
+
               {/* Duration */}
               <div className="space-y-2">
                 <Label>Duration</Label>
@@ -679,7 +703,7 @@ export function FindMentor() {
                 </button>
                 <button
                   onClick={handleSubmitRequest}
-                  disabled={submitting || !requestForm.topic.trim()}
+                  disabled={submitting || !requestForm.topic.trim() || (requestForm.type === "scheduled" && !requestForm.proposed_datetime)}
                   className="px-4 py-2 text-sm font-medium text-white bg-[#0A2463] rounded-lg hover:bg-[#0A2463]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   {submitting && (

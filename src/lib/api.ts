@@ -25,6 +25,13 @@ async function fetchAPI<T>(
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ detail: "Request failed" }));
+        // Auto-logout on 401 (expired/invalid token)
+        if (response.status === 401) {
+            localStorage.removeItem("phxnorth_token");
+            localStorage.removeItem("phxnorth_user");
+            window.location.href = "/login";
+            throw new Error("Session expired. Please log in again.");
+        }
         throw new Error(error.detail || `HTTP ${response.status}`);
     }
 
@@ -118,6 +125,9 @@ export const profileAPI = {
 
     toggleOnlineStatus: () =>
         fetchAPI<{ is_online: boolean }>("/profile/online-status", { method: "PUT" }),
+
+    heartbeat: () =>
+        fetchAPI<{ status: string }>("/profile/heartbeat", { method: "POST" }),
 };
 
 // ─── Timeline API ───────────────────────────────────────────────────
