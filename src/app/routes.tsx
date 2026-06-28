@@ -51,6 +51,7 @@ import { CareerAnalytics } from "./pages/CareerAnalytics";
 import { Preferences } from "./pages/Preferences";
 import { RiskDashboard } from "./pages/RiskDashboard";
 import { FindMentor } from "./pages/FindMentor";
+import { MyQuestions } from "./pages/MyQuestions";
 import { Billing } from "./pages/Billing";
 import { Messages } from "./pages/Messages";
 import { NotFound } from "./pages/NotFound";
@@ -295,6 +296,10 @@ export const router = createBrowserRouter([
       {
         path: "find-mentor",
         Component: FindMentor,
+      },
+      {
+        path: "my-questions",
+        Component: MyQuestions,
       },
       {
         path: "session/:id",

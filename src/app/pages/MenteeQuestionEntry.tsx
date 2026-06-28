@@ -50,12 +50,31 @@ interface SubQuestion {
 }
 
 interface AssumedGoal {
-  institution: string;
-  programLevel: string;
-  major: string;
-  targetIntake: string;
+  // Common
   country: string;
   category: string;
+  primaryGoal: string;
+  timeHorizon: string;
+  // Education
+  institution?: string;
+  programLevel?: string;
+  major?: string;
+  targetIntake?: string;
+  // Career
+  currentRole?: string;
+  targetRole?: string;
+  industry?: string;
+  yearsExperience?: string;
+  // Business
+  companyName?: string;
+  businessArea?: string;
+  challenge?: string;
+  revenue?: string;
+  // Entrepreneurship
+  ideaDescription?: string;
+  ventureStage?: string;
+  fundingStatus?: string;
+  targetMarket?: string;
 }
 
 interface StageOption {
@@ -609,79 +628,286 @@ export function MenteeQuestionEntry() {
 
             <div className={`border-2 rounded-2xl p-8 mb-6 transition-all ${isEditingGoal ? 'bg-white border-blue-500 shadow-lg' : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200'}`}>
               <div className="space-y-6">
+                {/* Common: Primary Goal */}
                 <div>
                   <label className="block text-sm font-semibold text-blue-900 mb-2">
-                    Institution <span className="text-red-500">*</span>
+                    Primary Goal <span className="text-red-500">*</span>
                   </label>
                   <input
-                    id="goal-institution"
+                    id="goal-primary"
                     type="text"
                     readOnly={!isEditingGoal}
-                    value={assumedGoal?.institution || ''}
-                    onChange={(e) => setAssumedGoal({ ...assumedGoal!, institution: e.target.value })}
-                    placeholder="e.g., University of Oxford"
+                    value={assumedGoal?.primaryGoal || ''}
+                    onChange={(e) => setAssumedGoal({ ...assumedGoal!, primaryGoal: e.target.value })}
+                    placeholder="e.g., Get into a top MBA program"
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
                   />
                 </div>
 
+                {/* ── Education fields ── */}
+                {assumedGoal?.category === 'education' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-blue-900 mb-2">
+                        Institution <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        readOnly={!isEditingGoal}
+                        value={assumedGoal?.institution || ''}
+                        onChange={(e) => setAssumedGoal({ ...assumedGoal!, institution: e.target.value })}
+                        placeholder="e.g., University of Oxford"
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">
+                          Program Level <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          disabled={!isEditingGoal}
+                          value={assumedGoal?.programLevel || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, programLevel: e.target.value })}
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        >
+                          <option value="">Select...</option>
+                          <option value="Undergraduate">Undergraduate</option>
+                          <option value="Graduate">Graduate</option>
+                          <option value="PhD">PhD</option>
+                          <option value="MBA">MBA</option>
+                          <option value="Professional Certificate">Professional Certificate</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">
+                          Major / Field <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.major || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, major: e.target.value })}
+                          placeholder="e.g., Chemistry"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-blue-900 mb-2">Target Intake</label>
+                      <input
+                        type="text"
+                        readOnly={!isEditingGoal}
+                        value={assumedGoal?.targetIntake || ''}
+                        onChange={(e) => setAssumedGoal({ ...assumedGoal!, targetIntake: e.target.value })}
+                        placeholder="e.g., Fall 2027"
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* ── Career fields ── */}
+                {assumedGoal?.category === 'career' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">Current Role</label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.currentRole || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, currentRole: e.target.value })}
+                          placeholder="e.g., Software Engineer"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">
+                          Target Role <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.targetRole || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, targetRole: e.target.value })}
+                          placeholder="e.g., Engineering Manager"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">Industry</label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.industry || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, industry: e.target.value })}
+                          placeholder="e.g., FinTech"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">Years of Experience</label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.yearsExperience || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, yearsExperience: e.target.value })}
+                          placeholder="e.g., 5 years"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* ── Business fields ── */}
+                {assumedGoal?.category === 'business' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">Company / Organization</label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.companyName || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, companyName: e.target.value })}
+                          placeholder="e.g., Acme Corp"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">
+                          Business Area <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.businessArea || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, businessArea: e.target.value })}
+                          placeholder="e.g., Sales & BD"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">
+                          Key Challenge <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.challenge || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, challenge: e.target.value })}
+                          placeholder="e.g., Scaling operations"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">Revenue Stage</label>
+                        <input
+                          type="text"
+                          readOnly={!isEditingGoal}
+                          value={assumedGoal?.revenue || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, revenue: e.target.value })}
+                          placeholder="e.g., $1M–$5M ARR"
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* ── Entrepreneurship fields ── */}
+                {assumedGoal?.category === 'entrepreneurship' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-blue-900 mb-2">
+                        Idea / Venture Description <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        readOnly={!isEditingGoal}
+                        value={assumedGoal?.ideaDescription || ''}
+                        onChange={(e) => setAssumedGoal({ ...assumedGoal!, ideaDescription: e.target.value })}
+                        placeholder="e.g., AI-powered tutoring marketplace"
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">
+                          Venture Stage <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          disabled={!isEditingGoal}
+                          value={assumedGoal?.ventureStage || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, ventureStage: e.target.value })}
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        >
+                          <option value="">Select...</option>
+                          <option value="Idea">Idea</option>
+                          <option value="MVP">MVP</option>
+                          <option value="Early Traction">Early Traction</option>
+                          <option value="Growth">Growth</option>
+                          <option value="Scale">Scale</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-blue-900 mb-2">Funding Status</label>
+                        <select
+                          disabled={!isEditingGoal}
+                          value={assumedGoal?.fundingStatus || ''}
+                          onChange={(e) => setAssumedGoal({ ...assumedGoal!, fundingStatus: e.target.value })}
+                          className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                        >
+                          <option value="">Select...</option>
+                          <option value="Bootstrapped">Bootstrapped</option>
+                          <option value="Pre-seed">Pre-seed</option>
+                          <option value="Seed">Seed</option>
+                          <option value="Series A+">Series A+</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-blue-900 mb-2">Target Market</label>
+                      <input
+                        type="text"
+                        readOnly={!isEditingGoal}
+                        value={assumedGoal?.targetMarket || ''}
+                        onChange={(e) => setAssumedGoal({ ...assumedGoal!, targetMarket: e.target.value })}
+                        placeholder="e.g., K-12 students in Southeast Asia"
+                        className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Common: Time Horizon & Country */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-blue-900 mb-2">
-                      Program Level <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      disabled={!isEditingGoal}
-                      value={assumedGoal?.programLevel || ''}
-                      onChange={(e) => setAssumedGoal({ ...assumedGoal!, programLevel: e.target.value })}
-                      className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
-                    >
-                      <option value="">Select...</option>
-                      <option value="Undergraduate">Undergraduate</option>
-                      <option value="Graduate">Graduate</option>
-                      <option value="PhD">PhD</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-blue-900 mb-2">
-                      Major <span className="text-red-500">*</span>
-                    </label>
+                    <label className="block text-sm font-semibold text-blue-900 mb-2">Time Horizon</label>
                     <input
                       type="text"
                       readOnly={!isEditingGoal}
-                      value={assumedGoal?.major || ''}
-                      onChange={(e) => setAssumedGoal({ ...assumedGoal!, major: e.target.value })}
-                      placeholder="e.g., Chemistry"
+                      value={assumedGoal?.timeHorizon || ''}
+                      onChange={(e) => setAssumedGoal({ ...assumedGoal!, timeHorizon: e.target.value })}
+                      placeholder="e.g., 6 months"
                       className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-blue-900 mb-2">
-                      Target Intake <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      readOnly={!isEditingGoal}
-                      value={assumedGoal?.targetIntake || ''}
-                      onChange={(e) => setAssumedGoal({ ...assumedGoal!, targetIntake: e.target.value })}
-                      placeholder="e.g., Fall 2027"
-                      className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-blue-900 mb-2">
-                      Country/Region <span className="text-red-500">*</span>
-                    </label>
+                    <label className="block text-sm font-semibold text-blue-900 mb-2">Country / Region</label>
                     <select
                       disabled={!isEditingGoal}
                       value={assumedGoal?.country || ''}
                       onChange={(e) => setAssumedGoal({ ...assumedGoal!, country: e.target.value })}
                       className={`w-full px-4 py-3 border-2 rounded-lg focus:border-blue-600 focus:outline-none ${isEditingGoal ? 'border-blue-400 bg-white' : 'border-blue-200 bg-blue-50/50 cursor-default'}`}
                     >
+                      <option value="">Select...</option>
                       <option value="United States">United States</option>
                       <option value="United Kingdom">United Kingdom</option>
                       <option value="Canada">Canada</option>

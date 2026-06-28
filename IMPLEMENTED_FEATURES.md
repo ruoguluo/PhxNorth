@@ -2,7 +2,7 @@
 
 > Function/endpoint-level inventory of what's been built. Companion to
 > `FEATURE_REQUIREMENTS.md` (requirements + status) and `DEVELOPMENT_PROGRESS.md`
-> (setup, file map, how to run). **Last updated:** 2026-06-01
+> (setup, file map, how to run). **Last updated:** 2026-06-28
 >
 > `[new]` = added in the recent work stream · `[pre-existing]` = already present.
 
@@ -83,10 +83,11 @@ message is now linked to a durable conversation thread.
 |---------------|-------------|---|
 | `pages/Billing.tsx` | Role-aware billing: spend / earnings + payouts / admin GMV + run-payouts | `[new]` FR-07 |
 | `pages/Messages.tsx` | Conversations inbox (list + thread + composer) | `[new]` FR-05 |
-| `pages/MenteeQuestionEntry.tsx` | Now calls real `/questions/*` + `/mentorship/match` (was mocked) | `[changed]` FR-03 + matching |
+| `pages/MenteeQuestionEntry.tsx` | Now calls real `/questions/*` + `/mentorship/match` (was mocked); assumed-goal form renders category-specific fields (education/career/business/entrepreneurship) | `[changed]` FR-03 + matching |
+| `pages/MyQuestions.tsx` | Mentee's active questions list with tabs (Active/Closed/All), search, withdraw action | `[new]` |
 | `lib/api.ts` | Added `billingAPI`, `conversationsAPI`, `mentorshipAPI.match`, `MentorMatch` type | `[changed]` |
-| `lib/question-api.ts` | Client for the question-structuring endpoints | `[new]` |
-| `components/Layout.tsx`, `app/routes.tsx` | Sidebar links + routes for `/app/billing`, `/app/messages` | `[changed]` |
+| `lib/question-api.ts` | Client for the question-structuring endpoints; `AssumedGoalDTO` expanded with category-specific fields | `[changed]` |
+| `components/Layout.tsx`, `app/routes.tsx` | Sidebar links + routes for `/app/billing`, `/app/messages`, `/app/my-questions` | `[changed]` |
 
 ---
 

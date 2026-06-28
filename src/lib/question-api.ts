@@ -41,12 +41,31 @@ export interface AIUnderstanding {
 }
 
 export interface AssumedGoalDTO {
-    institution: string;
-    programLevel: string;
-    major: string;
-    targetIntake: string;
+    // Common
     country: string;
     category: string;
+    primaryGoal: string;
+    timeHorizon: string;
+    // Education
+    institution?: string;
+    programLevel?: string;
+    major?: string;
+    targetIntake?: string;
+    // Career
+    currentRole?: string;
+    targetRole?: string;
+    industry?: string;
+    yearsExperience?: string;
+    // Business
+    companyName?: string;
+    businessArea?: string;
+    challenge?: string;
+    revenue?: string;
+    // Entrepreneurship
+    ideaDescription?: string;
+    ventureStage?: string;
+    fundingStatus?: string;
+    targetMarket?: string;
 }
 
 export interface StageOptionDTO {

@@ -573,6 +573,16 @@ export function Layout() {
                     </Link>
 
                     <Link
+                      to="/app/my-questions"
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        location.pathname === '/app/my-questions' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      My Questions
+                    </Link>
+
+                    <Link
                       to="/app/question-entry?type=quick"
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         location.pathname === '/app/question-entry' ? 'bg-[#0A2463]/10 text-[#0A2463]' : 'text-gray-700 hover:bg-gray-100'

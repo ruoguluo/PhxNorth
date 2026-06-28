@@ -345,10 +345,10 @@ export function MenteeDashboard() {
                   <div className="text-3xl font-bold text-gray-900 mb-1">{requests.filter(r => (r as any).status === 'pending' || (r as any).status === 'accepted').length}</div>
                   <div className="text-sm text-gray-600 mb-4">Active Mentorship Questions</div>
                   <a
-                    href="/app/question-entry"
+                    href="/app/my-questions"
                     className="w-full bg-[#0A2463] text-white px-4 py-2 rounded-lg hover:bg-[#0A2463]/90 transition-colors text-sm flex items-center justify-center gap-2"
                   >
-                    Continue Question Flow
+                    View My Questions
                     <ArrowRight className="w-4 h-4" />
                   </a>
                 </div>

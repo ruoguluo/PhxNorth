@@ -3,7 +3,7 @@
 > Pick-up-anywhere log of in-flight feature work. Pair with `FEATURE_REQUIREMENTS.md`
 > (the requirement list + status audit) and `IMPLEMENTATION_PLAN_FR03_FR07.md`
 > (design rationale for FR-03/FR-07).
-> **Last updated:** 2026-06-15
+> **Last updated:** 2026-06-28
 
 ---
 
@@ -394,10 +394,35 @@ Note: `typescript` is not currently a devDependency (Vite uses esbuild). Add it
 - **Kafka startup timeout:** Added 10-second `asyncio.wait_for` to Kafka producer/consumer `start()` so the behavioral backend doesn't hang when Kafka is unavailable
 - **Stripe SDK fix:** Replaced `card.get("last4")` with `getattr(card, "last4", None)` for newer Stripe Python SDK compatibility
 
-## 9. Git state (as of this update)
+## 10. Changes — 2026-06-28
+
+### My Questions page (`/app/my-questions`)
+- **Problem:** "Continue Question Flow" button on the mentee dashboard linked to `/app/question-entry` with no context, dropping the user into a blank type-selection page instead of showing their active questions.
+- **Fix:** New `MyQuestions.tsx` page listing the mentee's mentorship requests with:
+  - Tabs: Active / Closed / All (with live counts)
+  - Search by topic, message, or mentor name
+  - Status badges (Awaiting Mentor, Accepted, Completed, Declined, Expired)
+  - Withdraw action for pending requests (with confirmation)
+  - "New Question" button linking to the question entry flow
+- Route added at `/app/my-questions`; sidebar nav link added between Calendar and Instant Mentorship.
+- Dashboard card updated: button text changed to "View My Questions", links to `/app/my-questions`.
+- **Bug fix:** Withdraw button was silently failing because the DELETE handler read `localStorage.getItem('token')` instead of `'phxnorth_token'` (the key used by `fetchAPI`).
+
+### Category-aware assumed-goal form (FR-03 enhancement)
+- **Problem:** The "We understand your goal as" step in the quick question flow always showed education-specific fields (Institution, Program Level, Major, Target Intake), regardless of the question's category.
+- **Fix:** The form now renders different fields based on `assumedGoal.category`:
+  - **All categories:** Primary Goal, Time Horizon, Country/Region
+  - **Education:** Institution, Program Level, Major/Field, Target Intake
+  - **Career:** Current Role, Target Role, Industry, Years of Experience
+  - **Business:** Company/Organization, Business Area, Key Challenge, Revenue Stage
+  - **Entrepreneurship:** Idea/Venture Description, Venture Stage, Funding Status, Target Market
+- `AssumedGoal` interface (frontend) and Pydantic schema (backend) expanded with all category-specific fields.
+- `AssumedGoalDTO` in `question-api.ts` updated to match.
+
+---
+
+## 11. Git state (as of this update)
 
 Both repos on `main`, all work committed and pushed.
 
-**As of 2026-06-15:** Vite build clean. Wallet credit metering fully implemented across backend and frontend. Heartbeat-based online status replaces static boolean. All FR-04 through FR-08 features have working implementations.
-
-Suggested commit grouping: one commit per feature (FR-03, FR-07, FR-05) per repo. Consider adding `server/*.db` and `server/uploads/` to `.gitignore` if not already.
+**As of 2026-06-28:** My Questions page live. Question entry assumed-goal form is now category-aware. All previous features remain functional.
